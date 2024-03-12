@@ -41,7 +41,7 @@
     datum: {
         pos_x: Int, // x coordinate of the current position
         pos_y: Int, // y coordinate of the current position
-        pos_ts, // timestamp of last movement
+        pos_ts: PosixTime, // timestamp of last movement
         fuel: Int // total amount of available fuel
     }
 }
@@ -84,12 +84,21 @@
 
 ## Gameplay
 
+### Building a Ship
+
+// TODO
+
 ### Ship Movement
 
 - movement of a ship through the grid it achieved by a transaction the consumes the `ShipState` UTxO and outputs a new one with the updated state.
 - the maximum _distance_ that can be achieved in a single transaction is constrained by the constant `MAX_SHIP_MOVEMENT_PER_TX`.
 - moving the ship will consume a quantity of fuel proportional to the distance. The ratio of fuel required per distance unit is defined by the constant `FUEL_PER_DISTANCE_UNIT`.
 
+### Gathering Fuel
+
+// TODO
+
+### Claiming Rewards
 
 ## Glossary
 
