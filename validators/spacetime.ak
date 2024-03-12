@@ -4,15 +4,23 @@ use aiken/transaction.{InlineDatum, ScriptContext, Spend, Transaction}
 use aiken/transaction/value.{PolicyId, quantity_of}
 
 type Datum {
-  ship_id: ByteArray,
+  pilot_token: ByteArray,
   pos_x: Int,
   pos_y: Int,
   fuel: Int,
 }
 
-type Redeemer {
+type MoveRedeemer {
   delta_x: Int,
   delta_y: Int,
+}
+
+type GatherRedeemer {GatherRedeemer}
+
+type PotRedeemer {PotRedeemer}
+
+fn required_fuel(distance: Int, fuel_per_step: Int) -> Int {
+  distance * fuel_per_step
 }
 
 fn distance(delta_x: Int, delta_y: Int) -> Int {
@@ -51,11 +59,12 @@ validator(ship_policy_id: PolicyId, max_speed: Int, fuel_per_step: Int) {
       quantity_of(own_input.output.value, ship_policy_id, ship_id) == 1
 
     let distance = distance(delta_x, delta_y)
+    let required_fuel = required_fuel(distance, fuel_per_step)
 
     // speed = distance since we consider each block the unit of time 
     let must_respect_max_speed = distance <= max_speed
 
-    let must_have_enough_fuel = fuel >= fuel_per_step * distance
+    let must_have_enough_fuel = fuel >= required_fuel
 
     expect InlineDatum(out_data) = own_output.datum
 
@@ -66,6 +75,12 @@ validator(ship_policy_id: PolicyId, max_speed: Int, fuel_per_step: Int) {
 
     let final_ship_id_must_match = out_data.ship_id == ship_id
 
-    must_hold_ship_asset && must_respect_max_speed && must_have_enough_fuel && final_pos_must_respect_movement && final_ship_id_must_match
+    and {
+      must_hold_ship_asset,
+      must_respect_max_speed,
+      must_have_enough_fuel,
+      final_pos_must_respect_movement,
+      final_ship_id_must_match,
+    }
   }
 }
