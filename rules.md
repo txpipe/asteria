@@ -30,7 +30,7 @@
 - the datum of the `ShipState` UTxO contains information about current coordinates and available fuel.
 - all `ShipUtxo` are locked in a particular script address that constrains the changes that can be applied to the state.
 
-```json
+```js
 // ShipState
 {
     assets: {
@@ -67,7 +67,7 @@
 - the amount of fuel tokens in the `PelletState` represents the available fuel.
 
 
-```json
+```js
 // PelletState
 {
     assets: {
