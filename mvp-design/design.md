@@ -137,7 +137,6 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * the x and y output datum values are updated as the previous ones (input values) plus the corresponding deltas.
 * the output fuel datum field equals the input fuel minus the fuel required for the displacement.
 * the distance advanced doesn't exceed the `MAX_SHIP_MOVEMENT_PER_TX`.
-* the tx is signed by the ship owner.
 
 #### *Gather Redeemer (includes gathering amount)*
 * there is a single `ShipState` input.
