@@ -155,7 +155,8 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 ### Ship minting policy:
 * Params: `ShipState` validator address.
 
-*Mint*:
+#### MINT:
+
 ***TX:***
 * a single token is minted.
 * there is a single `ShipState` output.
@@ -168,6 +169,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 ***VALUE:***
 * the minted token is paid to the `ShipState` validator address.
 
-*Burn*:
+#### BURN:
+
 ***TX:***
 * the `ShipState` input is at coordinates (0,0).
