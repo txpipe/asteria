@@ -111,7 +111,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * adminToken is in the input.
 * datum doesn't change.
 
-#### *Collect Redeemer (includes address of the player that reached the pot)*
+#### *Collect Redeemer*
 * ship token is present in some input.
 * `Pot` output value has at most 50% adas less than input value.
 
