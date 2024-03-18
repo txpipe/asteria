@@ -106,7 +106,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * Params: admin token.
 
 #### *AddNewPlayer Redeemer*
-* `Pot` output value equals input value plus the inscription fee paid by the user.
+* `Pot` output value equals input value plus the inscription fee.
 * adminToken is in the input.
 * datum doesn't change.
 
