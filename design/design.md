@@ -71,13 +71,13 @@ Creates one `PelletState` UTxO locking min ada and an admin token, setting in th
 
 
 ### Create a ShipState UTxO:
-Creates a `ShipState` UTxO locking min ada and a minted ship token, specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and sets `fuel` to an initial amount. Also adds to the `Pot` UTxO value the inscription fee paid by the user.
+Creates a `ShipState` UTxO locking min ada and a ship token (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `Pot` UTxO value the inscription fee paid by the user.
 
 ![createShip diagram](img/createShip.png)
 
 
 ### Move a Ship:
-Updates the `pos_x` and `pos_y` datum fields of the `ShipState` UTxO with the `delta_x` and `delta_y` values specified in the redeemer.
+Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by adding the `delta_x` and `delta_y` values specified in the redeemer, and subtracting the fuel amount needed for the displacement.
 
 ![moveShip diagram](img/moveShip.png)
 
@@ -89,7 +89,7 @@ Updates the `fuel` datum field of both the `ShipState` and `PelletState` UTxOs, 
 
 
 ### Collect Rewards:
-Subtracts from the `Pot` UTxO 50% of the ada value, and pays that amount to the owner of the ship that reached the pot, toghether with the min ada locked in the locked in the `ShipState` UTxO. The ship token is burnt.
+Subtracts from the `Pot` UTxO 50% of the ada value, and pays that amount to the owner of the ship that reached the pot, together with the min ada locked in the `ShipState` UTxO. The ship token is burnt.
 
 ![collect diagram](img/collect.png)
 
