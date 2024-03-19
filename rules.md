@@ -28,7 +28,7 @@
 - a ship is identified by a Cardano native asset token of a specific policy id. We call this class of token `ShipToken`.
 - the UTxO that holds the `ShipToken` defines the state of the ship. We call this class of UTxOs `ShipState`.
 - the datum of the `ShipState` UTxO contains information about current coordinates and available fuel.
-- all `ShipUtxo` are locked in a particular script address that constrains the changes that can be applied to the state.
+- all `ShipState` UTxOs belong to a script address that constraints changes that can be applies to the state. We call this script `SpaceTimeScript`.
 
 ```js
 // ShipState
