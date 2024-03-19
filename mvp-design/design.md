@@ -3,9 +3,9 @@
 ## Introduction
 This document describes the technical design of the Asteria dApp - the script UTxOs involved, the operations that take place both during the game and in the setup phase, and the necessary validators and minting policies.
 
-There will be a single script UTxO for the `Pot`, several `PelletState` UTxOs and a `ShipState` UTxO for every user. The `Pot` UTxO locks the ada amount paid by each user when creating a ship, and it's position on the board is always assumed to be (0,0). Both `PelletState` and `ShipState` UTxOs have their positions specified in the datum. In order to identify valid game UTxOs, the admin will deposit a special token (the "admin token") in the `PelletState` and `Pot` UTxOs when creating them. This token is also used for parameterizing the pot and fuel validators, so we could have different "versions" of the game, each one with a different admin token.
+There will be a single `AsteriaUtxo`, several `PelletState` UTxOs and a `ShipState` UTxO for every user. The `AsteriaUtxo` locks the ada amount paid by each user when creating a ship, and it's position on the board is always assumed to be (0,0). Both `PelletState` and `ShipState` UTxOs have their positions specified in the datum. In order to identify valid game UTxOs, the admin will deposit a special token (the `AdminToken`) in the `PelletState` UTxOs and the `AsteriaUtxo` when creating them. This token is also used for parameterizing the Asteria and pellet validators, so we could have different "versions" of the game, each one with a different `AdminToken`.
 
-Each ship will be identified by a `ShipToken`, with a fixed policy id but a token name of their own. This is the token that is minted by the _Ship minting policy_, described in the validators section.
+Each ship will be identified by a `ShipToken`, with a fixed policy id but a token name of their own. This is the token that is minted by the `ShipyardPolicy`, described in the validators section.
 
 
 ## UTxOs specification
@@ -13,66 +13,67 @@ Each ship will be identified by a `ShipToken`, with a fixed policy id but a toke
 ### ShipState UTxO:
 
 >#### Address
->* Parameterized on admin token, `Pot` validator address and `PelletState` validator address.
+>* Parameterized on `AdminToken`, Asteria validator address and pellet validator address.
 >
 >#### Datum
+>* fuel: **Int**
 >* pos_x: **Int**
 >* pos_y: **Int**
->* fuel: **Int**
->* pilot_token: **(PolicyId, AssetName)**
->* ship_token_policy: **PolicyId**
+>* shipyard_policy: **PolicyId**
+>* ship_token_name: **AssetName**
+>* pilot_token_name: **AssetName**
 >
 >#### Value
->* minAda
+>* minADA
 >* `ShipToken`
 
 ### PelletState UTxO:
 
 >#### Address
->* Parameterized on the admin token.
+>* Parameterized on the `AdminToken`.
 >
 >#### Datum
+>* fuel: **Int**
 >* pos_x: **Int**
 >* pos_y: **Int**
->* fuel: **Int**
->* ship_token_policy: **PolicyId**
+>* shipyard_policy: **PolicyId**
 >
 >#### Value
->* minAda
->* admin token
+>* minADA
+>* `AdminToken`
 
-### Pot UTxO:
+### Asteria Utxo:
 
 >#### Address
->* Parameterized on the admin token.
+>* Parameterized on the `AdminToken`.
 >
 >#### Datum
->* ship_token_policy: **PolicyId**
+>* ship_counter: **Int**
+>* shipyard_policy: **PolicyId**
 >
 >#### Value
->* minAda
->* reward amount.
->* admin token
+>* total_rewards
+>* `AdminToken`
 >
->Note: the reward amount is updated during the course of the game, whenever a new user joins or reaches the pot.
+>Note: the reward amount is updated during the course of the game, whenever a new user joins or reaches Asteria.
 
 
 ## Transactions
 
-### Create Pot UTxO:
-This transaction creates the unique `Pot` UTxO locking min ada and an admin token. It stores in the datum the ship token policy id for being able to reference it in the validator.
+### Create AsteriaUtxo:
+This transaction creates the unique `AsteriaUtxo` locking min ada and an `AdminToken`. It stores in the datum the `ShipToken` policy id for being able to reference it in the validator.
 
-![createPot diagram](img/createPot.png)
+![createAsteria diagram](img/createAsteria.png)
 
 
 ### Create a PelletState UTxO:
-Creates one `PelletState` UTxO locking min ada and an admin token, setting in the datum the `pos_x` and `pos_y` coordinates where the pellet will be located on the grid and the `fuel` value equal to some initial value.
+Creates one `PelletState` UTxO locking min ada and an `AdminToken`, setting in the datum the `pos_x` and `pos_y` coordinates where the pellet will be located on the grid and the `fuel` value equal to some initial value.
 
 ![createPellet diagram](img/createPellet.png)
 
 
 ### Create a ShipState UTxO:
-Creates a `ShipState` UTxO locking min ada and a ship token (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `Pot` UTxO value the inscription fee paid by the user.
+Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
 
 ![createShip diagram](img/createShip.png)
 
@@ -90,44 +91,44 @@ Updates the `fuel` datum field of both the `ShipState` and `PelletState` UTxOs, 
 
 
 ### Collect Rewards:
-Subtracts from the `Pot` UTxO 50% of the ada value, and pays that amount to the owner of the ship that reached the pot, together with the min ada locked in the `ShipState` UTxO. The ship token is burnt.
+Subtracts from the `AsteriaUTxO` at most `MAX_ASTERIA_MINING`% of the ada value, and pays that amount to the owner of the ship that reached Asteria, together with the min ada locked in the `ShipState` UTxO. The `ShipToken` is burnt.
 
 ![collect diagram](img/collect.png)
 
 
 ### Quit Game:
-Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns the ship token.
+Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns the `ShipToken`.
 
 ![quit diagram](img/quit.png)
 
 
 ## Validators & Minting Policies
 
-### Pot validator:
-* Params: admin token.
+### Asteria validator:
+* Params: `AdminToken`.
 
 #### *AddNewPlayer Redeemer*
-* `Pot` output value equals input value plus the inscription fee.
-* adminToken is in the input.
+* `AsteriaUTxO` output value equals input value plus the `SHIP_MINT_FEE`.
+* `AdminToken` is in the input.
 * datum doesn't change.
 
 #### *Collect Redeemer*
-* ship token is present in some input.
-* `Pot` output value has at most 50% adas less than input value.
+* `ShipToken` is present in some input.
+* `AsteriaUTxO` output value has at most `MAX_ASTERIA_MINING`% adas less than input value.
 
-### PelletState validator:
-* Params: admin token.
+### Pellet validator:
+* Params: `AdminToken`.
 
 #### *Gather Redeemer (includes gathering amount)*
-* ship token is present in some input.
+* `ShipToken` is present in some input.
 * the amount specified is not greater than the fuel available in the pellet.
 * the amount specified is subtracted from the output `PelletState` fuel datum field, and the other fields remain unchanged.
 
-### ShipState validator:
-* Params: admin token, `Pot` validator address and `PelletState` validator address.
+### SpaceTimeScript validator:
+* Params: `AdminToken`, Asteria validator address and pellet validator address.
 
 #### *MoveShip Redeemer (includes delta_x and delta_y displacements)*
-* ship token is present.
+* `ShipToken` is present.
 * there is a single `ShipState` input.
 * there is a single `ShipState` output.
 * the `PilotToken` is present in an input.
@@ -142,32 +143,37 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * there is a single `ShipState` input.
 * there is a single `ShipState` output.
 * there is a `PelletState` input with the same x and y datum coordinates as the `ShipState` UTxO.
-* the amount specified plus the fuel before charging does not exceed the ship's fuel capacity.
+* the amount specified plus the fuel before charging does not exceed `MAX_SHIP_FUEL` capacity.
 * the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
 * the `ShipState` output value is the same as the input.
 
 #### *Collect Redeemer*
 * there is a single `ShipState` input.
-* pilot token is present.
+* `PilotToken` is present.
 * `ShipState` position is (0,0).
-* `Pot` UTxO is input.
-* ship token is burnt.
+* `AsteriaUTxO` is input.
+* `ShipToken` is burnt.
 
 #### *Quit Redeemer*
 * there is a single `ShipState` input.
 * the `PilotToken` is present in an input.
 * no `ShipState` output.
 
-### Ship minting policy:
-* Params: `ShipState` validator address.
+### Ship minting policy or "ShipyardPolicy":
+* Params: `SpaceTimeScript` validator address and Asteria validator address.
 
 #### MINT:
-* a single token is minted.
+* `AsteriaUTxO` is input.
+* exactly two tokens are minted.
+* the name of one token is the `ship_counter` of the `AsteriaUTxO` datum appended to the string `SHIP`. We refer to this token as the `ShipToken`.
+* the name of one token is the `ship_counter` of the `AsteriaUTxO` datum appended to the string `PILOT`. We refer to this token as the `PilotToken`
 * there is a single `ShipState` output.
-* the `ShipState` output datum has x and y coordinates such that distance from (0,0) is above the minimum distance.
-* the `ShipState` output datum has the `ship_token_policy` set as the policy id of the minted token.
 * the `ShipState` fuel datum field equals some initial value.
-* the minted token is paid to the `ShipState` validator address.
+* the `ShipState` output datum has x and y coordinates such that distance from (0,0) is above the minimum distance.
+* the `ShipState` output datum has the `shipyard_policy` set as the policy id of the minted tokens.
+* the `ShipState` output datum has the `ship_token_name` set as the name of the `ShipToken`.
+* the `ShipState` output datum has the `pilot_token_name` set as the name of the `PilotToken`.
+* the `ShipToken` is paid to the `SpaceTimeScript` validator address.
 
 #### BURN:
 * there is a `ShipState` input.
