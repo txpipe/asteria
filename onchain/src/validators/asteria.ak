@@ -1,12 +1,7 @@
 use aiken/transaction.{ScriptContext}
-use aiken/transaction/credential.{Address}
 use aiken/transaction/value.{AssetName, PolicyId}
 
-validator(
-  _pellet_validator_address: Address,
-  _asteria_validator_address: Address,
-  _admin_token: (PolicyId, AssetName),
-) {
+validator(_admin_token: (PolicyId, AssetName)) {
   fn spend(_datum: Data, _redeemer: Data, _ctx: ScriptContext) -> Bool {
     True
   }
