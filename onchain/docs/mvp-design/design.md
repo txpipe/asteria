@@ -90,10 +90,10 @@ Updates the `fuel` datum field of both the `ShipState` and `PelletState` UTxOs, 
 ![gatherFuel diagram](img/gatherFuel.png)
 
 
-### Collect Rewards:
+### Mine Asteria:
 Subtracts from the `AsteriaUTxO` at most `MAX_ASTERIA_MINING`% of the ada value, and pays that amount to the owner of the ship that reached Asteria, together with the min ada locked in the `ShipState` UTxO. The `ShipToken` is burnt.
 
-![collect diagram](img/collect.png)
+![mineAsteria diagram](img/mineAsteria.png)
 
 
 ### Quit Game:
@@ -107,19 +107,19 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 ### Asteria validator:
 * Params: `AdminToken`.
 
-#### *AddNewPlayer Redeemer*
+#### *AddNewShip Redeemer*
 * `AsteriaUTxO` output value equals input value plus the `SHIP_MINT_FEE`.
 * `AdminToken` is in the input.
 * datum doesn't change.
 
-#### *Collect Redeemer*
+#### *Mine Redeemer*
 * `ShipToken` is present in some input.
 * `AsteriaUTxO` output value has at most `MAX_ASTERIA_MINING`% adas less than input value.
 
 ### Pellet validator:
 * Params: `AdminToken`.
 
-#### *Gather Redeemer (includes gathering amount)*
+#### *Provide Redeemer (includes gathering amount)*
 * `ShipToken` is present in some input.
 * the amount specified is not greater than the fuel available in the pellet.
 * the amount specified is subtracted from the output `PelletState` fuel datum field, and the other fields remain unchanged.
@@ -139,7 +139,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * the output fuel datum field equals the input fuel minus the fuel required for the displacement.
 * the distance advanced doesn't exceed the `MAX_SHIP_MOVEMENT_PER_TX`.
 
-#### *Gather Redeemer (includes gathering amount)*
+#### *GatherFuel Redeemer (includes gathering amount)*
 * there is a single `ShipState` input.
 * there is a single `ShipState` output.
 * there is a `PelletState` input with the same x and y datum coordinates as the `ShipState` UTxO.
@@ -147,7 +147,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
 * the `ShipState` output value is the same as the input.
 
-#### *Collect Redeemer*
+#### *MineAsteria Redeemer*
 * there is a single `ShipState` input.
 * `PilotToken` is present.
 * `ShipState` position is (0,0).
