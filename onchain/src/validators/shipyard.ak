@@ -6,7 +6,7 @@ validator(
   _asteria_validator_address: Address,
   _spacetime_validator_address: Address,
 ) {
-  fn spend(_redeemer: ShipyardRedeemer, _ctx: ScriptContext) -> Bool {
+  fn mint(_redeemer: ShipyardRedeemer, _ctx: ScriptContext) -> Bool {
     True
   }
 }
