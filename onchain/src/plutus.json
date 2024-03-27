@@ -12,41 +12,116 @@
   },
   "validators": [
     {
-      "title": "spacetime.spend",
+      "title": "asteria.spend",
+      "datum": {
+        "title": "_datum",
+        "schema": {
+          "$ref": "#/definitions/asteria~1types~1AsteriaDatum"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/asteria~1types~1AsteriaRedeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "_admin_token",
+          "schema": {
+            "$ref": "#/definitions/Tuple$ByteArray_ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "582801000032323223222253330064a229309b2b1919bb03004001300430050013758002ae695d0aba21",
+      "hash": "631aff3dfb3ee15c0a560797a3e575872b27afe17662be117974aa0a"
+    },
+    {
+      "title": "pellet.spend",
       "datum": {
         "title": "datum",
         "schema": {
-          "$ref": "#/definitions/spacetime~1Datum"
+          "$ref": "#/definitions/asteria~1types~1PelletDatum"
         }
       },
       "redeemer": {
         "title": "redeemer",
         "schema": {
-          "$ref": "#/definitions/spacetime~1Redeemer"
+          "$ref": "#/definitions/asteria~1types~1PelletRedeemer"
         }
       },
       "parameters": [
         {
-          "title": "ship_policy_id",
+          "title": "admin_token",
           "schema": {
-            "$ref": "#/definitions/ByteArray"
-          }
-        },
-        {
-          "title": "max_speed",
-          "schema": {
-            "$ref": "#/definitions/Int"
-          }
-        },
-        {
-          "title": "fuel_per_step",
-          "schema": {
-            "$ref": "#/definitions/Int"
+            "$ref": "#/definitions/asteria~1types~1AssetClass"
           }
         }
       ],
-      "compiledCode": "59035e010000323232323232323232232232232222323232533300f32323232323232323232323232323232323232323253330243370e9001181180309919191919299981499b8748000c0a00044c8c8c8c8c94ccc0b8cdc3a4000605a0022646464646464646464a66606e66e1d2004303600113232323232533303c00c1533303c0091533303c0081533303c002100114a029405280a503371e6eb8c054c0e400c09d4ccc0e8cdc39bad300f303800233700048054266e1cdd69802981c00119b8002202814a0605a002607a002606a0022c6002606800e460766078607800266e24008068cdc480101699b8200102a3233700600204460020404a66606466e2000520001337029000000880099b873330043756600a605c600a605c00c0580389001181a00098160008b19803005119b873330023756600660580020540349001111191919299981919b8748008004520001375a606e6060004606000264a66606266e1d200200114c103d87a8000132323300100100222533303700114c103d87a800013232323253330383371e014004266e9520003303c375000297ae0133006006003375a60720066eb8c0dc008c0ec008c0e4004dd5981b18178011817800991980080080211299981a0008a6103d87a800013232323253330353371e010004266e95200033039374c00297ae01330060060033756606c0066eb8c0d0008c0e0008c0d80048c0c4c0c8004c0bc004c09c00458cc0040208cdd7980198138008021119198008008019129998170008a6103d87a800013232533302d300500213374a90001981880125eb804cc010010004c0c8008c0c00048c0b0004c0a8004c08801858dd61814000981400098138011bac3025001301d0033023001302300230210013019010375a603e002603e0046eb4c074004c074008dd6980d800980d8011bae3019001301100a375a602e002602e0046eb4c054004c0340145261365632533300f3370e9000000899191919299980b180c8010a4c2c6eb4c05c004c05c008dd6980a80098068028b18068021800802119299980719b87480000044c8c8c8c8c8c8c8c94ccc064c07000852616375a603400260340046eb4c060004c060008dd6980b000980b0011bae3014001300c00216300c001375a0026eb4004dd7000918029baa001230033754002ae6955ceaab9e5573eae815d0aba21",
-      "hash": "24dc592d83d2a81ee4e3981d3cb09f6141ef08f974e617a251745f97"
+      "compiledCode": "5903200100003232323232323232322222323232533300a3232323232323232323232323232323232323253330203023002132533301e3370e9002180e800899191919192999811a99981180108008a5013232323300100101122533302a00114a026464a66605264646600200200444a66605e00229404c8c94ccc0b8cdc7999b8c48000dc6a44104534849500000248904534849500014a226600800800260660046eb8c0c4004c014c8c8c94ccc0b0cdc3a4004002297adef6c6013756606260540046054002660200020326eacc040c09cc040c09c0085288998020020009817001181600098008009129998140008a5eb804cc0a4c098c0a8004cc008008c0ac00452819baf0033374a9000198131ba83370202a02e6050604003c66e24058050c064004c090004c07000458c088c08cc08cc06c00458c084004c8cc004004010894ccc08000452f5c026464a66603e66e1cccc888c8c8c94ccc094cdc3a40040022900009bad302a302300230230013253330243370e90010008a60103d87a8000132323300100100222533302a00114c103d87a8000132323232533302b3371e014004266e9520003302f375000297ae0133006006003375a60580066eb8c0a8008c0b8008c0b0004dd5981498110011811000998040018011bab3006301d002375c6048603a0386eb8c018c0740712002133023002330040040011330040040013024002302200122323300100100322533302100114c103d87a800013232323253330223371e00e004266e95200033026374c00297ae0133006006003375660460066eb8c084008c094008c08c0048c07cc080004dd6180e800980e800980e0011bac301a00130120013018001301000c375c602c002602c002602a00260280046eb4c048004c028020dd6980800098040028a4c26cac64a66601466e1d200000113232533300f3012002149858dd6980800098040028b18040021800802119299980499b87480000044c8c8c8c8c8c8c8c94ccc050c05c00852616375c602a002602a0046eb4c04c004c04c008dd6980880098088011bad300f0013007002163007001230053754002460066ea80055cd2ab9d5573caae7d5d02ba157441",
+      "hash": "3273ddf3159849256c36616cfa27cd07ad061ac4313b747b7fc43621"
+    },
+    {
+      "title": "shipyard.mint",
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/asteria~1types~1ShipyardRedeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "_asteria_validator_address",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+          }
+        },
+        {
+          "title": "_spacetime_validator_address",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+          }
+        }
+      ],
+      "compiledCode": "5201000032222253330054a229309b2b2b9a01",
+      "hash": "6586e490115868362eb1a7305c802c314357f2ebc5887f8bc4833732"
+    },
+    {
+      "title": "spacetime.spend",
+      "datum": {
+        "title": "_datum",
+        "schema": {
+          "$ref": "#/definitions/asteria~1types~1ShipDatum"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/asteria~1types~1ShipRedeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "_pellet_validator_address",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+          }
+        },
+        {
+          "title": "_asteria_validator_address",
+          "schema": {
+            "$ref": "#/definitions/aiken~1transaction~1credential~1Address"
+          }
+        },
+        {
+          "title": "_admin_token",
+          "schema": {
+            "$ref": "#/definitions/Tuple$ByteArray_ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "58290100003232322223222253330084a229309b2b1919bb03006001300630070013758002ae695d0aba21",
+      "hash": "dbe87f98127efdba8e6c83f717f68c6b7e14e58569ed8a8f9584a3e0"
     }
   ],
   "definitions": {
@@ -56,17 +131,191 @@
     "Int": {
       "dataType": "integer"
     },
-    "spacetime/Datum": {
-      "title": "Datum",
+    "Option$aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
+      "title": "Optional",
       "anyOf": [
         {
-          "title": "Datum",
+          "title": "Some",
+          "description": "An optional value.",
           "dataType": "constructor",
           "index": 0,
           "fields": [
             {
-              "title": "ship_id",
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "Tuple$ByteArray_ByteArray": {
+      "title": "Tuple",
+      "dataType": "list",
+      "items": [
+        {
+          "$ref": "#/definitions/ByteArray"
+        },
+        {
+          "$ref": "#/definitions/ByteArray"
+        }
+      ]
+    },
+    "aiken/transaction/credential/Address": {
+      "title": "Address",
+      "description": "A Cardano `Address` typically holding one or two credential references.\n\n Note that legacy bootstrap addresses (a.k.a. 'Byron addresses') are\n completely excluded from Plutus contexts. Thus, from an on-chain\n perspective only exists addresses of type 00, 01, ..., 07 as detailed\n in [CIP-0019 :: Shelley Addresses](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019/#shelley-addresses).",
+      "anyOf": [
+        {
+          "title": "Address",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "payment_credential",
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Credential"
+            },
+            {
+              "title": "stake_credential",
+              "$ref": "#/definitions/Option$aiken~1transaction~1credential~1Referenced$aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/credential/Credential": {
+      "title": "Credential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKeyCredential",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
               "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "ScriptCredential",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "aiken/transaction/credential/Referenced$aiken/transaction/credential/Credential": {
+      "title": "Referenced",
+      "description": "Represent a type of object that can be represented either inline (by hash)\n or via a reference (i.e. a pointer to an on-chain location).\n\n This is mainly use for capturing pointers to a stake credential\n registration certificate in the case of so-called pointer addresses.",
+      "anyOf": [
+        {
+          "title": "Inline",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1transaction~1credential~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "Pointer",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "title": "slot_number",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "transaction_index",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "certificate_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "asteria/types/AssetClass": {
+      "title": "AssetClass",
+      "anyOf": [
+        {
+          "title": "AssetClass",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "policy",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "name",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "asteria/types/AsteriaDatum": {
+      "title": "AsteriaDatum",
+      "anyOf": [
+        {
+          "title": "AsteriaDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "ship_counter",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "shipyard_policy",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "asteria/types/AsteriaRedeemer": {
+      "title": "AsteriaRedeemer",
+      "anyOf": [
+        {
+          "title": "AddNewShip",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Mine",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "asteria/types/PelletDatum": {
+      "title": "PelletDatum",
+      "anyOf": [
+        {
+          "title": "PelletDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "fuel",
+              "$ref": "#/definitions/Int"
             },
             {
               "title": "pos_x",
@@ -77,18 +326,70 @@
               "$ref": "#/definitions/Int"
             },
             {
-              "title": "fuel",
+              "title": "shipyard_policy",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "asteria/types/PelletRedeemer": {
+      "title": "PelletRedeemer",
+      "anyOf": [
+        {
+          "title": "Provide",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "amount",
               "$ref": "#/definitions/Int"
             }
           ]
         }
       ]
     },
-    "spacetime/Redeemer": {
-      "title": "Redeemer",
+    "asteria/types/ShipDatum": {
+      "title": "ShipDatum",
       "anyOf": [
         {
-          "title": "Redeemer",
+          "title": "ShipDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "fuel",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "pos_x",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "pos_y",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "shipyard_policy",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "ship_token_name",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "pilot_token_name",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "asteria/types/ShipRedeemer": {
+      "title": "ShipRedeemer",
+      "anyOf": [
+        {
+          "title": "MoveShip",
           "dataType": "constructor",
           "index": 0,
           "fields": [
@@ -101,6 +402,46 @@
               "$ref": "#/definitions/Int"
             }
           ]
+        },
+        {
+          "title": "GatherFuel",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "title": "amount",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        },
+        {
+          "title": "MineAsteria",
+          "dataType": "constructor",
+          "index": 2,
+          "fields": []
+        },
+        {
+          "title": "Quit",
+          "dataType": "constructor",
+          "index": 3,
+          "fields": []
+        }
+      ]
+    },
+    "asteria/types/ShipyardRedeemer": {
+      "title": "ShipyardRedeemer",
+      "anyOf": [
+        {
+          "title": "Mint",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Burn",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
         }
       ]
     }
