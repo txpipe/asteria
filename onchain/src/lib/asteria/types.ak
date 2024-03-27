@@ -1,5 +1,10 @@
 use aiken/transaction/value.{AssetName, PolicyId}
 
+pub type AssetClass {
+  policy: PolicyId,
+  name: AssetName,
+}
+
 pub type ShipDatum {
   fuel: Int,
   pos_x: Int,

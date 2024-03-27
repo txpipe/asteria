@@ -1,13 +1,43 @@
-use aiken/transaction.{ScriptContext}
-use aiken/transaction/value.{AssetName, PolicyId}
-use asteria/types.{PelletDatum, PelletRedeemer}
+use aiken/list.{filter}
+use aiken/transaction.{InlineDatum, Output, ScriptContext, Spend, Transaction}
+use aiken/transaction/value.{quantity_of}
+use asteria/types.{AssetClass, PelletDatum, PelletRedeemer, Provide}
+use asteria/utils
 
-validator(_admin_token: (PolicyId, AssetName)) {
-  fn spend(
-    _datum: PelletDatum,
-    _redeemer: PelletRedeemer,
-    _ctx: ScriptContext,
+validator(admin_token: AssetClass) {
+  pub fn spend(
+    datum: PelletDatum,
+    redeemer: PelletRedeemer,
+    ctx: ScriptContext,
   ) -> Bool {
-    True
+    let Provide(amount) = redeemer
+    let PelletDatum { fuel, shipyard_policy, .. } = datum
+    let ScriptContext { transaction, purpose } = ctx
+    let Transaction { inputs, outputs, .. } = transaction
+
+    expect Spend(utxo_ref) = purpose
+    expect [own_input] =
+      list.filter(inputs, fn(input) { input.output_reference == utxo_ref })
+    expect [own_output] =
+      filter(
+        outputs,
+        fn(output) {
+          quantity_of(output.value, admin_token.policy, admin_token.name) == 1
+        },
+      )
+    expect InlineDatum(out_datum) = own_output.datum
+    expect out_datum: PelletDatum = out_datum
+
+    let has_enough_fuel = amount <= fuel
+    let own_input_has_admin_token =
+      quantity_of(own_input.output.value, admin_token.policy, admin_token.name) == 1
+    let value_not_changed = own_input.output.value == own_output.value
+    let datum_update_ok =
+      out_datum == PelletDatum { ..datum, fuel: fuel - amount }
+
+    has_enough_fuel && own_input_has_admin_token && value_not_changed && datum_update_ok && utils.is_ship_token_input(
+      inputs,
+      shipyard_policy,
+    )
   }
 }
