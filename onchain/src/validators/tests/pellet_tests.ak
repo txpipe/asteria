@@ -6,7 +6,9 @@ use aiken/transaction.{
   Transaction, TransactionId,
 }
 use aiken/transaction/credential.{Address, ScriptCredential}
-use aiken/transaction/value.{PolicyId, add, from_lovelace, zero}
+use aiken/transaction/value.{
+  PolicyId, Value, add, from_lovelace, without_lovelace, zero,
+}
 use asteria/test_utils
 use asteria/types.{AssetClass, PelletDatum, Provide}
 use pellet as pellet_validator
@@ -18,21 +20,34 @@ use pellet as pellet_validator
 type ProvideTestOptions {
   initial_fuel: Int,
   provided_amount: Int,
-  ship_token_amount: Int,
+  pellet_input_value: Value,
+  pellet_output_value: Value,
+  admin_policy: PolicyId,
+  admin_token_name: ByteArray,
   shipyard_policy: PolicyId,
   ship_token_name: ByteArray,
+  ship_token_amount: Int,
   datum_out: PelletDatum,
 }
 
 fn default_provide_test_options() -> ProvideTestOptions {
   let shipyard_policy =
     #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005"
+  let admin_policy = #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2004"
+  let admin_token_name = "admin"
+  let value =
+    from_lovelace(2_000_000)
+      |> add(admin_policy, admin_token_name, 1)
   ProvideTestOptions {
     initial_fuel: 40,
     provided_amount: 15,
-    ship_token_amount: 1,
+    pellet_input_value: value,
+    pellet_output_value: value,
+    admin_policy,
+    admin_token_name,
     shipyard_policy,
     ship_token_name: "SHIP23",
+    ship_token_amount: 1,
     datum_out: PelletDatum { fuel: 25, pos_x: 1, pos_y: 2, shipyard_policy },
   }
 }
@@ -40,9 +55,8 @@ fn default_provide_test_options() -> ProvideTestOptions {
 fn provide(options: ProvideTestOptions) -> Bool {
   let pellet_addr = #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306513"
   let ship_addr = #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306514"
-  let admin_policy = #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2004"
-  let admin_token_name = "admin"
-  let admin_asset = AssetClass { policy: admin_policy, name: admin_token_name }
+  let admin_asset =
+    AssetClass { policy: options.admin_policy, name: options.admin_token_name }
   let transaction_id_1 =
     #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6a"
   let transaction_id_2 =
@@ -62,9 +76,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
           payment_credential: ScriptCredential(pellet_addr),
           stake_credential: None,
         }
-      let value =
-        from_lovelace(2_000_000)
-          |> add(admin_policy, admin_token_name, 1)
+      let value = options.pellet_input_value
       Output {
         address,
         value,
@@ -109,9 +121,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
         payment_credential: ScriptCredential(pellet_addr),
         stake_credential: None,
       }
-    let value =
-      from_lovelace(2_000_000)
-        |> add(admin_policy, admin_token_name, 1)
+    let value = options.pellet_output_value
     Output {
       address,
       value,
@@ -221,6 +231,26 @@ test wrong_ship_token_name() fail {
     ProvideTestOptions {
       ..default_provide_test_options(),
       ship_token_name: "SHI23",
+    }
+  provide(options)
+}
+
+test no_admin_token() fail {
+  let options =
+    ProvideTestOptions {
+      ..default_provide_test_options(),
+      pellet_input_value: from_lovelace(2_000_000),
+      pellet_output_value: from_lovelace(2_000_000),
+    }
+  provide(options)
+}
+
+test wrong_value_update() fail {
+  let default = default_provide_test_options()
+  let options =
+    ProvideTestOptions {
+      ..default_provide_test_options(),
+      pellet_output_value: without_lovelace(default.pellet_input_value),
     }
   provide(options)
 }
