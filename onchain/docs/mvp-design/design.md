@@ -123,6 +123,8 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * `ShipToken` is present in some input.
 * the amount specified is not greater than the fuel available in the pellet.
 * the amount specified is subtracted from the output `PelletState` fuel datum field, and the other fields remain unchanged.
+* The admin token is present in the input `PelletState`.
+* The `PelletState` value doesn't change.
 
 ### SpaceTimeScript validator:
 * Params: `AdminToken`, Asteria validator address and pellet validator address.
