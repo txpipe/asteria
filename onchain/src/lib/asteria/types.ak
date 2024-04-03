@@ -43,6 +43,6 @@ pub type AsteriaRedeemer {
 }
 
 pub type ShipyardRedeemer {
-  Mint
-  Burn
+  MintShip
+  BurnShip
 }
