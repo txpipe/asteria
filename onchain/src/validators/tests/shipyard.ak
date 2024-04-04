@@ -7,7 +7,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{AssetName, PolicyId, Value, add, from_lovelace}
 use asteria/test_utils
-use asteria/types.{AsteriaDatum, MintShip, ShipDatum}
+use asteria/types.{AsteriaDatum, BurnShip, MintShip, ShipDatum}
 use shipyard
 
 // ==============================================================================================
@@ -262,4 +262,152 @@ test ship_token_not_paid() fail {
       ship_value: wrong_value,
     }
   ship_mint(options)
+}
+
+// ==============================================================================================
+// Burn Tests
+// ==============================================================================================
+
+type BurnTestOptions {
+  pos_x: Int,
+  pos_y: Int,
+  ship_addr: Address,
+  shipyard_policy: PolicyId,
+  no_ship_input: Bool,
+  burnt_value: Value,
+}
+
+fn set_burn_test_options() -> BurnTestOptions {
+  let shipyard_policy =
+    #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005"
+  let ship_credential =
+    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306514"
+  let ship_addr =
+    Address {
+      payment_credential: ScriptCredential(ship_credential),
+      stake_credential: None,
+    }
+  let burnt_value = value.from_asset(shipyard_policy, "SHIP7", -1)
+  BurnTestOptions {
+    pos_x: 0,
+    pos_y: 0,
+    ship_addr,
+    shipyard_policy,
+    no_ship_input: False,
+    burnt_value,
+  }
+}
+
+fn ship_burn(options: BurnTestOptions) -> Bool {
+  let ship_token_name = "SHIP7"
+  let pilot_token_name = "PILOT7"
+  let shipyard_policy = options.shipyard_policy
+  let transaction_id =
+    #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6a"
+  let asteria_credential =
+    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306513"
+  let asteria_addr =
+    Address {
+      payment_credential: ScriptCredential(asteria_credential),
+      stake_credential: None,
+    }
+  let redeemer = BurnShip
+  let ship_datum =
+    ShipDatum {
+      fuel: 40,
+      pos_x: options.pos_x,
+      pos_y: options.pos_y,
+      shipyard_policy,
+      ship_token_name,
+      pilot_token_name,
+    }
+  let ship_in = {
+    let output = {
+      let value =
+        from_lovelace(2_000_000)
+          |> add(shipyard_policy, ship_token_name, 1)
+      Output {
+        address: options.ship_addr,
+        value,
+        datum: InlineDatum(ship_datum),
+        reference_script: None,
+      }
+    }
+    Input {
+      output_reference: OutputReference {
+        transaction_id: TransactionId { hash: transaction_id },
+        output_index: 0,
+      },
+      output,
+    }
+  }
+  let tx =
+    Transaction {
+      inputs: if options.no_ship_input {
+        []
+      } else {
+        [ship_in]
+      },
+      reference_inputs: [],
+      outputs: [],
+      fee: value.from_lovelace(5_000),
+      mint: value.to_minted_value(options.burnt_value),
+      certificates: [],
+      withdrawals: dict.new(),
+      validity_range: Interval {
+        lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
+        upper_bound: IntervalBound {
+          bound_type: Finite(10),
+          is_inclusive: True,
+        },
+      },
+      extra_signatories: [],
+      redeemers: dict.new()
+        |> dict.insert(
+            key: Mint(shipyard_policy),
+            value: {
+              let redeemer_data: Data = redeemer
+              redeemer_data
+            },
+            compare: test_utils.script_purpose_compare,
+          ),
+      datums: dict.new(),
+      id: TransactionId { hash: transaction_id },
+    }
+  let mint_ctx =
+    ScriptContext { transaction: tx, purpose: Mint(shipyard_policy) }
+  let result =
+    shipyard.mint(
+      asteria_addr,
+      spacetime_validator_address: options.ship_addr,
+      initial_fuel: 40,
+      min_distance: 15,
+      redeemer: redeemer,
+      ctx: mint_ctx,
+    )
+  result
+}
+
+test burn_ok() {
+  ship_burn(set_burn_test_options())
+}
+
+test no_ship_input() fail {
+  let options =
+    BurnTestOptions { ..set_burn_test_options(), no_ship_input: True }
+  ship_burn(options)
+}
+
+test ship_not_at_center() fail {
+  let options = BurnTestOptions { ..set_burn_test_options(), pos_x: 1 }
+  ship_burn(options)
+}
+
+test burn_more_than_one() fail {
+  let def_options = set_burn_test_options()
+  let burnt_value =
+    value.from_asset(def_options.shipyard_policy, "SHIP7", -1)
+      |> value.add(def_options.shipyard_policy, "PILOT7", -1)
+  let options = BurnTestOptions { ..def_options, burnt_value: burnt_value }
+  ship_burn(options)
 }

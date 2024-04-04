@@ -91,7 +91,7 @@ validator(
         expect Some(ship_input) =
           list.find(
             inputs,
-            fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
+            fn(input) { input.output.address == spacetime_validator_address },
           )
         expect InlineDatum(ship_datum) = ship_input.output.datum
         expect ship_datum: ShipDatum = ship_datum
