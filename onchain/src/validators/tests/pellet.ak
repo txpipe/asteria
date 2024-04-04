@@ -102,10 +102,10 @@ fn provide(options: ProvideTestOptions) -> Bool {
       let value =
         from_lovelace(2_000_000)
           |> add(
-               options.shipyard_policy,
-               options.ship_token_name,
-               options.ship_token_amount,
-             )
+              options.shipyard_policy,
+              options.ship_token_name,
+              options.ship_token_amount,
+            )
       Output { address, value, datum: NoDatum, reference_script: None }
     }
     let output_reference =
@@ -159,27 +159,27 @@ fn provide(options: ProvideTestOptions) -> Bool {
       extra_signatories: [],
       redeemers: dict.new()
         |> dict.insert(
-             key: Spend(
-               OutputReference {
-                 transaction_id: TransactionId { hash: transaction_id_1 },
-                 output_index: 0,
-               },
-             ),
-             value: {
-               let redeemer_data: Data = redeemer
-               redeemer_data
-             },
-             compare: test_utils.script_purpose_compare,
-           ),
+            key: Spend(
+              OutputReference {
+                transaction_id: TransactionId { hash: transaction_id_1 },
+                output_index: 0,
+              },
+            ),
+            value: {
+              let redeemer_data: Data = redeemer
+              redeemer_data
+            },
+            compare: test_utils.script_purpose_compare,
+          ),
       datums: dict.new()
         |> dict.insert(
-             transaction_id_1,
-             {
-               let datum_data: Data = InlineDatum(datum_in)
-               datum_data
-             },
-             compare: bytearray.compare,
-           ),
+            transaction_id_1,
+            {
+              let datum_data: Data = InlineDatum(datum_in)
+              datum_data
+            },
+            compare: bytearray.compare,
+          ),
       id: TransactionId { hash: transaction_id_1 },
     }
   let spend_ctx =
