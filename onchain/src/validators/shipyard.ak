@@ -59,7 +59,7 @@ validator(
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
         let must_respect_pilot_name =
-          ship_token_name == bytearray.concat(
+          pilot_token_name == bytearray.concat(
             "PILOT",
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
