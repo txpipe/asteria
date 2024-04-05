@@ -28,6 +28,12 @@ validator(admin_token: AssetClass) {
     expect InlineDatum(out_datum) = own_output.datum
     expect out_datum: PelletDatum = out_datum
 
+    expect Some(_) =
+      list.find(
+        inputs,
+        fn(input) { utils.is_ship_token_in_utxo(input.output, shipyard_policy) },
+      )
+
     let has_enough_fuel = amount <= fuel
     let own_input_has_admin_token =
       quantity_of(own_input.output.value, admin_token.policy, admin_token.name) == 1
@@ -35,9 +41,11 @@ validator(admin_token: AssetClass) {
     let datum_update_ok =
       out_datum == PelletDatum { ..datum, fuel: fuel - amount }
 
-    has_enough_fuel && own_input_has_admin_token && value_not_changed && datum_update_ok && utils.is_ship_token_input(
-      inputs,
-      shipyard_policy,
-    )
+    and {
+      has_enough_fuel,
+      own_input_has_admin_token,
+      value_not_changed,
+      datum_update_ok,
+    }
   }
 }

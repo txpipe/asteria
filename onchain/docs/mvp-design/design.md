@@ -162,7 +162,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * no `ShipState` output.
 
 ### Ship minting policy or "ShipyardPolicy":
-* Params: `SpaceTimeScript` validator address and Asteria validator address.
+* Params: `SpaceTimeScript` validator address, Asteria validator address, ship's initial fuel and minimum initial distance from Asteria.
 
 #### MINT:
 * `AsteriaUTxO` is input.
