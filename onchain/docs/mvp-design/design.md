@@ -127,7 +127,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * The `PelletState` value doesn't change.
 
 ### SpaceTimeScript validator:
-* Params: `AdminToken`, Asteria validator address and pellet validator address.
+* Params: `AdminToken`, Asteria validator address, pellet validator address, max distance allowed per movement, fuel required per step and ship's fuel capacity.
 
 #### *MoveShip Redeemer (includes delta_x and delta_y displacements)*
 * `ShipToken` is present.
