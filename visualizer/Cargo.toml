@@ -1,0 +1,16 @@
+[package]
+name = "visualizer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.13.2"
+bevy_pancam = "0.11.1"
+bevy_panorbit_camera = "0.17.0"
+rand = "0.8.5"
+
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"

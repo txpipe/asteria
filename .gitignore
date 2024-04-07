@@ -4,3 +4,6 @@ artifacts/
 build/
 # Aiken's default documentation export
 src/docs/
+
+# Cargo temp files
+target
