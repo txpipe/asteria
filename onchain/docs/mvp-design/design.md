@@ -144,6 +144,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 #### *GatherFuel Redeemer (includes gathering amount)*
 * there is a single `ShipState` input.
 * there is a single `ShipState` output.
+* `PilotToken` is present.
 * there is a `PelletState` input with the same x and y datum coordinates as the `ShipState` UTxO.
 * the amount specified plus the fuel before charging does not exceed `MAX_SHIP_FUEL` capacity.
 * the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
@@ -159,7 +160,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 #### *Quit Redeemer*
 * there is a single `ShipState` input.
 * the `PilotToken` is present in an input.
-* no `ShipState` output.
+* `ShipToken` is burnt.
 
 ### Ship minting policy or "ShipyardPolicy":
 * Params: `SpaceTimeScript` validator address, Asteria validator address, ship's initial fuel and minimum initial distance from Asteria.

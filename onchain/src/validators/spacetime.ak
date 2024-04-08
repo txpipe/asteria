@@ -1,9 +1,10 @@
-use aiken/list.{is_empty}
+use aiken/list
 use aiken/transaction.{InlineDatum, ScriptContext, Spend, Transaction}
 use aiken/transaction/credential.{Address}
 use aiken/transaction/value.{from_minted_value, quantity_of}
 use asteria/types.{
-  AssetClass, GatherFuel, MineAsteria, MoveShip, Quit, ShipDatum, ShipRedeemer,
+  AssetClass, GatherFuel, MineAsteria, MoveShip, PelletDatum, Quit, ShipDatum,
+  ShipRedeemer,
 }
 use asteria/utils
 
@@ -92,7 +93,7 @@ validator(
             fn(input) { input.output.address == pellet_validator_address },
           )
         expect InlineDatum(pellet_datum) = pellet_input.output.datum
-        expect pellet_datum: ShipDatum = pellet_datum
+        expect pellet_datum: PelletDatum = pellet_datum
 
         let must_have_pellet_position =
           pos_x == pellet_datum.pos_x && pos_y == pellet_datum.pos_y
@@ -123,13 +124,11 @@ validator(
           must_burn_ship_token,
         }
       }
-      Quit ->
-        is_empty(
-          list.filter(
-            outputs,
-            fn(output) { utils.is_ship_token_in_utxo(output, shipyard_policy) },
-          ),
-        )
+      Quit -> {
+        let must_burn_ship_token =
+          quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
+        must_burn_ship_token
+      }
     }
   }
 }
