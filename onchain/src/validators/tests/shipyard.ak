@@ -6,6 +6,7 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{AssetName, PolicyId, Value, add, from_lovelace}
+use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{AsteriaDatum, BurnShip, MintShip, ShipDatum}
 use shipyard
@@ -45,16 +46,15 @@ fn default_args() {
     initial_x: 10,
     initial_y: 10,
     ship_counter: 7,
-    ship_token_name: "SHIP7",
-    pilot_token_name: "PILOT7",
+    ship_token_name: mock.ship_token_name,
+    pilot_token_name: mock.pilot_token_name,
     no_asteria_input: False,
     no_ship_output: False,
   }
 }
 
 fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
-  let shipyard_policy =
-    #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005"
+  let shipyard_policy = mock.shipyard_policy
   let ship_datum =
     ShipDatum {
       fuel: args.initial_fuel,
@@ -84,24 +84,21 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
 
 fn ship_mint(options: MintTestOptions) -> Bool {
   let shipyard_policy = options.shipyard_policy
-  let ship_credential =
-    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306514"
+  let ship_credential = mock.ship_credential
   let ship_addr =
     Address {
       payment_credential: ScriptCredential(ship_credential),
       stake_credential: None,
     }
-  let asteria_credential =
-    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306513"
+  let asteria_credential = mock.asteria_credential
   let asteria_addr =
     Address {
       payment_credential: ScriptCredential(asteria_credential),
       stake_credential: None,
     }
-  let admin_policy = #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2004"
-  let admin_token_name = "admin"
-  let transaction_id =
-    #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6a"
+  let admin_policy = mock.admin_policy
+  let admin_token_name = mock.admin_token_name
+  let transaction_id = mock.transaction_id_1
   let redeemer = MintShip
   let asteria_datum =
     AsteriaDatum { ship_counter: options.ship_counter, shipyard_policy }
@@ -233,7 +230,7 @@ test initial_distance_below_min() fail {
 test wrong_policy_in_datum() fail {
   let default_options = set_mint_test_options(default_args())
   let wrong_datum =
-    ShipDatum { ..default_options.ship_datum, shipyard_policy: #"0000" }
+    ShipDatum { ..default_options.ship_datum, shipyard_policy: #"ffff" }
   let options = MintTestOptions { ..default_options, ship_datum: wrong_datum }
   ship_mint(options)
 }
@@ -278,37 +275,31 @@ type BurnTestOptions {
 }
 
 fn set_burn_test_options() -> BurnTestOptions {
-  let shipyard_policy =
-    #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005"
-  let ship_credential =
-    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306514"
   let ship_addr =
     Address {
-      payment_credential: ScriptCredential(ship_credential),
+      payment_credential: ScriptCredential(mock.ship_credential),
       stake_credential: None,
     }
-  let burnt_value = value.from_asset(shipyard_policy, "SHIP7", -1)
+  let burnt_value =
+    value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
   BurnTestOptions {
     pos_x: 0,
     pos_y: 0,
     ship_addr,
-    shipyard_policy,
+    shipyard_policy: mock.shipyard_policy,
     no_ship_input: False,
     burnt_value,
   }
 }
 
 fn ship_burn(options: BurnTestOptions) -> Bool {
-  let ship_token_name = "SHIP7"
-  let pilot_token_name = "PILOT7"
+  let ship_token_name = mock.ship_token_name
+  let pilot_token_name = mock.pilot_token_name
   let shipyard_policy = options.shipyard_policy
-  let transaction_id =
-    #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6a"
-  let asteria_credential =
-    #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306513"
+  let transaction_id = mock.transaction_id_1
   let asteria_addr =
     Address {
-      payment_credential: ScriptCredential(asteria_credential),
+      payment_credential: ScriptCredential(mock.asteria_credential),
       stake_credential: None,
     }
   let redeemer = BurnShip
@@ -406,8 +397,8 @@ test ship_not_at_center() fail {
 test burn_more_than_one() fail {
   let def_options = set_burn_test_options()
   let burnt_value =
-    value.from_asset(def_options.shipyard_policy, "SHIP7", -1)
-      |> value.add(def_options.shipyard_policy, "PILOT7", -1)
+    value.from_asset(def_options.shipyard_policy, mock.ship_token_name, -1)
+      |> value.add(def_options.shipyard_policy, mock.pilot_token_name, -1)
   let options = BurnTestOptions { ..def_options, burnt_value: burnt_value }
   ship_burn(options)
 }

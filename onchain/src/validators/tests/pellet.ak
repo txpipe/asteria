@@ -9,6 +9,7 @@ use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{
   PolicyId, Value, add, from_lovelace, without_lovelace, zero,
 }
+use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{AssetClass, PelletDatum, Provide}
 use pellet as pellet_validator
@@ -31,10 +32,9 @@ type ProvideTestOptions {
 }
 
 fn default_provide_test_options() -> ProvideTestOptions {
-  let shipyard_policy =
-    #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005"
-  let admin_policy = #"0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2004"
-  let admin_token_name = "admin"
+  let shipyard_policy = mock.shipyard_policy
+  let admin_policy = mock.admin_policy
+  let admin_token_name = mock.admin_token_name
   let value =
     from_lovelace(2_000_000)
       |> add(admin_policy, admin_token_name, 1)
@@ -46,21 +46,18 @@ fn default_provide_test_options() -> ProvideTestOptions {
     admin_policy,
     admin_token_name,
     shipyard_policy,
-    ship_token_name: "SHIP23",
+    ship_token_name: mock.ship_token_name,
     ship_token_amount: 1,
     datum_out: PelletDatum { fuel: 25, pos_x: 1, pos_y: 2, shipyard_policy },
   }
 }
 
 fn provide(options: ProvideTestOptions) -> Bool {
-  let pellet_addr = #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306513"
-  let ship_addr = #"6af53ff4f054348ad825c692dd9db8f1760a8e0eacf9af9f99306514"
+  let ship_addr = mock.ship_credential
   let admin_asset =
     AssetClass { policy: options.admin_policy, name: options.admin_token_name }
-  let transaction_id_1 =
-    #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6a"
-  let transaction_id_2 =
-    #"6dcd4ce23d88e2ee95838f4b759b3456c63d219231a64a3ce6dd2bf72f5c5b6b"
+  let transaction_id_1 = mock.transaction_id_1
+  let transaction_id_2 = mock.transaction_id_2
   let redeemer = Provide(options.provided_amount)
   let datum_in =
     PelletDatum {
@@ -73,7 +70,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
     let output = {
       let address =
         Address {
-          payment_credential: ScriptCredential(pellet_addr),
+          payment_credential: ScriptCredential(mock.pellet_credential),
           stake_credential: None,
         }
       let value = options.pellet_input_value
@@ -96,7 +93,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
     let output = {
       let address =
         Address {
-          payment_credential: ScriptCredential(ship_addr),
+          payment_credential: ScriptCredential(mock.ship_credential),
           stake_credential: None,
         }
       let value =
@@ -118,7 +115,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
   let pellet_out = {
     let address =
       Address {
-        payment_credential: ScriptCredential(pellet_addr),
+        payment_credential: ScriptCredential(mock.pellet_credential),
         stake_credential: None,
       }
     let value = options.pellet_output_value
@@ -230,7 +227,7 @@ test wrong_ship_token_name() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),
-      ship_token_name: "SHI23",
+      ship_token_name: "SHI7",
     }
   provide(options)
 }
