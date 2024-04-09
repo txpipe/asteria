@@ -17,14 +17,14 @@ use asteria/types.{AddNewShip, AssetClass, AsteriaDatum, Mine}
 // ==============================================================================================
 
 type AddTestOptions {
-  paid_fee: Bool,
+  pay_fee: Bool,
   include_admin_token: Bool,
   update_counter: Bool,
 }
 
 fn default_add_options() {
   AddTestOptions {
-    paid_fee: True,
+    pay_fee: True,
     include_admin_token: True,
     update_counter: True,
   }
@@ -69,7 +69,7 @@ fn addNewShip(options: AddTestOptions) -> Bool {
   let asteria_out =
     Output {
       address: asteria_address,
-      value: if options.paid_fee {
+      value: if options.pay_fee {
         asteria_in.output.value
           |> value.add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
       } else {
@@ -151,7 +151,7 @@ test add_ok() {
 }
 
 test add_no_fee_paid() fail {
-  addNewShip(AddTestOptions { ..default_add_options(), paid_fee: False })
+  addNewShip(AddTestOptions { ..default_add_options(), pay_fee: False })
 }
 
 test add_no_admin_token() fail {
