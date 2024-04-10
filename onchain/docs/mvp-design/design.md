@@ -105,16 +105,17 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 ## Validators & Minting Policies
 
 ### Asteria validator:
-* Params: `AdminToken`.
+* Params: `AdminToken`, `SHIP_MINT_FEE` and `MAX_ASTERIA_MINING`.
 
 #### *AddNewShip Redeemer*
 * `AsteriaUTxO` output value equals input value plus the `SHIP_MINT_FEE`.
 * `AdminToken` is in the input.
-* datum doesn't change.
+* datum `ship_counter` field is incremented by 1.
 
 #### *Mine Redeemer*
 * `ShipToken` is present in some input.
 * `AsteriaUTxO` output value has at most `MAX_ASTERIA_MINING`% adas less than input value.
+* datum doesn't change.
 
 ### Pellet validator:
 * Params: `AdminToken`.
