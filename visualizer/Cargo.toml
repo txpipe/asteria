@@ -10,7 +10,8 @@ bevy = "0.13.2"
 bevy_pancam = "0.11.1"
 bevy_panorbit_camera = "0.17.0"
 rand = "0.8.5"
-
+rand_core = "0.6"
+bevy_rand = { version = "0.5", features = ["rand_chacha", "wyrand"] }
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"

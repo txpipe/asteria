@@ -43,42 +43,23 @@ where
 }
 
 #[derive(Component)]
-pub struct Identity {
+pub struct ShipIdentity {
     pub name: String,
 }
 
-impl<R> FromRandom<R> for Identity
+impl<R> FromRandom<R> for ShipIdentity
 where
     R: Rng,
 {
     fn random(rng: &mut R) -> Self {
         Self {
-            name: format!("XXX{}", rng.gen_range(0..2000)),
-        }
-    }
-}
-#[derive(Bundle)]
-pub struct Asteroid {
-    pub identity: Identity,
-    pub position: Position,
-    pub fuel: Fuel,
-}
-
-impl<R> FromRandom<R> for Asteroid
-where
-    R: Rng,
-{
-    fn random(rng: &mut R) -> Self {
-        Self {
-            identity: FromRandom::<R>::random(rng),
-            position: FromRandom::<R>::random(rng),
-            fuel: FromRandom::<R>::random(rng),
+            name: format!("SHIP{}", rng.gen_range(0..2000)),
         }
     }
 }
 
-const RANDOM_SHIP_COUNT: usize = 150;
-const RANDOM_ASTEROID_COUNT: usize = 200;
+const RANDOM_SHIP_COUNT: usize = 50;
+const RANDOM_ASTEROID_COUNT: usize = 100;
 
 pub fn spawn_random_map(
     mut commands: Commands,
@@ -98,7 +79,6 @@ pub fn spawn_random_map(
 
     for _ in 0..RANDOM_ASTEROID_COUNT {
         commands.spawn(crate::asteroid::Asteroid::new(
-            FromRandom::random(&mut rng),
             FromRandom::random(&mut rng),
             FromRandom::random(&mut rng),
             &asteroid_material,

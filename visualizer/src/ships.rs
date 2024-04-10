@@ -1,6 +1,13 @@
-use bevy::prelude::*;
+use std::time::Duration;
 
-use crate::map::{Fuel, Identity, Position};
+use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy_rand::{
+    prelude::{ChaCha8Rng, WyRand},
+    resource::GlobalEntropy,
+};
+use rand::Rng;
+
+use crate::map::{Fuel, Position, ShipIdentity};
 
 const TILE_SIZE: u32 = 64;
 
@@ -35,14 +42,14 @@ impl FromWorld for ShipMaterial {
 #[derive(Bundle)]
 pub struct Ship {
     sprite_sheet: SpriteSheetBundle,
-    identity: Identity,
+    identity: ShipIdentity,
     position: Position,
     fuel: Fuel,
 }
 
 impl Ship {
     pub fn new(
-        identity: Identity,
+        identity: ShipIdentity,
         position: Position,
         fuel: Fuel,
         material: &ShipMaterial,
@@ -52,6 +59,10 @@ impl Ship {
                 atlas: TextureAtlas {
                     layout: material.layout.clone(),
                     index: 0,
+                },
+                transform: Transform {
+                    scale: Vec3::new(1.5, 1.5, 1.0),
+                    ..Default::default()
                 },
                 texture: material.texture.clone(),
                 ..Default::default()
@@ -73,10 +84,16 @@ fn render(mut query: Query<(&mut Transform, &Position)>) {
     }
 }
 
-fn sync(mut query: Query<&mut Position>, time: Res<Time>) {
-    for mut s in query.iter_mut() {
-        //s.x += time.elapsed_seconds().round() as i32;
-        //s.y += time.elapsed_seconds().round() as i32;
+fn random_move(
+    mut query: Query<(&mut Position, &Fuel), With<ShipIdentity>>,
+    time: Res<Time>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
+) {
+    for (mut pos, fuel) in query.iter_mut() {
+        if fuel.available > 300 {
+            pos.x += rng.gen_range(-1..1);
+            pos.y += rng.gen_range(-1..1);
+        }
     }
 }
 
@@ -85,6 +102,7 @@ pub struct ShipsPlugin;
 impl Plugin for ShipsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ShipMaterial>()
-            .add_systems(Update, (sync, render).chain());
+            .add_systems(Update, (render).chain())
+            .add_systems(Update, random_move.run_if(on_timer(Duration::from_secs(2))));
     }
 }

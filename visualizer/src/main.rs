@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_pancam::{PanCam, PanCamPlugin};
+use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 
 mod asteroid;
 mod map;
@@ -25,6 +26,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(PanCamPlugin::default())
+        .add_plugins(EntropyPlugin::<WyRand>::default())
         .add_systems(Startup, setup_camera)
         .add_systems(Startup, setup_ui)
         .add_plugins((map::MapPlugin, ships::ShipsPlugin, asteroid::AsteroidPlugin))

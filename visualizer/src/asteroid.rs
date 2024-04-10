@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::map::{Fuel, Identity, Position};
+use crate::map::{Fuel, Position};
 
 const TILE_SIZE: u32 = 64;
 
@@ -35,23 +35,25 @@ impl FromWorld for Material {
 #[derive(Bundle)]
 pub struct Asteroid {
     sprite_sheet: SpriteSheetBundle,
-    identity: Identity,
     position: Position,
     fuel: Fuel,
 }
 
 impl Asteroid {
-    pub fn new(identity: Identity, position: Position, fuel: Fuel, material: &Material) -> Self {
+    pub fn new(position: Position, fuel: Fuel, material: &Material) -> Self {
         Self {
             sprite_sheet: SpriteSheetBundle {
                 atlas: TextureAtlas {
                     layout: material.layout.clone(),
                     index: 0,
                 },
+                transform: Transform {
+                    scale: Vec3::new(0.8, 0.8, 1.0),
+                    ..Default::default()
+                },
                 texture: material.texture.clone(),
                 ..Default::default()
             },
-            identity,
             position,
             fuel,
         }
