@@ -143,6 +143,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * the distance advanced doesn't exceed the `MAX_SHIP_MOVEMENT_PER_TX`.
 
 #### *GatherFuel Redeemer (includes gathering amount)*
+* `ShipToken` is present.
 * there is a single `ShipState` input.
 * there is a single `ShipState` output.
 * `PilotToken` is present.
@@ -152,6 +153,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * the `ShipState` output value is the same as the input.
 
 #### *MineAsteria Redeemer*
+* `ShipToken` is present.
 * there is a single `ShipState` input.
 * `PilotToken` is present.
 * `ShipState` position is (0,0).
@@ -159,6 +161,7 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * `ShipToken` is burnt.
 
 #### *Quit Redeemer*
+* `ShipToken` is present.
 * there is a single `ShipState` input.
 * the `PilotToken` is present in an input.
 * `ShipToken` is burnt.
