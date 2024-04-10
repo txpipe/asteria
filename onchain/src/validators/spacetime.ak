@@ -42,6 +42,8 @@ validator(
           )
         },
       )
+    let must_hold_ship_token =
+      quantity_of(ship_input.output.value, shipyard_policy, ship_token_name) == 1
 
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
@@ -53,8 +55,6 @@ validator(
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
 
-        let must_hold_ship_token =
-          quantity_of(ship_input.output.value, shipyard_policy, ship_token_name) == 1
         let distance = utils.distance(delta_x, delta_y)
         let required_fuel = utils.required_fuel(distance, fuel_per_step)
         let must_have_enough_fuel = required_fuel <= fuel
@@ -104,6 +104,7 @@ validator(
           ship_input.output.value == ship_output.value
 
         and {
+          must_hold_ship_token,
           must_have_pellet_position,
           must_not_exceed_capacity,
           must_update_datum,
@@ -120,6 +121,7 @@ validator(
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
         and {
+          must_hold_ship_token,
           must_have_asteria_position,
           must_burn_ship_token,
         }
@@ -127,7 +129,10 @@ validator(
       Quit -> {
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
-        must_burn_ship_token
+        and {
+          must_hold_ship_token,
+          must_burn_ship_token,
+        }
       }
     }
   }

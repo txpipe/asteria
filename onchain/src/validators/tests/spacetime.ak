@@ -314,6 +314,7 @@ type GatherTestOptions {
   ship_pos_y: Int,
   update_fuel: Bool,
   preserve_pos_x: Bool,
+  include_ship_token: Bool,
 }
 
 fn default_gather_options() {
@@ -324,6 +325,7 @@ fn default_gather_options() {
     ship_pos_y: 10,
     update_fuel: True,
     preserve_pos_x: True,
+    include_ship_token: True,
   }
 }
 
@@ -382,8 +384,12 @@ fn gather(options: GatherTestOptions) -> Bool {
       stake_credential: None,
     }
   let ship_value =
-    min_ada
-      |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    if options.include_ship_token {
+      min_ada
+        |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    } else {
+      min_ada
+    }
   let ship_datum_in =
     ShipDatum {
       fuel: options.initial_fuel,
@@ -522,6 +528,12 @@ test gather_ok() {
   gather(default_gather_options())
 }
 
+test gather_no_ship_token() fail {
+  gather(
+    GatherTestOptions { ..default_gather_options(), include_ship_token: False },
+  )
+}
+
 test gather_different_pos_x() fail {
   gather(GatherTestOptions { ..default_gather_options(), ship_pos_x: 9 })
 }
@@ -553,6 +565,7 @@ type MineTestOptions {
   ship_pos_y: Int,
   include_asteria_input: Bool,
   burn_ship_token: Bool,
+  include_ship_token: Bool,
 }
 
 fn default_mine_options() {
@@ -561,6 +574,7 @@ fn default_mine_options() {
     ship_pos_y: 0,
     include_asteria_input: True,
     burn_ship_token: True,
+    include_ship_token: True,
   }
 }
 
@@ -609,8 +623,12 @@ fn mine(options: MineTestOptions) -> Bool {
       stake_credential: None,
     }
   let ship_value =
-    min_ada
-      |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    if options.include_ship_token {
+      min_ada
+        |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    } else {
+      min_ada
+    }
   let ship_datum_in =
     ShipDatum {
       fuel: 40,
@@ -742,6 +760,10 @@ test mine_mine_ok() {
   mine(default_mine_options())
 }
 
+test mine_no_ship_token() fail {
+  mine(MineTestOptions { ..default_mine_options(), include_ship_token: False })
+}
+
 test mine_wrong_x_pos() fail {
   mine(MineTestOptions { ..default_mine_options(), ship_pos_x: 1 })
 }
@@ -766,10 +788,11 @@ test mine_ship_token_not_burnt() fail {
 
 type QuitTestOptions {
   burn_ship_token: Bool,
+  include_ship_token: Bool,
 }
 
 fn default_quit_options() {
-  QuitTestOptions { burn_ship_token: True }
+  QuitTestOptions { burn_ship_token: True, include_ship_token: True }
 }
 
 fn quit(options: QuitTestOptions) -> Bool {
@@ -801,8 +824,12 @@ fn quit(options: QuitTestOptions) -> Bool {
       stake_credential: None,
     }
   let ship_value =
-    min_ada
-      |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    if options.include_ship_token {
+      min_ada
+        |> add(mock.shipyard_policy, mock.ship_token_name, 1)
+    } else {
+      min_ada
+    }
   let ship_datum_in =
     ShipDatum {
       fuel: 40,
@@ -924,5 +951,9 @@ test quit_ok() {
 }
 
 test quit_ship_token_not_burnt() fail {
-  quit(QuitTestOptions { burn_ship_token: False })
+  quit(QuitTestOptions { ..default_quit_options(), burn_ship_token: False })
+}
+
+test quit_no_ship_token() fail {
+  quit(QuitTestOptions { ..default_quit_options(), include_ship_token: False })
 }
