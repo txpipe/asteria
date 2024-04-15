@@ -1,3 +1,5 @@
+use dotenv::dotenv;
+use std::env;
 use std::ops::Deref;
 use std::vec;
 
@@ -368,9 +370,14 @@ async fn graphql_request(schema: &State<AsteriaSchema>, request: Request) -> Res
 
 #[launch]
 async fn rocket() -> _ {
+    dotenv().ok();
+    
+    let database_url =
+        env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
+
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://postgres:Test1234@localhost:35432/postgres")
+        .connect(database_url.as_str())
         .await
         .expect("Failed to create pool");
 
