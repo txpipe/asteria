@@ -7,3 +7,9 @@ src/docs/
 
 # Cargo temp files
 target
+
+# .env files
+**/.env
+
+# sqlx
+**/.sqlx
