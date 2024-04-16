@@ -105,7 +105,6 @@ pub enum PositionalInterface {
     RewardPot(RewardPot),
 }
 
-#[derive(sqlx::FromRow, Debug)]
 struct MapObjectRecord {
     id: String,
     fuel: Option<i32>,
@@ -371,7 +370,7 @@ async fn graphql_request(schema: &State<AsteriaSchema>, request: Request) -> Res
 #[launch]
 async fn rocket() -> _ {
     dotenv().ok();
-    
+
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
 
