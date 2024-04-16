@@ -7,3 +7,6 @@ src/docs/
 
 # Cargo temp files
 target
+
+# Env files
+.env
