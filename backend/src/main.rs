@@ -1,4 +1,6 @@
+use async_graphql::http::GraphiQLSource;
 use dotenv::dotenv;
+use rocket::response::content::RawHtml;
 use std::env;
 use std::ops::Deref;
 use std::vec;
@@ -367,6 +369,11 @@ async fn graphql_request(schema: &State<AsteriaSchema>, request: Request) -> Res
     request.execute(schema.deref()).await
 }
 
+#[rocket::get("/graphql")]
+async fn graphiql() -> RawHtml<String> {
+    rocket::response::content::RawHtml(GraphiQLSource::build().endpoint("/graphql").finish())
+}
+
 #[launch]
 async fn rocket() -> _ {
     dotenv().ok();
@@ -387,5 +394,5 @@ async fn rocket() -> _ {
 
     rocket::build()
         .manage(schema)
-        .mount("/", routes![index, graphql_request])
+        .mount("/", routes![index, graphql_request, graphiql])
 }
