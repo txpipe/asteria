@@ -89,7 +89,6 @@ async function createShip(
     throw Error("Asteria datum not found");
   }
   const asteriaInputAda = asteria.assets.lovelace;
-  // const asteriaInputDatum: AsteriaDatumT = Data.from(asteria.datum);
 
   const asteriaInputDatum = Data.from<AsteriaDatumT>(
     asteria.datum as string,
@@ -98,7 +97,7 @@ async function createShip(
 
   const asteriaInfo = {
     ship_counter: asteriaInputDatum.ship_counter + 1n,
-    shipyard_policy: shipyardPolicyId,
+    shipyard_policy: asteriaInputDatum.shipyard_policy,
   };
   const asteriaOutputDatum = Data.to<AsteriaDatumT>(
     asteriaInfo,
