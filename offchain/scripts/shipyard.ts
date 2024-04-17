@@ -1,22 +1,26 @@
-import { Data, MintingPolicy, applyParamsToScript } from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { Address, Data, MintingPolicy, applyParamsToScript } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import plutusBlueprint from "../../onchain/src/plutus.json" with { type: "json" };
-import { AikenAddress, AikenAddressT } from "../types.ts";
+import { AssetClass, AssetClassT } from "../types.ts";
 
 const shipyardPolicy = plutusBlueprint.validators.find(
-  ({ title }) => title === "shipyard.mint"
+  ({ title }) => title === "spacetime.mint"
 );
 
 if (!shipyardPolicy) {
   throw new Error(
-    "Shipyard minting policy indexed with 'shipyard.mint' failed!"
+    "Shipyard minting policy indexed with 'spacetime.mint' failed!"
   );
 }
 
 const MINTING_POLICY: MintingPolicy["script"] = shipyardPolicy.compiledCode;
 
 const MintingPolicyParam = Data.Tuple([
-  AikenAddress,
-  AikenAddress,
+  Data.Bytes(),
+  Data.Bytes(),
+  AssetClass,
+  Data.Integer({ minimum: 0 }),
+  Data.Integer({ minimum: 0 }),
+  Data.Integer({ minimum: 0 }),
   Data.Integer({ minimum: 0 }),
   Data.Integer({ minimum: 0 }),
 ]);
@@ -24,18 +28,26 @@ const MintingPolicyParam = Data.Tuple([
 type MintingPolicyParamT = Data.Static<typeof MintingPolicyParam>;
 
 function buildShipyardMintingPolicy(
-  asteria_validator_address: AikenAddressT,
-  spacetime_validator_address: AikenAddressT,
+  pellet_validator_address: Address,
+  asteria_validator_address: Address,
+  admin_token: AssetClassT,
+  max_moving_distance: bigint,
+  max_ship_fuel: bigint,
+  fuel_per_step: bigint,
   initial_fuel: bigint,
-  min_distance: bigint
+  min_asteria_distance: bigint,
 ): MintingPolicy {
   const appliedMintingPolicy = applyParamsToScript<MintingPolicyParamT>(
     MINTING_POLICY,
     [
+      pellet_validator_address,
       asteria_validator_address,
-      spacetime_validator_address,
+      admin_token,
+      max_moving_distance,
+      max_ship_fuel,
+      fuel_per_step,
       initial_fuel,
-      min_distance,
+      min_asteria_distance
     ],
     MintingPolicyParam as unknown as MintingPolicyParamT
   );
