@@ -11,5 +11,5 @@ CREATE TABLE MapObjects (
 );
 
 -- Indexes for performance optimization
-CREATE INDEX idx_mapobjects_type ON MapObjects(type);
+CREATE INDEX idx_mapobjects_class ON MapObjects(class);
 CREATE INDEX idx_mapobjects_position ON MapObjects(positionX, positionY);
