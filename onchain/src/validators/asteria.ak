@@ -63,7 +63,7 @@ validator(
             },
           )
         expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let rewards = value.lovelace_of(asteria_input.output.value)
+        let rewards = value.lovelace_of(asteria_input.output.value) - 2_000_000
         let must_respect_max_mining =
           compare_with(
             from_int(value.lovelace_of(asteria_output.value)),
