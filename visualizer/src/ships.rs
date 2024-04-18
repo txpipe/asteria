@@ -1,11 +1,8 @@
-use std::time::Duration;
-
 use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_rand::{
-    prelude::{ChaCha8Rng, WyRand},
-    resource::GlobalEntropy,
-};
+use bevy_mod_picking::prelude::*;
+use bevy_rand::{prelude::WyRand, resource::GlobalEntropy};
 use rand::Rng;
+use std::time::Duration;
 
 use crate::map::{Fuel, Position, ShipIdentity};
 
@@ -86,7 +83,6 @@ fn render(mut query: Query<(&mut Transform, &Position)>) {
 
 fn random_move(
     mut query: Query<(&mut Position, &Fuel), With<ShipIdentity>>,
-    time: Res<Time>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     for (mut pos, fuel) in query.iter_mut() {
@@ -96,13 +92,140 @@ fn random_move(
         }
     }
 }
+#[derive(States, Debug, Clone, Eq, PartialEq, Hash)]
+struct HudState(Option<Entity>);
+
+const PRIMARY_COLOR: Color = Color::rgb(255., 255., 0.);
+
+fn render_hud(
+    mut commands: Commands,
+    query: Query<(Option<&PickingInteraction>, &ShipIdentity), With<ShipIdentity>>,
+    asset_server: Res<AssetServer>,
+    mut state: ResMut<NextState<HudState>>,
+) {
+    let text_style = TextStyle {
+        font: asset_server.load("fonts/pixel.ttf"),
+        font_size: 26.0,
+        color: PRIMARY_COLOR,
+    };
+
+    for (i, s) in &query {
+        if let Some(PickingInteraction::Pressed) = i {
+            state.set(HudState(Some(
+                commands
+                    .spawn(NodeBundle {
+                        style: Style {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::Center,
+                            ..default()
+                        },
+                        ..default()
+                    })
+                    .with_children(|parent| {
+                        parent
+                            .spawn(NodeBundle {
+                                style: Style {
+                                    width: Val::Percent(50.),
+                                    height: Val::Percent(50.),
+                                    border: UiRect::all(Val::Px(1.)),
+                                    flex_wrap: FlexWrap::Wrap,
+                                    ..default()
+                                },
+                                background_color: Color::rgba(0., 0., 0., 0.8).into(),
+                                border_color: PRIMARY_COLOR.into(),
+                                ..default()
+                            })
+                            .with_children(|parent| {
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(100.),
+                                            height: Val::Px(60.),
+                                            border: UiRect::bottom(Val::Px(1.)),
+                                            align_items: AlignItems::Center,
+                                            justify_content: JustifyContent::SpaceBetween,
+                                            margin: UiRect::all(Val::Px(4.)),
+                                            ..default()
+                                        },
+                                        border_color: PRIMARY_COLOR.into(),
+                                        ..default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn(TextBundle::from_section(
+                                            "Ship Detail",
+                                            text_style.clone(),
+                                        ));
+
+                                        parent
+                                            .spawn((
+                                                ButtonBundle {
+                                                    style: Style {
+                                                        width: Val::Px(30.),
+                                                        height: Val::Px(30.),
+                                                        ..default()
+                                                    },
+                                                    background_color: Color::rgba(0., 0., 0., 1.)
+                                                        .into(),
+                                                    ..default()
+                                                },
+                                                On::<Pointer<Click>>::run(move |mut commands: Commands, state: Res<State<HudState>>,| {
+                                                    commands.entity(state.get().0.unwrap()).despawn_recursive();
+                                                }),
+                                            ))
+                                            .with_children(|parent| {
+                                                parent.spawn(TextBundle::from_section(
+                                                    "X",
+                                                    text_style.clone(),
+                                                ));
+                                            });
+                                    });
+
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(100.),
+                                            height: Val::Px(60.),
+                                            border: UiRect::bottom(Val::Px(1.)),
+                                            align_items: AlignItems::Center,
+                                            justify_content: JustifyContent::SpaceBetween,
+                                            margin: UiRect::all(Val::Px(4.)),
+                                            ..default()
+                                        },
+                                        ..default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn(TextBundle::from_section(
+                                            "Name",
+                                            text_style.clone(),
+                                        ));
+                                        parent.spawn(TextBundle::from_section(
+                                            &s.name,
+                                            text_style.clone(),
+                                        ));
+                                    });
+                            });
+                    })
+                    .id(),
+            )));
+        }
+    }
+}
 
 pub struct ShipsPlugin;
 
 impl Plugin for ShipsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ShipMaterial>()
-            .add_systems(Update, (render).chain())
-            .add_systems(Update, random_move.run_if(on_timer(Duration::from_secs(2))));
+            .add_systems(
+                Update,
+                (
+                    (render).chain(),
+                    random_move.run_if(on_timer(Duration::from_secs(2))),
+                    render_hud,
+                ),
+            )
+            .insert_state(HudState(None));
     }
 }
