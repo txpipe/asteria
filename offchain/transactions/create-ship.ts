@@ -55,7 +55,7 @@ async function createShip(
   ]);
   const spacetimeValidator = spacetimeRef[0].scriptRef;
   if (!spacetimeValidator) {
-    throw Error("Could not read pellet validator from ref UTxO");
+    throw Error("Could not read spacetime validator from ref UTxO");
   }
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
   const spacetimeAddressBech32 =

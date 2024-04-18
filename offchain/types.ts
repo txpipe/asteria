@@ -30,5 +30,56 @@ const ShipDatum = Data.Object({
 });
 type ShipDatumT = Data.Static<typeof ShipDatum>;
 
-export { AssetClass, AsteriaDatum, PelletDatum, ShipDatum };
+const ShipRedeemerSchema = Data.Enum([
+  Data.Object({
+    MoveShip: Data.Object({
+      delta_x: Data.Integer(),
+      delta_y: Data.Integer(),
+    }),
+  }),
+  Data.Object({
+    GatherFuel: Data.Object({
+      amount: Data.Integer(),
+    }),
+  }),
+  Data.Literal("MineAsteria"),
+  Data.Literal("Quit"),
+]);
+
+type ShipRedeemerT = Data.Static<typeof ShipRedeemerSchema>;
+
+// deno-lint-ignore no-namespace
+namespace ShipRedeemer {
+  export const MoveShip = (delta_x: bigint, delta_y: bigint) =>
+    Data.to<ShipRedeemerT>(
+      {
+        MoveShip: {
+          delta_x,
+          delta_y,
+        },
+      },
+      ShipRedeemerSchema as unknown as ShipRedeemerT
+    );
+  export const GatherFuel = (amount: bigint) =>
+    Data.to<ShipRedeemerT>(
+      {
+        GatherFuel: {
+          amount,
+        },
+      },
+      ShipRedeemerSchema as unknown as ShipRedeemerT
+    );
+  export const MineAsteria = () =>
+    Data.to<ShipRedeemerT>(
+      "MineAsteria",
+      ShipRedeemerSchema as unknown as ShipRedeemerT
+    );
+  export const Quit = () =>
+    Data.to<ShipRedeemerT>(
+      "Quit",
+      ShipRedeemerSchema as unknown as ShipRedeemerT
+    );
+}
+
+export { AssetClass, AsteriaDatum, PelletDatum, ShipDatum, ShipRedeemer };
 export type { AssetClassT, AsteriaDatumT, PelletDatumT, ShipDatumT };
