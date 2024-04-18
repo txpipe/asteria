@@ -1,25 +1,9 @@
-import {
-  Data,
-  toUnit,
-  getAddressDetails,
-  TxHash,
-} from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { buildAsteriaValidator } from "../scripts/asteria.ts";
+import { Data, toUnit, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucidBase } from "../utils.ts";
 import { AssetClassT, PelletDatum, PelletDatumT } from "../types.ts";
-import { buildShipyardMintingPolicy } from "../scripts/shipyard.ts";
-import { buildSpacetimeValidator } from "../scripts/spacetime.ts";
-import { buildPelletValidator } from "../scripts/pellet.ts";
 
 async function createPellet(
   admin_token: AssetClassT,
-  ship_mint_lovelace_fee: bigint,
-  max_asteria_mining: bigint,
-  max_moving_distance: bigint,
-  max_ship_fuel: bigint,
-  fuel_per_step: bigint,
-  initial_fuel: bigint,
-  min_asteria_distance: bigint,
   fuel: bigint,
   pos_x: bigint,
   pos_y: bigint
@@ -31,57 +15,41 @@ async function createPellet(
   }
   lucid.selectWalletFromSeed(seed);
 
-  const asteriaValidator = buildAsteriaValidator(
-    admin_token,
-    ship_mint_lovelace_fee,
-    max_asteria_mining
+  const pelletRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./pellet-ref.json")
   );
-  const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
-  const asteriaScriptAddress =
-    lucid.utils.paymentCredentialOf(asteriaAddressBech32).hash;
-
-  const pelletValidator = buildPelletValidator(admin_token);
-  const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
-  const pelletScriptAddress =
-    lucid.utils.paymentCredentialOf(pelletAddressBech32).hash;
-
-  const spacetimeValidator = buildSpacetimeValidator(
-    pelletScriptAddress,
-    asteriaScriptAddress,
-    admin_token,
-    max_moving_distance,
-    max_ship_fuel,
-    fuel_per_step,
-    initial_fuel,
-    min_asteria_distance
-  );
-  const spacetimeAddressBech32 =
-    lucid.utils.validatorToAddress(spacetimeValidator);
-  const spacetimeAddressDetails = getAddressDetails(spacetimeAddressBech32);
-  if (!spacetimeAddressDetails.paymentCredential) {
-    throw Error("Unable to obtain Spacetime address credentials");
+  const pelletRef = await lucid.utxosByOutRef([
+    {
+      txHash: pelletRefTxHash.txHash,
+      outputIndex: 0,
+    },
+  ]);
+  const pelletValidator = pelletRef[0].scriptRef;
+  if (!pelletValidator) {
+    throw Error("Could not read pellet validator from ref UTxO");
   }
+  const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
 
-  const shipyardMintingPolicy = buildShipyardMintingPolicy(
-    pelletScriptAddress,
-    asteriaScriptAddress,
-    admin_token,
-    max_moving_distance,
-    max_ship_fuel,
-    fuel_per_step,
-    initial_fuel,
-    min_asteria_distance
+  const spacetimeRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./spacetime-ref.json")
   );
-
-  const shipyardTokenUnit = lucid.utils.mintingPolicyToId(
-    shipyardMintingPolicy
-  );
+  const spacetimeRef = await lucid.utxosByOutRef([
+    {
+      txHash: spacetimeRefTxHash.txHash,
+      outputIndex: 0,
+    },
+  ]);
+  const spacetimeValidator = spacetimeRef[0].scriptRef;
+  if (!spacetimeValidator) {
+    throw Error("Could not read pellet validator from ref UTxO");
+  }
+  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
   const pelletInfo = {
     fuel: fuel,
     pos_x: pos_x,
     pos_y: pos_y,
-    shipyard_policy: shipyardTokenUnit,
+    shipyard_policy: shipyardPolicyId,
   };
 
   const pelletDatum = Data.to<PelletDatumT>(
@@ -98,7 +66,6 @@ async function createPellet(
       { inline: pelletDatum },
       {
         [adminTokenUnit]: BigInt(1),
-        lovelace: 2_000_000n,
       }
     )
     .complete();

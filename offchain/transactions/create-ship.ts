@@ -1,14 +1,11 @@
 import {
   Data,
   toUnit,
-  getAddressDetails,
   TxHash,
   Constr,
   UTxO,
   fromText,
-  MintingPolicy,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { buildAsteriaValidator } from "../scripts/asteria.ts";
 import { lucidBase } from "../utils.ts";
 import {
   AssetClassT,
@@ -17,19 +14,11 @@ import {
   ShipDatum,
   ShipDatumT,
 } from "../types.ts";
-import { buildShipyardMintingPolicy } from "../scripts/shipyard.ts";
-import { buildSpacetimeValidator } from "../scripts/spacetime.ts";
-import { buildPelletValidator } from "../scripts/pellet.ts";
 
 async function createShip(
   admin_token: AssetClassT,
   ship_mint_lovelace_fee: bigint,
-  max_asteria_mining: bigint,
-  max_moving_distance: bigint,
-  max_ship_fuel: bigint,
-  fuel_per_step: bigint,
   initial_fuel: bigint,
-  min_asteria_distance: bigint,
   pos_x: bigint,
   pos_y: bigint
 ): Promise<TxHash> {
@@ -40,49 +29,37 @@ async function createShip(
   }
   lucid.selectWalletFromSeed(seed);
 
-  const asteriaValidator = buildAsteriaValidator(
-    admin_token,
-    ship_mint_lovelace_fee,
-    max_asteria_mining
+  const asteriaRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./asteria-ref.json")
   );
+  const asteriaRef = await lucid.utxosByOutRef([
+    {
+      txHash: asteriaRefTxHash.txHash,
+      outputIndex: 0,
+    },
+  ]);
+  const asteriaValidator = asteriaRef[0].scriptRef;
+  if (!asteriaValidator) {
+    throw Error("Could not read Asteria validator from ref UTxO");
+  }
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
-  const asteriaScriptAddress =
-    lucid.utils.paymentCredentialOf(asteriaAddressBech32).hash;
 
-  const pelletValidator = buildPelletValidator(admin_token);
-  const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
-  const pelletScriptAddress =
-    lucid.utils.paymentCredentialOf(pelletAddressBech32).hash;
-
-  const spacetimeValidator = buildSpacetimeValidator(
-    pelletScriptAddress,
-    asteriaScriptAddress,
-    admin_token,
-    max_moving_distance,
-    max_ship_fuel,
-    fuel_per_step,
-    initial_fuel,
-    min_asteria_distance
+  const spacetimeRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./spacetime-ref.json")
   );
+  const spacetimeRef = await lucid.utxosByOutRef([
+    {
+      txHash: spacetimeRefTxHash.txHash,
+      outputIndex: 0,
+    },
+  ]);
+  const spacetimeValidator = spacetimeRef[0].scriptRef;
+  if (!spacetimeValidator) {
+    throw Error("Could not read pellet validator from ref UTxO");
+  }
+  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
-  const spacetimeAddressDetails = getAddressDetails(spacetimeAddressBech32);
-  if (!spacetimeAddressDetails.paymentCredential) {
-    throw Error("Unable to obtain Spacetime address credentials");
-  }
-
-  const shipyardMintingPolicy: MintingPolicy = buildShipyardMintingPolicy(
-    pelletScriptAddress,
-    asteriaScriptAddress,
-    admin_token,
-    max_moving_distance,
-    max_ship_fuel,
-    fuel_per_step,
-    initial_fuel,
-    min_asteria_distance
-  );
-
-  const shipyardPolicyId = lucid.utils.mintingPolicyToId(shipyardMintingPolicy);
 
   const asteria: UTxO = (await lucid.utxosAt(asteriaAddressBech32))[0];
   if (!asteria.datum) {
@@ -105,7 +82,6 @@ async function createShip(
   );
 
   const shipTokenName = fromText("SHIP" + asteriaInputDatum.ship_counter);
-
   const pilotTokenName = fromText("PILOT" + asteriaInputDatum.ship_counter);
   const shipInfo = {
     fuel: initial_fuel,
@@ -126,11 +102,17 @@ async function createShip(
 
   const addNewShipRedeemer = Data.to(new Constr(0, []));
   const mintRedeemer = Data.to(new Constr(0, []));
-
   const tx = await lucid
     .newTx()
+    .readFrom([asteriaRef[0], spacetimeRef[0]])
+    .mintAssets(
+      {
+        [shipTokenUnit]: BigInt(1),
+        [pilotTokenUnit]: BigInt(1),
+      },
+      mintRedeemer
+    )
     .collectFrom([asteria], addNewShipRedeemer)
-    .attachSpendingValidator(asteriaValidator)
     .payToContract(
       spacetimeAddressBech32,
       { inline: shipDatum },
@@ -145,14 +127,6 @@ async function createShip(
         [adminTokenUnit]: BigInt(1),
         lovelace: asteriaInputAda + ship_mint_lovelace_fee,
       }
-    )
-    .attachMintingPolicy(shipyardMintingPolicy)
-    .mintAssets(
-      {
-        [shipTokenUnit]: BigInt(1),
-        [pilotTokenUnit]: BigInt(1),
-      },
-      mintRedeemer
     )
     .complete();
 

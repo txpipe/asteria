@@ -11,4 +11,23 @@ const lucidBase = async (): Promise<Lucid> => {
   return lucid;
 };
 
-export { lucidBase };
+function writeJson(path: string, data: object): string {
+  try {
+    Deno.writeTextFileSync(path, JSON.stringify(data));
+    return "Written to " + path;
+  } catch (e) {
+    return e.message;
+  }
+}
+
+const abs = (n: bigint) => (n < 0n ? -n : n);
+
+const distance = (delta_x: bigint, delta_y: bigint): bigint => {
+  return abs(delta_x) + abs(delta_y);
+};
+
+const required_fuel = (distance: bigint, fuel_per_step: bigint): bigint => {
+  return distance * fuel_per_step;
+};
+
+export { lucidBase, writeJson, distance, required_fuel };
