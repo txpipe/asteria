@@ -75,13 +75,13 @@ validator(
         let must_respect_max_distance = distance <= max_moving_distance
 
         and {
+          must_update_x?,
+          must_update_y?,
+          must_update_fuel?,
           must_hold_ship_token?,
           must_have_enough_fuel?,
           must_preserve_ship_value?,
           must_preserve_pilot_token?,
-          must_update_x?,
-          must_update_y?,
-          must_update_fuel?,
           must_respect_max_distance?,
         }
       }

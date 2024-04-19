@@ -42,10 +42,10 @@ validator(admin_token: AssetClass) {
       out_datum == PelletDatum { ..datum, fuel: fuel - amount }
 
     and {
-      has_enough_fuel,
-      own_input_has_admin_token,
-      value_not_changed,
-      datum_update_ok,
+      has_enough_fuel?,
+      datum_update_ok?,
+      value_not_changed?,
+      own_input_has_admin_token?,
     }
   }
 }
