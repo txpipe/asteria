@@ -3,6 +3,7 @@ use bevy_mod_picking::prelude::*;
 use bevy_pancam::{PanCam, PanCamPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 
+mod api;
 mod asteroid;
 mod map;
 mod ships;
