@@ -1,4 +1,9 @@
+use aiken/hash.{Blake2b_224, Hash}
+use aiken/transaction/credential.{Script}
 use aiken/transaction/value.{AssetName, PolicyId}
+
+pub type ScriptAddress =
+  Hash<Blake2b_224, Script>
 
 pub type AssetClass {
   policy: PolicyId,
@@ -9,7 +14,6 @@ pub type ShipDatum {
   fuel: Int,
   pos_x: Int,
   pos_y: Int,
-  shipyard_policy: PolicyId,
   ship_token_name: AssetName,
   pilot_token_name: AssetName,
 }

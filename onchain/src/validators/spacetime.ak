@@ -1,36 +1,43 @@
+use aiken/bytearray
+use aiken/dict
 use aiken/list
-use aiken/transaction.{InlineDatum, ScriptContext, Spend, Transaction}
-use aiken/transaction/credential.{Address}
+use aiken/string
+use aiken/transaction.{InlineDatum, Mint, ScriptContext, Spend, Transaction}
+use aiken/transaction/credential.{
+  Address, ScriptCredential, VerificationKeyCredential,
+}
 use aiken/transaction/value.{from_minted_value, quantity_of}
 use asteria/types.{
-  AssetClass, GatherFuel, MineAsteria, MoveShip, PelletDatum, Quit, ShipDatum,
-  ShipRedeemer,
+  AssetClass, AsteriaDatum, BurnShip, GatherFuel, MineAsteria, MintShip,
+  MoveShip, PelletDatum, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
+  ShipyardRedeemer,
 }
 use asteria/utils
 
 validator(
-  pellet_validator_address: Address,
-  asteria_validator_address: Address,
+  pellet_validator_address: ScriptAddress,
+  asteria_validator_address: ScriptAddress,
   _admin_token: AssetClass,
-  max_distance: Int,
+  max_moving_distance: Int,
   max_ship_fuel: Int,
   fuel_per_step: Int,
+  initial_fuel: Int,
+  min_asteria_distance: Int,
 ) {
+  // SPACETIME VALIDATOR:
   pub fn spend(datum: ShipDatum, redeemer: ShipRedeemer, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
     let Transaction { inputs, outputs, mint, .. } = transaction
-    let ShipDatum {
-      fuel,
-      pos_x,
-      pos_y,
-      shipyard_policy,
-      ship_token_name,
-      pilot_token_name,
-    } = datum
+    let ShipDatum { fuel, pos_x, pos_y, ship_token_name, pilot_token_name } =
+      datum
 
     expect Spend(ship_ref) = purpose
     expect [ship_input] =
       list.filter(inputs, fn(input) { input.output_reference == ship_ref })
+    expect ScriptCredential(credential) =
+      ship_input.output.address.payment_credential
+    let shipyard_policy = credential
+
     expect Some(_) =
       list.find(
         inputs,
@@ -65,17 +72,17 @@ validator(
         let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
         let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
         let must_update_fuel = ship_output_datum.fuel == fuel - required_fuel
-        let must_respect_max_distance = distance <= max_distance
+        let must_respect_max_distance = distance <= max_moving_distance
 
         and {
-          must_hold_ship_token,
-          must_have_enough_fuel,
-          must_preserve_ship_value,
-          must_preserve_pilot_token,
-          must_update_x,
-          must_update_y,
-          must_update_fuel,
-          must_respect_max_distance,
+          must_update_x?,
+          must_update_y?,
+          must_update_fuel?,
+          must_hold_ship_token?,
+          must_have_enough_fuel?,
+          must_preserve_ship_value?,
+          must_preserve_pilot_token?,
+          must_respect_max_distance?,
         }
       }
 
@@ -90,7 +97,13 @@ validator(
         expect Some(pellet_input) =
           list.find(
             inputs,
-            fn(input) { input.output.address == pellet_validator_address },
+            fn(input) {
+              when input.output.address.payment_credential is {
+                VerificationKeyCredential(_) -> False
+                ScriptCredential(addr_payment) ->
+                  addr_payment == pellet_validator_address
+              }
+            },
           )
         expect InlineDatum(pellet_datum) = pellet_input.output.datum
         expect pellet_datum: PelletDatum = pellet_datum
@@ -104,35 +117,128 @@ validator(
           ship_input.output.value == ship_output.value
 
         and {
-          must_hold_ship_token,
-          must_have_pellet_position,
-          must_not_exceed_capacity,
-          must_update_datum,
-          must_preserve_ship_value,
+          must_hold_ship_token?,
+          must_have_pellet_position?,
+          must_not_exceed_capacity?,
+          must_update_datum?,
+          must_preserve_ship_value?,
         }
       }
       MineAsteria -> {
         expect Some(_) =
           list.find(
             inputs,
-            fn(input) { input.output.address == asteria_validator_address },
+            fn(input) {
+              when input.output.address.payment_credential is {
+                VerificationKeyCredential(_) -> False
+                ScriptCredential(addr_payment) ->
+                  addr_payment == asteria_validator_address
+              }
+            },
           )
         let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
         and {
-          must_hold_ship_token,
-          must_have_asteria_position,
-          must_burn_ship_token,
+          must_hold_ship_token?,
+          must_have_asteria_position?,
+          must_burn_ship_token?,
         }
       }
       Quit -> {
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
         and {
-          must_hold_ship_token,
-          must_burn_ship_token,
+          must_hold_ship_token?,
+          must_burn_ship_token?,
         }
+      }
+    }
+  }
+
+  // SHIPYARD POLICY:
+  pub fn mint(redeemer: ShipyardRedeemer, ctx: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = ctx
+    let Transaction { inputs, outputs, mint, .. } = transaction
+    expect Mint(policy_id) = purpose
+    let minted_tokens =
+      mint
+        |> value.from_minted_value
+        |> value.tokens(policy_id)
+        |> dict.to_list()
+
+    when redeemer is {
+      MintShip -> {
+        expect Some(asteria_input) =
+          list.find(
+            inputs,
+            fn(input) {
+              when input.output.address.payment_credential is {
+                VerificationKeyCredential(_) -> False
+                ScriptCredential(addr_payment) ->
+                  addr_payment == asteria_validator_address
+              }
+            },
+          )
+
+        expect InlineDatum(asteria_datum) = asteria_input.output.datum
+        expect asteria_datum: AsteriaDatum = asteria_datum
+        expect [(ship_token_name, 1)] =
+          list.filter(
+            minted_tokens,
+            fn(token) { utils.has_prefix("SHIP", token.1st) },
+          )
+        expect [(pilot_token_name, 1)] =
+          list.filter(
+            minted_tokens,
+            fn(token) { utils.has_prefix("PILOT", token.1st) },
+          )
+        expect [ship_state] =
+          transaction.find_script_outputs(outputs, policy_id)
+        expect InlineDatum(ship_datum) = ship_state.datum
+        expect ship_datum: ShipDatum = ship_datum
+        let must_respect_ship_name =
+          ship_token_name == bytearray.concat(
+            "SHIP",
+            bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
+          )
+
+        let must_respect_pilot_name =
+          pilot_token_name == bytearray.concat(
+            "PILOT",
+            bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
+          )
+        let must_mint_two_assets = list.length(minted_tokens) == 2
+        let must_have_initial_fuel = ship_datum.fuel == initial_fuel
+        let must_respect_min_distance =
+          utils.distance(ship_datum.pos_x, ship_datum.pos_y) >= min_asteria_distance
+        let must_have_ship_name = ship_datum.ship_token_name == ship_token_name
+        let must_have_pilot_name =
+          ship_datum.pilot_token_name == pilot_token_name
+        let must_hold_ship_token =
+          value.quantity_of(ship_state.value, policy_id, ship_token_name) == 1
+        and {
+          must_mint_two_assets?,
+          must_respect_ship_name?,
+          must_respect_pilot_name?,
+          must_have_initial_fuel?,
+          must_respect_min_distance?,
+          must_have_ship_name?,
+          must_have_pilot_name?,
+          must_hold_ship_token?,
+        }
+      }
+
+      BurnShip -> {
+        expect Some(ship_input) =
+          list.find(
+            inputs,
+            fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
+          )
+        expect InlineDatum(ship_datum) = ship_input.output.datum
+        expect ship_datum: ShipDatum = ship_datum
+        expect [(_, -1)] = minted_tokens
+        ship_datum.pos_x == 0 && ship_datum.pos_y == 0
       }
     }
   }

@@ -59,25 +59,17 @@ fn move(options: MoveTestOptions) -> Bool {
   let min_ada = from_lovelace(2_000_000)
   let initial_x = -20
   let initial_y = -20
-  let max_distance = 30
+  let max_moving_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
+  let initial_pellet_fuel = 40
+  let min_asteria_distance = 10
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = MoveShip(options.delta_x, options.delta_y)
   let pilot_address =
     Address {
       payment_credential: VerificationKeyCredential(mock.pilot_credential),
-      stake_credential: None,
-    }
-  let asteria_address =
-    Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
-      stake_credential: None,
-    }
-  let pellet_address =
-    Address {
-      payment_credential: ScriptCredential(mock.pellet_credential),
       stake_credential: None,
     }
   let ship_address =
@@ -97,7 +89,6 @@ fn move(options: MoveTestOptions) -> Bool {
       fuel: options.initial_fuel,
       pos_x: initial_x,
       pos_y: initial_y,
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
     }
@@ -121,7 +112,6 @@ fn move(options: MoveTestOptions) -> Bool {
       } else {
         initial_y
       },
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: if options.preserve_pilot_token {
         mock.pilot_token_name
@@ -240,12 +230,14 @@ fn move(options: MoveTestOptions) -> Bool {
     }
   let result =
     spacetime.spend(
-      pellet_address,
-      asteria_address,
+      mock.pellet_credential,
+      mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_moving_distance,
       max_ship_fuel,
       fuel_per_step,
+      initial_pellet_fuel,
+      min_asteria_distance,
       ship_datum_in,
       redeemer,
       spend_ctx,
@@ -334,20 +326,17 @@ fn gather(options: GatherTestOptions) -> Bool {
   let pellet_fuel = 20
   let pellet_pos_x = 10
   let pellet_pos_y = 10
-  let max_distance = 30
+  let max_moving_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
+  let initial_pellet_fuel = 40
+  let min_asteria_distance = 10
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = GatherFuel(options.amount)
   let pilot_address =
     Address {
       payment_credential: VerificationKeyCredential(mock.pilot_credential),
-      stake_credential: None,
-    }
-  let asteria_address =
-    Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
       stake_credential: None,
     }
   let pellet_address =
@@ -395,7 +384,6 @@ fn gather(options: GatherTestOptions) -> Bool {
       fuel: options.initial_fuel,
       pos_x: options.ship_pos_x,
       pos_y: options.ship_pos_y,
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
     }
@@ -412,7 +400,6 @@ fn gather(options: GatherTestOptions) -> Bool {
         options.ship_pos_x + 1
       },
       pos_y: options.ship_pos_y,
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
     }
@@ -511,12 +498,14 @@ fn gather(options: GatherTestOptions) -> Bool {
     }
   let result =
     spacetime.spend(
-      pellet_address,
-      asteria_address,
+      mock.pellet_credential,
+      mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_moving_distance,
       max_ship_fuel,
       fuel_per_step,
+      initial_pellet_fuel,
+      min_asteria_distance,
       ship_datum_in,
       redeemer,
       spend_ctx,
@@ -583,6 +572,8 @@ fn mine(options: MineTestOptions) -> Bool {
   let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
+  let initial_fuel = 40
+  let min_distance = 10
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = MineAsteria
@@ -612,11 +603,6 @@ fn mine(options: MineTestOptions) -> Bool {
       }
     Input { output_reference, output }
   }
-  let pellet_address =
-    Address {
-      payment_credential: ScriptCredential(mock.pellet_credential),
-      stake_credential: None,
-    }
   let ship_address =
     Address {
       payment_credential: ScriptCredential(mock.ship_credential),
@@ -634,7 +620,6 @@ fn mine(options: MineTestOptions) -> Bool {
       fuel: 40,
       pos_x: options.ship_pos_x,
       pos_y: options.ship_pos_y,
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
     }
@@ -743,12 +728,14 @@ fn mine(options: MineTestOptions) -> Bool {
     }
   let result =
     spacetime.spend(
-      pellet_address,
-      asteria_address,
+      mock.pellet_credential,
+      mock.asteria_credential,
       admin_token,
       max_distance,
       max_ship_fuel,
       fuel_per_step,
+      initial_fuel,
+      min_distance,
       ship_datum_in,
       redeemer,
       spend_ctx,
@@ -800,22 +787,14 @@ fn quit(options: QuitTestOptions) -> Bool {
   let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
+  let initial_fuel = 40
+  let min_distance = 10
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = Quit
   let pilot_address =
     Address {
       payment_credential: VerificationKeyCredential(mock.pilot_credential),
-      stake_credential: None,
-    }
-  let asteria_address =
-    Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
-      stake_credential: None,
-    }
-  let pellet_address =
-    Address {
-      payment_credential: ScriptCredential(mock.pellet_credential),
       stake_credential: None,
     }
   let ship_address =
@@ -835,7 +814,6 @@ fn quit(options: QuitTestOptions) -> Bool {
       fuel: 40,
       pos_x: 10,
       pos_y: 10,
-      shipyard_policy: mock.shipyard_policy,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
     }
@@ -933,12 +911,14 @@ fn quit(options: QuitTestOptions) -> Bool {
     }
   let result =
     spacetime.spend(
-      pellet_address,
-      asteria_address,
+      mock.pellet_credential,
+      mock.asteria_credential,
       admin_token,
       max_distance,
       max_ship_fuel,
       fuel_per_step,
+      initial_fuel,
+      min_distance,
       ship_datum_in,
       redeemer,
       spend_ctx,
