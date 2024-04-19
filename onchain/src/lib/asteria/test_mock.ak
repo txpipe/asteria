@@ -1,4 +1,4 @@
-pub const shipyard_policy = #"c000"
+pub const shipyard_policy = #"0000"
 
 pub const admin_policy = #"c111"
 

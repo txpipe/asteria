@@ -87,7 +87,6 @@ async function createShip(
     fuel: initial_fuel,
     pos_x: pos_x,
     pos_y: pos_y,
-    shipyard_policy: shipyardPolicyId,
     ship_token_name: shipTokenName,
     pilot_token_name: pilotTokenName,
   };

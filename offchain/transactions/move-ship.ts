@@ -59,7 +59,6 @@ async function moveShip(
     fuel: shipInputDatum.fuel - spent_fuel,
     pos_x: shipInputDatum.pos_x + delta_x,
     pos_y: shipInputDatum.pos_y + delta_y,
-    shipyard_policy: shipInputDatum.shipyard_policy,
     ship_token_name: shipInputDatum.ship_token_name,
     pilot_token_name: shipInputDatum.pilot_token_name,
   };

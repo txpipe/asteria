@@ -24,7 +24,6 @@ const ShipDatum = Data.Object({
   fuel: Data.Integer(),
   pos_x: Data.Integer(),
   pos_y: Data.Integer(),
-  shipyard_policy: Data.Bytes({ maxLength: 28 }),
   ship_token_name: Data.Bytes(),
   pilot_token_name: Data.Bytes(),
 });

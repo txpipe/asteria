@@ -19,7 +19,6 @@ Each ship will be identified by a `ShipToken`, with a fixed policy id but a toke
 >* fuel: **Int**
 >* pos_x: **Int**
 >* pos_y: **Int**
->* shipyard_policy: **PolicyId**
 >* ship_token_name: **AssetName**
 >* pilot_token_name: **AssetName**
 >
@@ -177,7 +176,6 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 * there is a single `ShipState` output.
 * the `ShipState` fuel datum field equals some initial value.
 * the `ShipState` output datum has x and y coordinates such that distance from (0,0) is above the minimum distance.
-* the `ShipState` output datum has the `shipyard_policy` set as the policy id of the minted tokens.
 * the `ShipState` output datum has the `ship_token_name` set as the name of the `ShipToken`.
 * the `ShipState` output datum has the `pilot_token_name` set as the name of the `PilotToken`.
 * the `ShipToken` is paid to the `SpaceTimeScript` validator address.

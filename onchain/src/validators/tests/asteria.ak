@@ -200,7 +200,7 @@ fn mine(options: MineTestOptions) -> Bool {
     let output =
       Output {
         address: asteria_address,
-        value: value.from_lovelace(10_000_000)
+        value: value.from_lovelace(12_000_000)
           |> value.add(mock.admin_policy, mock.admin_token_name, 1),
         datum: InlineDatum(asteria_datum),
         reference_script: None,
@@ -244,6 +244,7 @@ fn mine(options: MineTestOptions) -> Bool {
     Output {
       address: asteria_address,
       value: asteria_in.output.value
+        |> value.add(ada_policy_id, ada_asset_name, -2_000_000)
         |> value.add(ada_policy_id, ada_asset_name, -options.lovelace_mined),
       datum: if options.preserve_counter {
         InlineDatum(asteria_datum)
