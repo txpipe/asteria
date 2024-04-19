@@ -66,6 +66,7 @@ async function createPellet(
       { inline: pelletDatum },
       {
         [adminTokenUnit]: BigInt(1),
+        lovelace: 2_000_000n,
       }
     )
     .complete();

@@ -58,6 +58,7 @@ async function createAsteria(admin_token: AssetClassT): Promise<TxHash> {
       { inline: asteriaDatum },
       {
         [adminTokenUnit]: BigInt(1),
+        lovelace: 2_000_000n,
       }
     )
     .complete();

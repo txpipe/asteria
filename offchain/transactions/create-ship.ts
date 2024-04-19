@@ -117,6 +117,7 @@ async function createShip(
       { inline: shipDatum },
       {
         [shipTokenUnit]: BigInt(1),
+        lovelace: 2_000_000n,
       }
     )
     .payToContract(
