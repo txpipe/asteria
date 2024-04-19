@@ -8,15 +8,20 @@ const admin_token: AssetClassT = {
 };
 const ship_mint_lovelace_fee = 3000n;
 const initial_fuel = 15n;
-const pos_x = 20n;
-const pos_y = -13n;
+const pos_x = 5n;
+const pos_y = 5n;
+const asteria_tx_hash =
+  "ee451e2dbd7bdb9998eb469ba4833737769b2cfb771a33b79f70252193eebe68";
+const asteria_tx_index = 0;
 
 const txHash = await createShip(
   admin_token,
   ship_mint_lovelace_fee,
   initial_fuel,
   pos_x,
-  pos_y
+  pos_y,
+  asteria_tx_hash,
+  asteria_tx_index
 );
 
 console.log(txHash);

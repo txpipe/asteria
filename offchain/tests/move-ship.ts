@@ -2,12 +2,12 @@ import { fromText } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { moveShip } from "../transactions/move-ship.ts";
 
 const fuel_per_step = 1n;
-const delta_x = 2n;
-const delta_y = -3n;
-const ship_token_name = fromText("SHIP0");
-const pilot_token_name = fromText("PILOT0");
+const delta_x = -5n;
+const delta_y = -5n;
+const ship_token_name = fromText("SHIP6");
+const pilot_token_name = fromText("PILOT6");
 const shipTxHash =
-  "ca30a841e582f284b7b71d39c2cbc8b9a7fca9476d921b6b9d97c0c7e31bf2bc";
+  "0a15b9bc5fab21137186120f487bd14d4bcef19747f53383281fcbbb99d2ce57";
 
 const txHash = await moveShip(
   fuel_per_step,
