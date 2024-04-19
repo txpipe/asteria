@@ -99,17 +99,20 @@ const PRIMARY_COLOR: Color = Color::rgb(255., 255., 0.);
 
 fn render_hud(
     mut commands: Commands,
-    query: Query<(Option<&PickingInteraction>, &ShipIdentity), With<ShipIdentity>>,
+    query: Query<
+        (Option<&PickingInteraction>, &ShipIdentity, &Position, &Fuel),
+        With<ShipIdentity>,
+    >,
     asset_server: Res<AssetServer>,
     mut state: ResMut<NextState<HudState>>,
 ) {
     let text_style = TextStyle {
-        font: asset_server.load("fonts/pixel.ttf"),
-        font_size: 26.0,
+        font: asset_server.load("fonts/pixel.otf"),
+        font_size: 32.0,
         color: PRIMARY_COLOR,
     };
 
-    for (i, s) in &query {
+    for (i, s, p, f) in &query {
         if let Some(PickingInteraction::Pressed) = i {
             state.set(HudState(Some(
                 commands
@@ -128,9 +131,10 @@ fn render_hud(
                             .spawn(NodeBundle {
                                 style: Style {
                                     width: Val::Percent(50.),
-                                    height: Val::Percent(50.),
-                                    border: UiRect::all(Val::Px(1.)),
+                                    height: Val::Percent(40.),
+                                    border: UiRect::all(Val::Px(2.)),
                                     flex_wrap: FlexWrap::Wrap,
+                                    padding: UiRect::all(Val::Px(12.)),
                                     ..default()
                                 },
                                 background_color: Color::rgba(0., 0., 0., 0.8).into(),
@@ -143,10 +147,9 @@ fn render_hud(
                                         style: Style {
                                             width: Val::Percent(100.),
                                             height: Val::Px(60.),
-                                            border: UiRect::bottom(Val::Px(1.)),
+                                            border: UiRect::bottom(Val::Px(2.)),
                                             align_items: AlignItems::Center,
                                             justify_content: JustifyContent::SpaceBetween,
-                                            margin: UiRect::all(Val::Px(4.)),
                                             ..default()
                                         },
                                         border_color: PRIMARY_COLOR.into(),
@@ -202,6 +205,54 @@ fn render_hud(
                                         ));
                                         parent.spawn(TextBundle::from_section(
                                             &s.name,
+                                            text_style.clone(),
+                                        ));
+                                    });
+
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(100.),
+                                            height: Val::Px(60.),
+                                            border: UiRect::bottom(Val::Px(1.)),
+                                            align_items: AlignItems::Center,
+                                            justify_content: JustifyContent::SpaceBetween,
+                                            margin: UiRect::all(Val::Px(4.)),
+                                            ..default()
+                                        },
+                                        ..default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn(TextBundle::from_section(
+                                            "Position",
+                                            text_style.clone(),
+                                        ));
+                                        parent.spawn(TextBundle::from_section(
+                                            format!("({},{})", p.x, p.y),
+                                            text_style.clone(),
+                                        ));
+                                    });
+
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            width: Val::Percent(100.),
+                                            height: Val::Px(60.),
+                                            border: UiRect::bottom(Val::Px(1.)),
+                                            align_items: AlignItems::Center,
+                                            justify_content: JustifyContent::SpaceBetween,
+                                            margin: UiRect::all(Val::Px(4.)),
+                                            ..default()
+                                        },
+                                        ..default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn(TextBundle::from_section(
+                                            "Fuel Available",
+                                            text_style.clone(),
+                                        ));
+                                        parent.spawn(TextBundle::from_section(
+                                            f.available.to_string(),
                                             text_style.clone(),
                                         ));
                                     });
