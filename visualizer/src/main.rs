@@ -6,6 +6,7 @@ use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 mod asteroid;
 mod map;
 mod ships;
+mod ui;
 
 #[derive(Component)]
 struct MyCameraMarker;
