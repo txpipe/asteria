@@ -1,15 +1,24 @@
-use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
+use aiken/option.{is_some}
 use aiken/transaction.{ScriptContext, Transaction}
-use aiken/transaction/credential.{VerificationKey}
+use aiken/transaction/value
+use asteria/types.{AssetClass}
 
-validator {
-  fn spend(
-    _datum: Data,
-    redeemer: Hash<Blake2b_224, VerificationKey>,
-    ctx: ScriptContext,
-  ) -> Bool {
-    let must_be_signed = list.has(ctx.transaction.extra_signatories, redeemer)
-    must_be_signed?
+validator(admin_token: AssetClass) {
+  fn spend(_datum: Data, _redeemer: Data, ctx: ScriptContext) -> Bool {
+    let is_admin_token_input =
+      is_some(
+        list.find(
+          ctx.transaction.inputs,
+          fn(input) {
+            value.quantity_of(
+              input.output.value,
+              admin_token.policy,
+              admin_token.name,
+            ) > 0
+          },
+        ),
+      )
+    is_admin_token_input
   }
 }

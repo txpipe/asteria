@@ -64,7 +64,7 @@ async function deploySpacetime(
     min_asteria_distance
   );
 
-  const deployValidator = buildDeployValidator();
+  const deployValidator = buildDeployValidator(admin_token);
   const deployAddressBech32 = lucid.utils.validatorToAddress(deployValidator);
 
   const tx = await lucid

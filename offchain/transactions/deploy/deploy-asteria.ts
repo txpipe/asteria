@@ -22,7 +22,7 @@ async function deployAsteria(
     max_asteria_mining
   );
 
-  const deployValidator = buildDeployValidator();
+  const deployValidator = buildDeployValidator(admin_token);
   const deployAddressBech32 = lucid.utils.validatorToAddress(deployValidator);
 
   const tx = await lucid
