@@ -13,7 +13,8 @@ async function moveShip(
   delta_x: bigint,
   delta_y: bigint,
   ship_token_name: string,
-  pilot_token_name: string
+  pilot_token_name: string,
+  shipTxHash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -42,7 +43,14 @@ async function moveShip(
   const shipTokenUnit = toUnit(shipyardPolicyId, ship_token_name);
   const pilotTokenUnit = toUnit(shipyardPolicyId, pilot_token_name);
 
-  const ship: UTxO = (await lucid.utxosAt(spacetimeAddressBech32))[0];
+  const ship: UTxO = (
+    await lucid.utxosByOutRef([
+      {
+        txHash: shipTxHash,
+        outputIndex: 0,
+      },
+    ])
+  )[0];
   if (!ship.datum) {
     throw Error("Ship datum not found");
   }
