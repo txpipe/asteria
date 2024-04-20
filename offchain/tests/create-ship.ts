@@ -6,12 +6,12 @@ const admin_token: AssetClassT = {
   policy: "0298aa99f95e2fe0a0132a6bb794261fb7e7b0d988215da2f2de2005",
   name: fromText("tokenA"),
 };
-const ship_mint_lovelace_fee = 3000n;
-const initial_fuel = 15n;
-const pos_x = 5n;
-const pos_y = 5n;
+const ship_mint_lovelace_fee = 3_000_000n;
+const initial_fuel = 30n;
+const pos_x = 7n;
+const pos_y = -10n;
 const asteria_tx_hash =
-  "ee451e2dbd7bdb9998eb469ba4833737769b2cfb771a33b79f70252193eebe68";
+  "2ad4ee7c7cd9156de39f33c5a1c31e701fae299366bf886c85bbb00ac84f210b";
 const asteria_tx_index = 0;
 
 const txHash = await createShip(

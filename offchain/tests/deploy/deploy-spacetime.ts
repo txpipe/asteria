@@ -9,7 +9,7 @@ const admin_token: AssetClassT = {
 const max_moving_distance = 20n;
 const max_ship_fuel = 100n;
 const fuel_per_step = 1n;
-const initial_fuel = 15n;
+const initial_fuel = 30n;
 const min_asteria_distance = 10n;
 
 const txHash = await deploySpacetime(
