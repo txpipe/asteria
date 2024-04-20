@@ -11,7 +11,7 @@ async function createAsteria(admin_token: AssetClassT): Promise<TxHash> {
   lucid.selectWalletFromSeed(seed);
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./asteria-ref.json")
+    await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
   const asteriaRef = await lucid.utxosByOutRef([
     {
@@ -26,7 +26,7 @@ async function createAsteria(admin_token: AssetClassT): Promise<TxHash> {
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {

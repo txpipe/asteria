@@ -28,7 +28,7 @@ async function deployPellet(admin_token: AssetClassT): Promise<TxHash> {
   const signedTx = await tx.sign().complete();
   const txHash = await signedTx.submit();
 
-  console.log(writeJson("./pellet-ref.json", { txHash: txHash }));
+  console.log(writeJson("./script-refs/pellet-ref.json", { txHash: txHash }));
   return txHash;
 }
 

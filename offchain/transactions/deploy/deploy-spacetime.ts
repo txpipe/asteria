@@ -20,7 +20,7 @@ async function deploySpacetime(
   lucid.selectWalletFromSeed(seed);
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./asteria-ref.json")
+    await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
   const asteriaRef = await lucid.utxosByOutRef([
     {
@@ -37,7 +37,7 @@ async function deploySpacetime(
     lucid.utils.paymentCredentialOf(asteriaAddressBech32).hash;
 
   const pelletRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./pellet-ref.json")
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
   const pelletRef = await lucid.utxosByOutRef([
     {
@@ -79,7 +79,9 @@ async function deploySpacetime(
   const signedTx = await tx.sign().complete();
   const txHash = await signedTx.submit();
 
-  console.log(writeJson("./spacetime-ref.json", { txHash: txHash }));
+  console.log(
+    writeJson("./script-refs/spacetime-ref.json", { txHash: txHash })
+  );
 
   return txHash;
 }

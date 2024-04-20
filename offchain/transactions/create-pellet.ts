@@ -16,7 +16,7 @@ async function createPellet(
   lucid.selectWalletFromSeed(seed);
 
   const pelletRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./pellet-ref.json")
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
   const pelletRef = await lucid.utxosByOutRef([
     {
@@ -31,7 +31,7 @@ async function createPellet(
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {

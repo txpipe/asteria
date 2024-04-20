@@ -23,7 +23,7 @@ async function mineAsteria(
   lucid.selectWalletFromSeed(seed);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {
@@ -37,7 +37,7 @@ async function mineAsteria(
   }
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./asteria-ref.json")
+    await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
   const asteriaRef = await lucid.utxosByOutRef([
     {
@@ -113,12 +113,12 @@ async function mineAsteria(
       { inline: asteriaOutputDatum },
       {
         [adminTokenUnit]: BigInt(1),
-        lovelace: rewards - 1500n + 2_000_000n,
+        lovelace: rewards - 1_500_000n + 2_000_000n,
       }
     )
     .payToAddress(await lucid.wallet.address(), {
       [pilotTokenUnit]: BigInt(1),
-      lovelace: 1500n,
+      lovelace: 1_500_000n,
     })
     .complete();
 

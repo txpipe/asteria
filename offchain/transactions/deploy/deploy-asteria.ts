@@ -37,7 +37,7 @@ async function deployAsteria(
   const signedTx = await tx.sign().complete();
   const txHash = await signedTx.submit();
 
-  console.log(writeJson("./asteria-ref.json", { txHash: txHash }));
+  console.log(writeJson("./script-refs/asteria-ref.json", { txHash: txHash }));
   return txHash;
 }
 

@@ -30,7 +30,7 @@ async function gatherFuel(
   lucid.selectWalletFromSeed(seed);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {
@@ -46,7 +46,7 @@ async function gatherFuel(
     lucid.utils.validatorToAddress(spacetimeValidator);
 
   const pelletRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./pellet-ref.json")
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
   const pelletRef = await lucid.utxosByOutRef([
     {

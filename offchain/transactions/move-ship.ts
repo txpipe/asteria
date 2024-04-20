@@ -24,7 +24,7 @@ async function moveShip(
   lucid.selectWalletFromSeed(seed);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {
