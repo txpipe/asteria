@@ -6,7 +6,6 @@ use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 mod asteroid;
 mod map;
 mod ships;
-mod ui;
 
 #[derive(Component)]
 struct MyCameraMarker;
@@ -24,6 +23,13 @@ fn setup_ui(mut commands: Commands) {
     });
 }
 
+// fn setup_environment(mut commands: Commands, asset_server: Res<AssetServer>) {
+//     commands.spawn(SpriteBundle {
+//         texture: asset_server.load("background.gif"),
+//         ..default()
+//     });
+// }
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
@@ -32,6 +38,7 @@ fn main() {
         .add_plugins(DefaultPickingPlugins)
         .add_systems(Startup, setup_camera)
         .add_systems(Startup, setup_ui)
+        // .add_systems(Startup, setup_environment)
         .add_plugins((map::MapPlugin, ships::ShipsPlugin, asteroid::AsteroidPlugin))
         .run();
 }

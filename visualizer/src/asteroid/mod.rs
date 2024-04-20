@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::map::{Fuel, Position};
+use crate::map::{AsteroidIdentity, Fuel, Position};
+
+use self::hud::{render_hud, HudState};
 
 mod hud;
 
@@ -37,6 +39,7 @@ impl FromWorld for Material {
 #[derive(Bundle)]
 pub struct Asteroid {
     sprite_sheet: SpriteSheetBundle,
+    identity: AsteroidIdentity,
     position: Position,
     fuel: Fuel,
 }
@@ -58,6 +61,7 @@ impl Asteroid {
             },
             position,
             fuel,
+            identity: AsteroidIdentity,
         }
     }
 }
@@ -76,6 +80,8 @@ pub struct AsteroidPlugin;
 
 impl Plugin for AsteroidPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Material>().add_systems(Update, render);
+        app.init_resource::<Material>()
+            .add_systems(Update, (render, render_hud))
+            .insert_state(HudState(None));
     }
 }
