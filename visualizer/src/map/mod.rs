@@ -58,6 +58,10 @@ where
     }
 }
 
+#[derive(Component)]
+pub struct AsteroidIdentity; 
+
+
 const RANDOM_SHIP_COUNT: usize = 50;
 const RANDOM_ASTEROID_COUNT: usize = 100;
 

@@ -1,17 +1,14 @@
 use bevy::prelude::*;
 use bevy_mod_picking::prelude::*;
 
-use crate::map::{Fuel, Position, ShipIdentity};
+use crate::map::{AsteroidIdentity, Fuel, Position};
 
 #[derive(States, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct HudState(pub Option<Entity>);
 
 pub fn render_hud(
     mut commands: Commands,
-    query: Query<
-        (Option<&PickingInteraction>, &ShipIdentity, &Position, &Fuel),
-        With<ShipIdentity>,
-    >,
+    query: Query<(Option<&PickingInteraction>, &Position, &Fuel), With<AsteroidIdentity>>,
     asset_server: Res<AssetServer>,
     mut state: ResMut<NextState<HudState>>,
 ) {
@@ -21,7 +18,7 @@ pub fn render_hud(
         color: Color::GOLD,
     };
 
-    for (i, s, p, f) in &query {
+    for (i, p, f) in &query {
         if let Some(PickingInteraction::Pressed) = i {
             state.set(HudState(Some(
                 commands
@@ -40,7 +37,7 @@ pub fn render_hud(
                             .spawn(NodeBundle {
                                 style: Style {
                                     width: Val::Percent(50.),
-                                    height: Val::Percent(40.),
+                                    height: Val::Percent(30.),
                                     border: UiRect::all(Val::Px(2.)),
                                     flex_wrap: FlexWrap::Wrap,
                                     padding: UiRect::all(Val::Px(12.)),
@@ -66,7 +63,7 @@ pub fn render_hud(
                                     })
                                     .with_children(|parent| {
                                         parent.spawn(TextBundle::from_section(
-                                            "Ship Detail",
+                                            "Asteroid Detail",
                                             text_style.clone(),
                                         ));
 
@@ -94,29 +91,6 @@ pub fn render_hud(
                                             });
                                     });
 
-                                parent
-                                    .spawn(NodeBundle {
-                                        style: Style {
-                                            width: Val::Percent(100.),
-                                            height: Val::Px(60.),
-                                            border: UiRect::bottom(Val::Px(1.)),
-                                            align_items: AlignItems::Center,
-                                            justify_content: JustifyContent::SpaceBetween,
-                                            margin: UiRect::all(Val::Px(4.)),
-                                            ..default()
-                                        },
-                                        ..default()
-                                    })
-                                    .with_children(|parent| {
-                                        parent.spawn(TextBundle::from_section(
-                                            "Name",
-                                            text_style.clone(),
-                                        ));
-                                        parent.spawn(TextBundle::from_section(
-                                            &s.name,
-                                            text_style.clone(),
-                                        ));
-                                    });
 
                                 parent
                                     .spawn(NodeBundle {
@@ -157,7 +131,7 @@ pub fn render_hud(
                                     })
                                     .with_children(|parent| {
                                         parent.spawn(TextBundle::from_section(
-                                            "Fuel Available",
+                                            "Fuel",
                                             text_style.clone(),
                                         ));
                                         parent.spawn(TextBundle::from_section(
