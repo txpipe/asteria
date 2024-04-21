@@ -1,6 +1,9 @@
 use async_graphql::http::GraphiQLSource;
 use dotenv::dotenv;
+use num_traits::Zero;
 use rocket::response::content::RawHtml;
+use sqlx::types::BigDecimal;
+use num_traits::cast::ToPrimitive;
 use std::env;
 use std::ops::Deref;
 use std::vec;
@@ -36,7 +39,7 @@ pub struct FuelPellet {
 pub struct RewardPot {
     id: ID,
     position: Position,
-    total_rewards: i32,
+    total_rewards: i64,
     class: String,
 }
 
@@ -107,16 +110,17 @@ pub enum PositionalInterface {
     RewardPot(RewardPot),
 }
 
+#[derive(Debug)]
 struct MapObjectRecord {
-    id: String,
+    id: Option<String>,
     fuel: Option<i32>,
-    position_x: i32,
-    position_y: i32,
+    position_x: Option<i32>,
+    position_y: Option<i32>,
     policy_id: Option<String>,
     token_name: Option<String>,
     pilot_name: Option<String>,
     class: Option<String>,
-    total_rewards: Option<i32>,
+    total_rewards: Option<BigDecimal>,
 }
 
 #[Object]
@@ -235,7 +239,7 @@ impl QueryRoot {
         // Query to select map objects within a radius using Manhattan distance
         let fetched_objects = sqlx::query_as!(MapObjectRecord,
             "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM MapObjects
+             FROM mapobjects
              WHERE positionX BETWEEN ($1::int - $3::int) AND ($1::int + $3::int)
                AND positionY BETWEEN ($2::int - $3::int) AND ($2::int + $3::int)
                AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int",
@@ -244,16 +248,16 @@ impl QueryRoot {
         .fetch_all(pool)
         .await
         .map_err(|e| Error::new(e.to_string()))?;
-
+        println!("{:?}", fetched_objects);
         let map_objects: Vec<MapObject> = fetched_objects
             .into_iter()
             .map(|record| match record.class.as_deref() {
                 Some("Ship") => MapObject::Ship(Ship {
-                    id: ID::from(record.id),
+                    id: ID::from(record.id.unwrap_or_default()),
                     fuel: record.fuel.unwrap_or(0),
                     position: Position {
-                        x: record.position_x,
-                        y: record.position_y,
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
                     },
                     shipyard_policy: PolicyId {
                         id: ID::from(record.policy_id.unwrap_or_default()),
@@ -266,25 +270,25 @@ impl QueryRoot {
                     },
                     class: record.class.unwrap_or_default(),
                 }),
-                Some("FuelPellet") => MapObject::FuelPellet(FuelPellet {
-                    id: ID::from(record.id),
+                Some("Fuel") => MapObject::FuelPellet(FuelPellet {
+                    id: ID::from(record.id.unwrap_or_default()),
                     fuel: record.fuel.unwrap_or(0),
                     position: Position {
-                        x: record.position_x,
-                        y: record.position_y,
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
                     },
                     shipyard_policy: PolicyId {
                         id: ID::from(record.policy_id.unwrap_or_default()),
                     },
                     class: record.class.unwrap_or_default(),
                 }),
-                Some("RewardPot") => MapObject::RewardPot(RewardPot {
-                    id: ID::from(record.id),
+                Some("Asteria") => MapObject::RewardPot(RewardPot {
+                    id: ID::from(record.id.unwrap_or_default()),
                     position: Position {
-                        x: record.position_x,
-                        y: record.position_y,
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
                     },
-                    total_rewards: record.total_rewards.unwrap_or(0),
+                    total_rewards: record.total_rewards.unwrap_or(BigDecimal::zero()).to_i64().unwrap_or(0),
                     class: record.class.unwrap_or_default(),
                 }),
                 _ => panic!("Unknown class type or class not provided"),
