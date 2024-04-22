@@ -17,10 +17,8 @@ import {
 async function gatherFuel(
   admin_token: AssetClassT,
   gather_amount: bigint,
-  ship_token_name: string,
-  pilot_token_name: string,
-  shipTxHash: TxHash,
-  pelletTxHash: TxHash
+  ship_tx_hash: TxHash,
+  pellet_tx_hash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -61,14 +59,11 @@ async function gatherFuel(
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
 
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-  const shipTokenUnit = toUnit(shipyardPolicyId, ship_token_name);
-  const pilotTokenUnit = toUnit(shipyardPolicyId, pilot_token_name);
-  const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
 
   const ship: UTxO = (
     await lucid.utxosByOutRef([
       {
-        txHash: shipTxHash,
+        txHash: ship_tx_hash,
         outputIndex: 0,
       },
     ])
@@ -81,7 +76,7 @@ async function gatherFuel(
   const pellet: UTxO = (
     await lucid.utxosByOutRef([
       {
-        txHash: pelletTxHash,
+        txHash: pellet_tx_hash,
         outputIndex: 0,
       },
     ])
@@ -121,6 +116,16 @@ async function gatherFuel(
     pelletInfo,
     PelletDatum as unknown as PelletDatumT
   );
+
+  const shipTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.ship_token_name
+  );
+  const pilotTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.pilot_token_name
+  );
+  const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
 
   const shipRedeemer = Data.to(new Constr(1, [new Constr(1, [gather_amount])]));
   const pelletRedeemer = Data.to(new Constr(0, [gather_amount]));

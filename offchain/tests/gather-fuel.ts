@@ -7,20 +7,16 @@ const admin_token: AssetClassT = {
   name: fromText("tokenA"),
 };
 const gather_amount = 20n;
-const ship_token_name = fromText("SHIP5");
-const pilot_token_name = fromText("PILOT5");
-const shipTxHash =
-  "bdae242f3dc8a4c3e1299a3b7631c1ba55d8858ddb4ab50760b99e8df7a0a4f1";
-const pelletTxHash =
-  "8e509be8d633f361e33c8fef0278d1e32fa196861798ff92d18f3b6b6ab05248";
+const ship_tx_hash =
+  "6ca378639a51b1283ec2c84deb772f62bff59603eca230aeb711fedee8389d69";
+const pellet_tx_hash =
+  "b1d5dedc6c9ba333d8eab4c9f05edda4563fc313fc9b124393ec3b64e3676fb0";
 
 const txHash = await gatherFuel(
   admin_token,
   gather_amount,
-  ship_token_name,
-  pilot_token_name,
-  shipTxHash,
-  pelletTxHash
+  ship_tx_hash,
+  pellet_tx_hash
 );
 
 console.log(txHash);

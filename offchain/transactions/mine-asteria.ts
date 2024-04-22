@@ -6,14 +6,19 @@ import {
   UTxO,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucidBase } from "../utils.ts";
-import { AssetClassT, AsteriaDatum, AsteriaDatumT } from "../types.ts";
+import {
+  AssetClassT,
+  AsteriaDatum,
+  AsteriaDatumT,
+  ShipDatum,
+  ShipDatumT,
+} from "../types.ts";
 
 async function mineAsteria(
   admin_token: AssetClassT,
-  ship_token_name: string,
-  pilot_token_name: string,
-  shipTxHash: TxHash,
-  asteriaTxHash: TxHash
+  ship_tx_hash: TxHash,
+  asteria_tx_hash: TxHash,
+  max_asteria_mining: bigint
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -52,14 +57,11 @@ async function mineAsteria(
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
 
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-  const shipTokenUnit = toUnit(shipyardPolicyId, ship_token_name);
-  const pilotTokenUnit = toUnit(shipyardPolicyId, pilot_token_name);
-  const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
 
   const ship: UTxO = (
     await lucid.utxosByOutRef([
       {
-        txHash: shipTxHash,
+        txHash: ship_tx_hash,
         outputIndex: 0,
       },
     ])
@@ -67,11 +69,15 @@ async function mineAsteria(
   if (!ship.datum) {
     throw Error("Ship datum not found");
   }
+  const shipInputDatum = Data.from<ShipDatumT>(
+    ship.datum as string,
+    ShipDatum as unknown as ShipDatumT
+  );
 
   const asteria: UTxO = (
     await lucid.utxosByOutRef([
       {
-        txHash: asteriaTxHash,
+        txHash: asteria_tx_hash,
         outputIndex: 1,
       },
     ])
@@ -80,6 +86,9 @@ async function mineAsteria(
     throw Error("Asteria datum not found");
   }
   const rewards = asteria.assets.lovelace - 2_000_000n;
+  const minedRewards = BigInt(
+    (Number(rewards) * Number(max_asteria_mining)) / 100
+  );
 
   const asteriaInputDatum = Data.from<AsteriaDatumT>(
     asteria.datum as string,
@@ -92,6 +101,16 @@ async function mineAsteria(
   const asteriaOutputDatum = Data.to<AsteriaDatumT>(
     asteriaInfo,
     AsteriaDatum as unknown as AsteriaDatumT
+  );
+
+  const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+  const shipTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.ship_token_name
+  );
+  const pilotTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.pilot_token_name
   );
 
   const shipRedeemer = Data.to(new Constr(1, [new Constr(2, [])]));
@@ -113,7 +132,7 @@ async function mineAsteria(
       { inline: asteriaOutputDatum },
       {
         [adminTokenUnit]: BigInt(1),
-        lovelace: rewards - 1_500_000n + 2_000_000n,
+        lovelace: rewards - minedRewards + 2_000_000n,
       }
     )
     .payToAddress(await lucid.wallet.address(), {

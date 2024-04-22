@@ -12,9 +12,7 @@ async function moveShip(
   fuel_per_step: bigint,
   delta_x: bigint,
   delta_y: bigint,
-  ship_token_name: string,
-  pilot_token_name: string,
-  shipTxHash: TxHash
+  ship_tx_hash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -39,14 +37,10 @@ async function moveShip(
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
 
-  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-  const shipTokenUnit = toUnit(shipyardPolicyId, ship_token_name);
-  const pilotTokenUnit = toUnit(shipyardPolicyId, pilot_token_name);
-
   const ship: UTxO = (
     await lucid.utxosByOutRef([
       {
-        txHash: shipTxHash,
+        txHash: ship_tx_hash,
         outputIndex: 0,
       },
     ])
@@ -55,7 +49,6 @@ async function moveShip(
     throw Error("Ship datum not found");
   }
   const shipAda = ship.assets.lovelace;
-
   const shipInputDatum = Data.from<ShipDatumT>(
     ship.datum as string,
     ShipDatum as unknown as ShipDatumT
@@ -73,6 +66,16 @@ async function moveShip(
   const shipOutputDatum = Data.to<ShipDatumT>(
     shipInfo,
     ShipDatum as unknown as ShipDatumT
+  );
+
+  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
+  const shipTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.ship_token_name
+  );
+  const pilotTokenUnit = toUnit(
+    shipyardPolicyId,
+    shipInputDatum.pilot_token_name
   );
 
   const moveShipRedeemer = Data.to(
