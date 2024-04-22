@@ -248,7 +248,6 @@ impl QueryRoot {
         .fetch_all(pool)
         .await
         .map_err(|e| Error::new(e.to_string()))?;
-        println!("{:?}", fetched_objects);
         let map_objects: Vec<MapObject> = fetched_objects
             .into_iter()
             .map(|record| match record.class.as_deref() {
@@ -288,7 +287,7 @@ impl QueryRoot {
                         x: record.position_x.unwrap_or(0),
                         y: record.position_y.unwrap_or(0),
                     },
-                    total_rewards: record.total_rewards.unwrap_or(BigDecimal::zero()).to_i64().unwrap_or(0),
+                    total_rewards: record.total_rewards.unwrap_or(BigDecimal::zero()).to_i64().unwrap(),
                     class: record.class.unwrap_or_default(),
                 }),
                 _ => panic!("Unknown class type or class not provided"),

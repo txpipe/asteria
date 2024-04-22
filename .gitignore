@@ -10,3 +10,5 @@ target
 
 # .env files
 **/.env
+
+.mono
