@@ -1,5 +1,8 @@
-use bevy::prelude::*;
+use async_compat::Compat;
+use bevy::{prelude::*, tasks::IoTaskPool};
 use rand::Rng;
+
+use crate::api::get_assets;
 
 pub trait FromRandom<R>
 where
@@ -59,8 +62,7 @@ where
 }
 
 #[derive(Component)]
-pub struct AsteroidIdentity; 
-
+pub struct AsteroidIdentity;
 
 const RANDOM_SHIP_COUNT: usize = 50;
 const RANDOM_ASTEROID_COUNT: usize = 100;
@@ -90,11 +92,22 @@ pub fn spawn_random_map(
     }
 }
 
+pub fn spawn_assets(
+    mut _commands: Commands,
+    _ship_material: Res<crate::ships::ShipMaterial>,
+    _asteroid_material: Res<crate::asteroid::Material>,
+) {
+    let future = async move {
+        get_assets().await;
+    };
+    IoTaskPool::get().spawn(Compat::new(future)).detach();
+}
+
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_random_map);
+        app.add_systems(Startup, (spawn_random_map, spawn_assets));
         //app.add_systems(Update, update_map.run_if(on_timer(Duration::from_secs(4))));
     }
 }
