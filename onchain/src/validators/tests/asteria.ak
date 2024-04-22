@@ -244,7 +244,6 @@ fn mine(options: MineTestOptions) -> Bool {
     Output {
       address: asteria_address,
       value: asteria_in.output.value
-        |> value.add(ada_policy_id, ada_asset_name, -2_000_000)
         |> value.add(ada_policy_id, ada_asset_name, -options.lovelace_mined),
       datum: if options.preserve_counter {
         InlineDatum(asteria_datum)
