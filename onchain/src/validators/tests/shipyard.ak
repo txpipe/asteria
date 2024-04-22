@@ -283,8 +283,8 @@ fn set_burn_test_options() -> BurnTestOptions {
   let burnt_value =
     value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
   BurnTestOptions {
-    pos_x: 0,
-    pos_y: 0,
+    pos_x: 5,
+    pos_y: -12,
     ship_addr,
     shipyard_policy: mock.shipyard_policy,
     no_ship_input: False,
@@ -391,11 +391,6 @@ test burn_ok() {
 test no_ship_input() fail {
   let options =
     BurnTestOptions { ..set_burn_test_options(), no_ship_input: True }
-  ship_burn(options)
-}
-
-test ship_not_at_center() fail {
-  let options = BurnTestOptions { ..set_burn_test_options(), pos_x: 1 }
   ship_burn(options)
 }
 

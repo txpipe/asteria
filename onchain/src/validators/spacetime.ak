@@ -57,7 +57,7 @@ validator(
         expect [ship_output] =
           list.filter(
             outputs,
-            fn(output) { utils.is_ship_token_in_utxo(output, shipyard_policy) },
+            fn(output) { output.address == ship_input.output.address },
           )
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
@@ -90,7 +90,7 @@ validator(
         expect [ship_output] =
           list.filter(
             outputs,
-            fn(output) { utils.is_ship_token_in_utxo(output, shipyard_policy) },
+            fn(output) { output.address == ship_input.output.address },
           )
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
@@ -230,15 +230,13 @@ validator(
       }
 
       BurnShip -> {
-        expect Some(ship_input) =
+        expect Some(_) =
           list.find(
             inputs,
             fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
           )
-        expect InlineDatum(ship_datum) = ship_input.output.datum
-        expect ship_datum: ShipDatum = ship_datum
         expect [(_, -1)] = minted_tokens
-        ship_datum.pos_x == 0 && ship_datum.pos_y == 0
+        True
       }
     }
   }
