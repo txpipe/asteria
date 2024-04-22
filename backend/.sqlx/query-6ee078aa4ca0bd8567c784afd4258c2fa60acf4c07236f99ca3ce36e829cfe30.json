@@ -1,12 +1,12 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards\n             FROM MapObjects\n             WHERE positionX BETWEEN ($1::int - $3::int) AND ($1::int + $3::int)\n               AND positionY BETWEEN ($2::int - $3::int) AND ($2::int + $3::int)\n               AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int",
+  "query": "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards\n             FROM mapobjects\n             WHERE class = 'Asteria' AND shipyardPolicy = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 1,
@@ -31,42 +31,40 @@
       {
         "ordinal": 5,
         "name": "token_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
         "name": "pilot_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 7,
         "name": "class",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
         "name": "total_rewards",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4",
-        "Int4",
-        "Int4"
+        "Text"
       ]
     },
     "nullable": [
-      false,
-      true,
-      false,
-      false,
       true,
       true,
       true,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
       true
     ]
   },
-  "hash": "d234cba02f8f6fa0620368c1a6c164859c6a6efaade36ffa824a1bcbda537664"
+  "hash": "6ee078aa4ca0bd8567c784afd4258c2fa60acf4c07236f99ca3ce36e829cfe30"
 }
