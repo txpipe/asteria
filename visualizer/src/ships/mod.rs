@@ -1,10 +1,6 @@
-use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_rand::{prelude::WyRand, resource::GlobalEntropy};
-use rand::Rng;
-use std::time::Duration;
-
+use bevy::prelude::*;
 use crate::map::{Fuel, Position, ShipIdentity};
-use hud::{HudState, render_hud};
+use hud::{render_hud, HudState};
 
 mod hud;
 
@@ -83,30 +79,12 @@ fn render(mut query: Query<(&mut Transform, &Position)>) {
     }
 }
 
-fn random_move(
-    mut query: Query<(&mut Position, &Fuel), With<ShipIdentity>>,
-    mut rng: ResMut<GlobalEntropy<WyRand>>,
-) {
-    for (mut pos, fuel) in query.iter_mut() {
-        if fuel.available > 300 {
-            pos.x += rng.gen_range(-1..1);
-            pos.y += rng.gen_range(-1..1);
-        }
-    }
-}
 pub struct ShipsPlugin;
 
 impl Plugin for ShipsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ShipMaterial>()
-            .add_systems(
-                Update,
-                (
-                    (render).chain(),
-                    random_move.run_if(on_timer(Duration::from_secs(2))),
-                    render_hud,
-                ),
-            )
+            .add_systems(Update, ((render).chain(), render_hud))
             .insert_state(HudState(None));
     }
 }
