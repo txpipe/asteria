@@ -8,8 +8,8 @@ use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{AssetName, PolicyId, Value, add, from_lovelace}
 use asteria/test_mock as mock
 use asteria/test_utils
-use asteria/types.{AsteriaDatum, BurnShip, MintShip, ShipDatum}
-use shipyard
+use asteria/types.{AssetClass, AsteriaDatum, BurnShip, MintShip, ShipDatum}
+use spacetime
 
 // ==============================================================================================
 // Mint Tests
@@ -60,7 +60,6 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
       fuel: args.initial_fuel,
       pos_x: args.initial_x,
       pos_y: args.initial_y,
-      shipyard_policy,
       ship_token_name: args.ship_token_name,
       pilot_token_name: args.pilot_token_name,
     }
@@ -83,17 +82,22 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
 }
 
 fn ship_mint(options: MintTestOptions) -> Bool {
+  let max_distance = 30
+  let fuel_per_step = 1
+  let max_ship_fuel = 100
+  let initial_fuel = 40
+  let min_distance = 10
   let shipyard_policy = options.shipyard_policy
-  let ship_credential = mock.ship_credential
-  let ship_addr =
+  let admin_token =
+    AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
+  let ship_address =
     Address {
-      payment_credential: ScriptCredential(ship_credential),
+      payment_credential: ScriptCredential(shipyard_policy),
       stake_credential: None,
     }
-  let asteria_credential = mock.asteria_credential
-  let asteria_addr =
+  let asteria_address =
     Address {
-      payment_credential: ScriptCredential(asteria_credential),
+      payment_credential: ScriptCredential(mock.asteria_credential),
       stake_credential: None,
     }
   let admin_policy = mock.admin_policy
@@ -108,7 +112,7 @@ fn ship_mint(options: MintTestOptions) -> Bool {
         from_lovelace(2_000_000)
           |> add(admin_policy, admin_token_name, 1)
       Output {
-        address: asteria_addr,
+        address: asteria_address,
         value,
         datum: InlineDatum(asteria_datum),
         reference_script: None,
@@ -124,7 +128,7 @@ fn ship_mint(options: MintTestOptions) -> Bool {
   }
   let ship_out =
     Output {
-      address: ship_addr,
+      address: ship_address,
       value: options.ship_value,
       datum: InlineDatum(options.ship_datum),
       reference_script: None,
@@ -172,12 +176,16 @@ fn ship_mint(options: MintTestOptions) -> Bool {
   let mint_ctx =
     ScriptContext { transaction: tx, purpose: Mint(shipyard_policy) }
   let result =
-    shipyard.mint(
-      asteria_addr,
-      ship_addr,
-      initial_fuel: 40,
-      min_distance: 15,
-      redeemer: redeemer,
+    spacetime.mint(
+      mock.pellet_credential,
+      mock.asteria_credential,
+      admin_token,
+      max_distance,
+      max_ship_fuel,
+      fuel_per_step,
+      initial_fuel,
+      min_distance,
+      redeemer,
       ctx: mint_ctx,
     )
   result
@@ -225,14 +233,6 @@ test wrong_initial_fuel() fail {
 test initial_distance_below_min() fail {
   let args = MintTestArgs { ..default_args(), initial_x: 3, initial_y: 3 }
   ship_mint(set_mint_test_options(args))
-}
-
-test wrong_policy_in_datum() fail {
-  let default_options = set_mint_test_options(default_args())
-  let wrong_datum =
-    ShipDatum { ..default_options.ship_datum, shipyard_policy: #"ffff" }
-  let options = MintTestOptions { ..default_options, ship_datum: wrong_datum }
-  ship_mint(options)
 }
 
 test wrong_ship_name_in_datum() fail {
@@ -293,22 +293,23 @@ fn set_burn_test_options() -> BurnTestOptions {
 }
 
 fn ship_burn(options: BurnTestOptions) -> Bool {
+  let max_distance = 30
+  let fuel_per_step = 1
+  let max_ship_fuel = 100
+  let initial_fuel = 40
+  let min_distance = 10
   let ship_token_name = mock.ship_token_name
   let pilot_token_name = mock.pilot_token_name
   let shipyard_policy = options.shipyard_policy
   let transaction_id = mock.transaction_id_1
-  let asteria_addr =
-    Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
-      stake_credential: None,
-    }
+  let admin_token =
+    AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = BurnShip
   let ship_datum =
     ShipDatum {
       fuel: 40,
       pos_x: options.pos_x,
       pos_y: options.pos_y,
-      shipyard_policy,
       ship_token_name,
       pilot_token_name,
     }
@@ -368,12 +369,16 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
   let mint_ctx =
     ScriptContext { transaction: tx, purpose: Mint(shipyard_policy) }
   let result =
-    shipyard.mint(
-      asteria_addr,
-      spacetime_validator_address: options.ship_addr,
-      initial_fuel: 40,
-      min_distance: 15,
-      redeemer: redeemer,
+    spacetime.mint(
+      mock.pellet_credential,
+      mock.asteria_credential,
+      admin_token,
+      max_distance,
+      max_ship_fuel,
+      fuel_per_step,
+      initial_fuel,
+      min_distance,
+      redeemer,
       ctx: mint_ctx,
     )
   result

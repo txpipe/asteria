@@ -11,5 +11,4 @@ target
 # .env files
 **/.env
 
-# sqlx
-**/.sqlx
+.mono

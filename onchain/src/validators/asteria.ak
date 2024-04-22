@@ -47,10 +47,10 @@ validator(
           asteria_output_datum.shipyard_policy == shipyard_policy
 
         and {
-          must_hold_admin_token,
-          must_add_fee,
-          must_increment_counter,
-          must_preserve_shipyard_policy,
+          must_add_fee?,
+          must_hold_admin_token?,
+          must_increment_counter?,
+          must_preserve_shipyard_policy?,
         }
       }
 
@@ -63,7 +63,7 @@ validator(
             },
           )
         expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let rewards = value.lovelace_of(asteria_input.output.value)
+        let rewards = value.lovelace_of(asteria_input.output.value) - 2_000_000
         let must_respect_max_mining =
           compare_with(
             from_int(value.lovelace_of(asteria_output.value)),
@@ -75,8 +75,8 @@ validator(
           )
         let must_preserve_datum = datum == asteria_output_datum
         and {
-          must_respect_max_mining,
-          must_preserve_datum,
+          must_respect_max_mining?,
+          must_preserve_datum?,
         }
       }
     }
