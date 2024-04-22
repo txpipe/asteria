@@ -1,9 +1,9 @@
 use async_graphql::http::GraphiQLSource;
 use dotenv::dotenv;
+use num_traits::cast::ToPrimitive;
 use num_traits::Zero;
 use rocket::response::content::RawHtml;
 use sqlx::types::BigDecimal;
-use num_traits::cast::ToPrimitive;
 use std::env;
 use std::ops::Deref;
 use std::vec;
@@ -27,7 +27,7 @@ pub struct Ship {
 }
 
 #[derive(Clone, SimpleObject)]
-pub struct FuelPellet {
+pub struct Fuel {
     id: ID,
     fuel: i32,
     position: Position,
@@ -36,7 +36,7 @@ pub struct FuelPellet {
 }
 
 #[derive(Clone, SimpleObject)]
-pub struct RewardPot {
+pub struct Asteria {
     id: ID,
     position: Position,
     total_rewards: i64,
@@ -47,6 +47,7 @@ pub struct RewardPot {
 pub struct AsteriaState {
     ship_counter: i32,
     shipyard_policy: PolicyId,
+    reward: i64,
 }
 
 #[derive(Clone, SimpleObject)]
@@ -94,8 +95,8 @@ pub enum ShipActionType {
 #[derive(Union)]
 pub enum MapObject {
     Ship(Ship),
-    FuelPellet(FuelPellet),
-    RewardPot(RewardPot),
+    Fuel(Fuel),
+    Asteria(Asteria),
 }
 
 #[derive(Interface)]
@@ -106,8 +107,8 @@ pub enum MapObject {
 
 pub enum PositionalInterface {
     Ship(Ship),
-    FuelPellet(FuelPellet),
-    RewardPot(RewardPot),
+    Fuel(Fuel),
+    Asteria(Asteria),
 }
 
 #[derive(Debug)]
@@ -125,104 +126,193 @@ struct MapObjectRecord {
 
 #[Object]
 impl QueryRoot {
-    async fn ship(&self, _ctx: &Context<'_>, ship_token_name: AssetNameInput) -> Ship {
-        Ship {
-            id: ID::from("ship-1234"),
-            fuel: 100,
-            position: Position { x: 10, y: 20 },
-            shipyard_policy: PolicyId {
-                id: ID::from("policy-5678"),
-            },
-            ship_token_name: AssetName {
-                name: ship_token_name.name.clone(),
-            },
-            pilot_token_name: AssetName {
-                name: "PilotOne".to_string(),
-            },
-            class: "Ship".to_string(),
+    async fn ship(&self, ctx: &Context<'_>, ship_token_name: AssetNameInput) -> Result<Ship> {
+        // Access the connection pool from the GraphQL context
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let shipyard_policy_id = ctx
+            .data::<PolicyId>()
+            .map_err(|e| Error::new(e.message))?;
+
+        // Query to select a ship by token name
+        let fetched_ship = sqlx::query_as!(MapObjectRecord,
+            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
+             FROM mapobjects
+             WHERE shipTokenName = $1 AND shipyardPolicy = $2",
+            ship_token_name.name, shipyard_policy_id.id.to_string()
+        );
+
+        let record = fetched_ship
+            .fetch_one(pool)
+            .await
+            .map_err(|e| Error::new(e.to_string()))?;
+
+        match record.class.as_deref() {
+            Some("Ship") => Ok(Ship {
+                id: ID::from(record.id.unwrap_or_default()),
+                fuel: record.fuel.unwrap_or(0),
+                position: Position {
+                    x: record.position_x.unwrap_or(0),
+                    y: record.position_y.unwrap_or(0),
+                },
+                shipyard_policy: PolicyId {
+                    id: ID::from(record.policy_id.unwrap_or_default()),
+                },
+                ship_token_name: AssetName {
+                    name: record.token_name.unwrap_or_default(),
+                },
+                pilot_token_name: AssetName {
+                    name: record.pilot_name.unwrap_or_default(),
+                },
+                class: record.class.unwrap_or_default(),
+            }),
+            _ => panic!("Unknown class type or class not provided"),
         }
     }
 
     async fn ships(
         &self,
-        _ctx: &Context<'_>,
+        ctx: &Context<'_>,
         limit: Option<i32>,
         offset: Option<i32>,
-    ) -> Vec<Ship> {
-        let mut ships = Vec::new();
-        let num_ships = limit.unwrap_or(10);
-        let start = offset.unwrap_or(0) as usize;
+    ) -> Result<Vec<Ship>> {
+        // Access the connection pool from the GraphQL context
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
 
-        // Generate fake data for ships
-        for i in start..(start + num_ships as usize) {
+        let shipyard_policy_id = ctx
+            .data::<PolicyId>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let mut ships = Vec::new();
+
+        let num_ships = limit.unwrap_or(10) as i64;
+
+        let start = offset.unwrap_or(0) as i64;
+
+        // Query to select ships
+        let fetched_ships = sqlx::query_as!(MapObjectRecord,
+            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
+             FROM mapobjects
+             WHERE class = 'Ship' AND shipyardPolicy = $1
+             LIMIT $2 OFFSET $3",
+            shipyard_policy_id.id.to_string(), num_ships, start
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        for record in fetched_ships {
             ships.push(Ship {
-                id: ID::from(format!("ship-{}", i)),
-                fuel: 100,
+                id: ID::from(record.id.unwrap_or_default()),
+                fuel: record.fuel.unwrap_or(0),
                 position: Position {
-                    x: i as i32 * 10,
-                    y: i as i32 * 20,
+                    x: record.position_x.unwrap_or(0),
+                    y: record.position_y.unwrap_or(0),
                 },
                 shipyard_policy: PolicyId {
-                    id: ID::from(format!("policy-{}", i)),
+                    id: ID::from(record.policy_id.unwrap_or_default()),
                 },
                 ship_token_name: AssetName {
-                    name: format!("Explorer-{}", i),
+                    name: record.token_name.unwrap_or_default(),
                 },
                 pilot_token_name: AssetName {
-                    name: format!("Pilot-{}", i),
+                    name: record.pilot_name.unwrap_or_default(),
                 },
-                class: "Battleship".to_string(),
+                class: record.class.unwrap_or_default(),
             });
         }
 
-        ships
+        Ok(ships)
+
     }
 
     async fn fuel_pellets(
         &self,
-        _ctx: &Context<'_>,
+        ctx: &Context<'_>,
         limit: Option<i32>,
         offset: Option<i32>,
-    ) -> Vec<FuelPellet> {
-        let mut fuel_pellets = Vec::new();
-        let num_pellets = limit.unwrap_or(10);
-        let start = offset.unwrap_or(0) as usize;
+    ) -> Result<Vec<Fuel>> {
+        // Access the connection pool from the GraphQL context
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
 
-        // Generate fake data for fuel pellets
-        for i in start..(start + num_pellets as usize) {
-            fuel_pellets.push(FuelPellet {
-                id: ID::from(format!("pellet-{}", i)),
-                fuel: 100,
+        let shipyard_policy_id = ctx
+            .data::<PolicyId>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let mut fuels = Vec::new();
+
+        let num_fuels = limit.unwrap_or(10) as i64;
+
+        let start = offset.unwrap_or(0) as i64;
+
+        // Query to select fuel pellets
+        let fetched_fuels = sqlx::query_as!(MapObjectRecord,
+            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
+             FROM mapobjects
+             WHERE class = 'Fuel' AND shipyardPolicy = $1
+             LIMIT $2 OFFSET $3",
+            shipyard_policy_id.id.to_string(), num_fuels, start
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+        
+        for record in fetched_fuels {
+            fuels.push(Fuel {
+                id: ID::from(record.id.unwrap_or_default()),
+                fuel: record.fuel.unwrap_or(0),
                 position: Position {
-                    x: i as i32 * 5,
-                    y: i as i32 * 10,
+                    x: record.position_x.unwrap_or(0),
+                    y: record.position_y.unwrap_or(0),
                 },
                 shipyard_policy: PolicyId {
-                    id: ID::from(format!("policy-{}", i)),
+                    id: ID::from(record.policy_id.unwrap_or_default()),
                 },
-                class: "Standard".to_string(),
+                class: record.class.unwrap_or_default(),
             });
         }
 
-        fuel_pellets
+        Ok(fuels)
     }
 
-    async fn asteria_state(&self, _ctx: &Context<'_>) -> AsteriaState {
-        AsteriaState {
-            ship_counter: 123,
+    async fn asteria(&self, ctx: &Context<'_>) -> Result<AsteriaState> {
+        // Access the connection pool from the GraphQL context
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let shipyard_policy_id = ctx
+            .data::<PolicyId>()
+            .map_err(|e| Error::new(e.message))?;
+
+        // Query to select the number of ships and the shipyard policy
+        let fetched_asteria_state = sqlx::query_as!(MapObjectRecord,
+            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
+             FROM mapobjects
+             WHERE class = 'Asteria' AND shipyardPolicy = $1",
+            shipyard_policy_id.id.to_string()
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        Ok(AsteriaState {
+            ship_counter: fetched_asteria_state.fuel.unwrap_or(0),
             shipyard_policy: PolicyId {
-                id: ID::from("some-policy-id"),
+                id: ID::from(fetched_asteria_state.policy_id.unwrap_or_default()),
             },
-        }
-    }
-
-    async fn reward_pot(&self, _ctx: &Context<'_>) -> RewardPot {
-        RewardPot {
-            id: ID::from("reward-123"),
-            position: Position { x: 100, y: 200 },
-            total_rewards: 5000,
-            class: "Standard".to_string(),
-        }
+            reward: fetched_asteria_state
+                .total_rewards
+                .unwrap_or(BigDecimal::zero())
+                .to_i64()
+                .unwrap(),
+        })
     }
 
     async fn objects_in_radius(
@@ -236,14 +326,19 @@ impl QueryRoot {
             .data::<sqlx::PgPool>()
             .map_err(|e| Error::new(e.message))?;
 
+        let shipyard_policy_id = ctx
+            .data::<PolicyId>()
+            .map_err(|e| Error::new(e.message))?;
+
         // Query to select map objects within a radius using Manhattan distance
         let fetched_objects = sqlx::query_as!(MapObjectRecord,
             "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
              FROM mapobjects
              WHERE positionX BETWEEN ($1::int - $3::int) AND ($1::int + $3::int)
                AND positionY BETWEEN ($2::int - $3::int) AND ($2::int + $3::int)
-               AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int",
-            center.x, center.y, radius
+               AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int
+               AND shipyardPolicy = $4::text",
+            center.x, center.y, radius, shipyard_policy_id.id.to_string()
         )
         .fetch_all(pool)
         .await
@@ -269,7 +364,7 @@ impl QueryRoot {
                     },
                     class: record.class.unwrap_or_default(),
                 }),
-                Some("Fuel") => MapObject::FuelPellet(FuelPellet {
+                Some("Fuel") => MapObject::Fuel(Fuel {
                     id: ID::from(record.id.unwrap_or_default()),
                     fuel: record.fuel.unwrap_or(0),
                     position: Position {
@@ -281,13 +376,17 @@ impl QueryRoot {
                     },
                     class: record.class.unwrap_or_default(),
                 }),
-                Some("Asteria") => MapObject::RewardPot(RewardPot {
+                Some("Asteria") => MapObject::Asteria(Asteria {
                     id: ID::from(record.id.unwrap_or_default()),
                     position: Position {
                         x: record.position_x.unwrap_or(0),
                         y: record.position_y.unwrap_or(0),
                     },
-                    total_rewards: record.total_rewards.unwrap_or(BigDecimal::zero()).to_i64().unwrap(),
+                    total_rewards: record
+                        .total_rewards
+                        .unwrap_or(BigDecimal::zero())
+                        .to_i64()
+                        .unwrap(),
                     class: record.class.unwrap_or_default(),
                 }),
                 _ => panic!("Unknown class type or class not provided"),
@@ -384,6 +483,13 @@ async fn rocket() -> _ {
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
 
+    let shipyard_policy_id =
+        env::var("SHIPYARD_POLICY_ID").expect("SHIPYARD_POLICY_ID must be set in the environment");
+
+    let shipyard_policy_id = PolicyId {
+        id: ID::from(shipyard_policy_id),
+    };
+
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
         .connect(database_url.as_str())
@@ -393,6 +499,7 @@ async fn rocket() -> _ {
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
         .data(pool.clone())
+        .data(shipyard_policy_id)
         .finish();
 
     rocket::build()
