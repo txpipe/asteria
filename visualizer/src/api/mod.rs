@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde_json::json;
 use std::error::Error;
 
-pub const API_URL: &str = "http://127.0.0.1:8000/graphql";
+pub const API_URL: &str = "https://dmtr_scrolls_v0_preview_1t9nhgnmxtpzrzm2gwv0723cu.scrolls-m0.demeter.run/graphql";
 
 #[derive(Debug, Deserialize)]
 pub enum AssetClass {
