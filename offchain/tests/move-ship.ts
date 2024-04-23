@@ -1,6 +1,6 @@
+import { fuel_per_step } from "../constants.ts";
 import { moveShip } from "../transactions/move-ship.ts";
 
-const fuel_per_step = 1n;
 const delta_x = -7n;
 const delta_y = 10n;
 const ship_tx_hash =
