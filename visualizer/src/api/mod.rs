@@ -2,12 +2,14 @@ use serde::Deserialize;
 use serde_json::json;
 use std::error::Error;
 
-pub const API_URL: &str = "https://dmtr_scrolls_v0_preview_1t9nhgnmxtpzrzm2gwv0723cu.scrolls-m0.demeter.run/graphql";
+pub const API_URL: &str =
+    "https://dmtr_scrolls_v0_preprod_1v4ux6kn0wp24qdjz259lrkv2.scrolls-m0.demeter.run/graphql";
 
 #[derive(Debug, Deserialize)]
 pub enum AssetClass {
     Ship,
     Fuel,
+    Asteria,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,7 +28,7 @@ pub struct AssetPositionDto {
 pub struct AssetDto {
     pub id: String,
     pub ship_token_name: Option<AssetTokenDto>,
-    pub fuel: u32,
+    pub fuel: Option<u32>,
     pub position: AssetPositionDto,
     pub class: AssetClass,
 }
@@ -62,6 +64,13 @@ pub async fn get_assets() -> Result<Vec<AssetDto>, Box<dyn Error>> {
                 ... on Fuel {
                     id 
                     fuel
+                    position {
+                        x, y
+                    }
+                    class
+                }
+                ... on Asteria {
+                     id,
                     position {
                         x, y
                     }
