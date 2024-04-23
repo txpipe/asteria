@@ -13,6 +13,13 @@ rand = "0.8.5"
 rand_core = "0.6"
 bevy_rand = { version = "0.5", features = ["rand_chacha", "wyrand"] }
 bevy_mod_picking = "0.18.2"
+serde = { version = "1.0.198", features = ["derive"] }
+reqwest = { version = "0.12.4", features = ["json"] }
+async-compat = "0.2.3"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+serde_json = "1.0.116"
+crossbeam-channel = "0.5.12"
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"

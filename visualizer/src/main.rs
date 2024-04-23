@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use bevy_mod_picking::prelude::*;
 use bevy_pancam::{PanCam, PanCamPlugin};
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
+use tracing::Level;
 
+mod api;
 mod asteroid;
 mod map;
 mod ships;
@@ -11,9 +13,11 @@ mod ships;
 struct MyCameraMarker;
 
 fn setup_camera(mut commands: Commands) {
-    commands
-        .spawn(Camera2dBundle::default())
-        .insert(PanCam::default());
+    commands.spawn(Camera2dBundle::default()).insert(PanCam {
+        min_scale: 1.,
+        max_scale: Some(3.),
+        ..default()
+    });
 }
 
 fn setup_ui(mut commands: Commands) {
@@ -31,6 +35,8 @@ fn setup_ui(mut commands: Commands) {
 // }
 
 fn main() {
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(PanCamPlugin)

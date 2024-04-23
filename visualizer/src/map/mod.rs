@@ -1,28 +1,18 @@
-use bevy::prelude::*;
-use rand::Rng;
+use async_compat::Compat;
+use bevy::{prelude::*, tasks::IoTaskPool};
+use crossbeam_channel::{bounded, Receiver};
+use std::{thread::sleep, time::Duration};
 
-pub trait FromRandom<R>
-where
-    R: rand::Rng,
-{
-    fn random(rng: &mut R) -> Self;
-}
+use crate::api::{get_assets, AssetDto};
 
 #[derive(Component)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
 }
-
-impl<R> FromRandom<R> for Position
-where
-    R: Rng,
-{
-    fn random(rng: &mut R) -> Self {
-        Self {
-            x: rng.gen_range(-20..20),
-            y: rng.gen_range(-20..20),
-        }
+impl Position {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
     }
 }
 
@@ -30,15 +20,9 @@ where
 pub struct Fuel {
     pub available: u32,
 }
-
-impl<R> FromRandom<R> for Fuel
-where
-    R: Rng,
-{
-    fn random(rng: &mut R) -> Self {
-        Self {
-            available: rng.gen_range(0..500),
-        }
+impl Fuel {
+    pub fn new(available: u32) -> Self {
+        Self { available }
     }
 }
 
@@ -46,47 +30,91 @@ where
 pub struct ShipIdentity {
     pub name: String,
 }
-
-impl<R> FromRandom<R> for ShipIdentity
-where
-    R: Rng,
-{
-    fn random(rng: &mut R) -> Self {
-        Self {
-            name: format!("SHIP{}", rng.gen_range(0..2000)),
-        }
+impl ShipIdentity {
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 }
 
 #[derive(Component)]
-pub struct AsteroidIdentity; 
+pub struct AsteroidIdentity;
 
+#[derive(Resource, Deref)]
+struct StreamReceiver(Receiver<Vec<AssetDto>>);
 
-const RANDOM_SHIP_COUNT: usize = 50;
-const RANDOM_ASTEROID_COUNT: usize = 100;
+#[derive(Event)]
+struct StreamEvent(Vec<AssetDto>);
 
-pub fn spawn_random_map(
+#[derive(States, Debug, Clone, Eq, PartialEq, Hash)]
+struct AssetOnMap {
+    entity: Entity,
+    id: String,
+}
+#[derive(States, Debug, Clone, Eq, PartialEq, Hash)]
+pub struct MapState(Vec<AssetOnMap>);
+
+fn load_assets_map(mut commands: Commands) {
+    let (tx, rx) = bounded::<Vec<AssetDto>>(1);
+    let future = async move {
+        loop {
+            let assets_result = get_assets().await;
+
+            if let Err(err) = assets_result {
+                error!(error = err.to_string(), "Error to load assets");
+                return;
+            }
+
+            let assets = assets_result.unwrap();
+            tx.send(assets).unwrap();
+
+            let duration = Duration::from_secs(1);
+            sleep(duration);
+        }
+    };
+    IoTaskPool::get().spawn(Compat::new(future)).detach();
+    commands.insert_resource(StreamReceiver(rx));
+}
+fn read_load_assets_stream(receiver: Res<StreamReceiver>, mut events: EventWriter<StreamEvent>) {
+    for from_stream in receiver.try_iter() {
+        events.send(StreamEvent(from_stream));
+    }
+}
+fn spawn_assets(
     mut commands: Commands,
+    mut reader: EventReader<StreamEvent>,
     ship_material: Res<crate::ships::ShipMaterial>,
     asteroid_material: Res<crate::asteroid::Material>,
+    mut state_mut: ResMut<NextState<MapState>>,
+    state: Res<State<MapState>>,
 ) {
-    let mut rng = rand::thread_rng();
-
-    for _ in 0..RANDOM_SHIP_COUNT {
-        commands.spawn(crate::ships::Ship::new(
-            FromRandom::random(&mut rng),
-            FromRandom::random(&mut rng),
-            FromRandom::random(&mut rng),
-            &ship_material,
-        ));
-    }
-
-    for _ in 0..RANDOM_ASTEROID_COUNT {
-        commands.spawn(crate::asteroid::Asteroid::new(
-            FromRandom::random(&mut rng),
-            FromRandom::random(&mut rng),
-            &asteroid_material,
-        ));
+    for event in reader.read() {
+        let mut assets_on_map = state.get().0.clone();
+        for asset in event.0.iter() {
+            if let Some(asset_on_map) = state.get().0.iter().find(|a| a.id == asset.id) {
+                let mut entity = commands.get_entity(asset_on_map.entity).unwrap();
+                let position = Position::new(asset.position.x, asset.position.y);
+                entity.insert(position);
+            } else {
+                let entity = match asset.class {
+                    crate::api::AssetClass::Ship => commands.spawn(crate::ships::Ship::new(
+                        ShipIdentity::new(asset.ship_token_name.as_ref().unwrap().name.clone()),
+                        Position::new(asset.position.x, asset.position.y),
+                        Fuel::new(asset.fuel),
+                        &ship_material,
+                    )),
+                    crate::api::AssetClass::Fuel => commands.spawn(crate::asteroid::Asteroid::new(
+                        Position::new(asset.position.x, asset.position.y),
+                        Fuel::new(asset.fuel),
+                        &asteroid_material,
+                    )),
+                };
+                assets_on_map.push(AssetOnMap {
+                    entity: entity.id(),
+                    id: asset.id.clone(),
+                });
+            }
+        }
+        state_mut.set(MapState(assets_on_map));
     }
 }
 
@@ -94,7 +122,9 @@ pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_random_map);
-        //app.add_systems(Update, update_map.run_if(on_timer(Duration::from_secs(4))));
+        app.add_event::<StreamEvent>()
+            .add_systems(Startup, load_assets_map)
+            .add_systems(Update, (read_load_assets_stream, spawn_assets))
+            .insert_state(MapState(Vec::new()));
     }
 }
