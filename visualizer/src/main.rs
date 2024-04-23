@@ -16,7 +16,7 @@ struct MyCameraMarker;
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default()).insert(PanCam {
         min_scale: 1.,
-        max_scale: Some(3.),
+        // max_scale: Some(3.),
         ..default()
     });
 }
