@@ -118,12 +118,16 @@ fn spawn_assets(
     }
 }
 
+fn spawn_pot(mut commands: Commands, pot_material: Res<crate::pot::Material>) {
+    commands.spawn(crate::pot::Pot::new(Position::new(0, 0), &pot_material));
+}
+
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<StreamEvent>()
-            .add_systems(Startup, load_assets_map)
+            .add_systems(Startup, (load_assets_map, spawn_pot))
             .add_systems(Update, (read_load_assets_stream, spawn_assets))
             .insert_state(MapState(Vec::new()));
     }
