@@ -1,13 +1,12 @@
+use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy_rand::{prelude::WyRand, resource::GlobalEntropy};
+use rand::Rng;
 use std::time::Duration;
 
-use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_rand::{
-    prelude::{ChaCha8Rng, WyRand},
-    resource::GlobalEntropy,
-};
-use rand::Rng;
-
 use crate::map::{Fuel, Position, ShipIdentity};
+use hud::{HudState, render_hud};
+
+mod hud;
 
 const TILE_SIZE: u32 = 64;
 
@@ -86,7 +85,6 @@ fn render(mut query: Query<(&mut Transform, &Position)>) {
 
 fn random_move(
     mut query: Query<(&mut Position, &Fuel), With<ShipIdentity>>,
-    time: Res<Time>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     for (mut pos, fuel) in query.iter_mut() {
@@ -96,13 +94,19 @@ fn random_move(
         }
     }
 }
-
 pub struct ShipsPlugin;
 
 impl Plugin for ShipsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ShipMaterial>()
-            .add_systems(Update, (render).chain())
-            .add_systems(Update, random_move.run_if(on_timer(Duration::from_secs(2))));
+            .add_systems(
+                Update,
+                (
+                    (render).chain(),
+                    random_move.run_if(on_timer(Duration::from_secs(2))),
+                    render_hud,
+                ),
+            )
+            .insert_state(HudState(None));
     }
 }
