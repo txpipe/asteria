@@ -1,26 +1,24 @@
 
-# Asteria
+# Introduction
 
-A Cardano bot challenge to showcase the capabilities of the eUTxO model.
+Asteria is a Cardano bot challenge to showcase the capabilities of the eUTxO model. In particular, it's concurrency benefits.
 
-## Mechanics
+Developers participate by building their own bots (automated agents) that interact directly with the Cardano blockchain. Each bot can be defined as an off-chain process that controls particular UTxOs that are constrained by on-chain validators.
 
-In this bot challenge you compete by moving a ship (your bot) through a 2D grid. The ship that reaches the center is allowed to collect the rewards.
+Once the challenge has been layed out by the administrators, all following interactions and rewards are fully decentralized. There're no _admin keys_ to adjust any of the mechanics.
 
-Ships are implemented as UTxOs with a datum holding a pair of (x, y) coordinates that represent their position in the 2D grid. To move a ship, a transaction must consume the UTxO and create a new one with holding the new position.
+## Game Overview
 
-![grid](/introduction1.svg)
+- Your bot is in charge of controlling a (space) ship that moves in a 2D grid.
+- The goal is to reach coordinates (0, 0) allowing the rewards of the challenge to be claimed.
+- Your movement is constrained by a maximum speed and the availability of a fuel resource.
+- Fuel is freely available at fixed coordinates in the grid, ships can gather the fuel if their coordinates overlap.
 
-Movement of the ships is constrained by a _Space-Time_ on-chain script that limits their velocity. Strictly speaking, the max distance that a ship can move in any given transaction has a constant upper bound. Distances are defined using [Manhattan distance] to simplify the math.
 
-![move tx](/introduction2.svg)
+## Ongoing Challenges
 
-Movement of the ships is also constrained by a _fuel_ token that is required for any change in position. An specifc amount of _fuel_ is required per distance unit. The lack of the required fuel amount will block the movement of the ship.
+There might be any number of open challenges (games) ongoing at any point. Everything in Asteria is open-source, so you can even run your own challenge.
 
-![gather tx](/introduction3.svg)
-
-To accumulate fuel, ships must _gather_ these tokens which are distributed randomly across the same grid. To gather a fuel token, your ship needs to be in the same coordinates as the fuel.
-
-To create a ship, a participant must mint the corresponding NFT from the valid policy id. A minimum amount of ADA will be requried for the mint. This ADA used to mint the ships will be increment the rewards locked for the winner. The initial position of the ship is decided by the player but is contrainted to the external boundary of the grid.
-
-A unique UTxO will be place at the center of the grid to hold the rewards for the winner of the challenge. To claim rewards, a ship must be located at the center of the grid. Each claim is allowed to collect 1/2 of the total rewards.
+|Name|Network|Shipyard Policy|
+|--|--|--|
+|alpha|`preview`|`000000`| 

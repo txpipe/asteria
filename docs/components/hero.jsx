@@ -5,17 +5,12 @@ export function Hero() {
         <div className="flex justify-center">
           <img src="/logo.png" alt="Asteria logo" className="mb-4" />
         </div>
-        <h1 className="flex flex-col flex-wrap font-bold text-4xl md:text-6xl lg:text-7xl dark:text-gray-200">
-          The power of eUTxO model
-        </h1>
+        <h1 className="flex flex-col flex-wrap font-bold text-4xl md:text-6xl lg:text-7xl dark:text-gray-200">Asteria</h1>
       </div>
 
       <div className="mb-8 max-w-3xl text-center mx-auto">
         <p className="md:text-lg text-gray-600 dark:text-gray-400">
-          Asteria is an open hackathon, a bot challenge that leverages the eUTxO model.
-          Players participate by moving a ship across a 2D grid and gathering resources. ADA rewards are available to players that reach the center of the gird.
-          All interactions from participants happen through on-chain transactions, forcing the developer to learn about the UTxO Model.
-          With ADA reward incentive and a compelling experience, we hope to attract developers from both inside and outside of the Cardano ecosystem
+        A Cardano bot challenge to showcase the capabilities of the eUTxO model. Players participate by moving a ship across a 2D grid and gathering resources. ADA rewards are available to players that reach the center of the gird. All interactions from participants happen through on-chain transactions, that leverage the UTxO Model.
         </p>
       </div>
 
