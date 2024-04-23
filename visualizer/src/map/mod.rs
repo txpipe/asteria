@@ -84,6 +84,7 @@ fn spawn_assets(
     mut reader: EventReader<StreamEvent>,
     ship_material: Res<crate::ships::ShipMaterial>,
     asteroid_material: Res<crate::asteroid::Material>,
+    pot_material: Res<crate::pot::Material>,
     mut state_mut: ResMut<NextState<MapState>>,
     state: Res<State<MapState>>,
 ) {
@@ -99,13 +100,17 @@ fn spawn_assets(
                     crate::api::AssetClass::Ship => commands.spawn(crate::ships::Ship::new(
                         ShipIdentity::new(asset.ship_token_name.as_ref().unwrap().name.clone()),
                         Position::new(asset.position.x, asset.position.y),
-                        Fuel::new(asset.fuel),
+                        Fuel::new(asset.fuel.unwrap()),
                         &ship_material,
                     )),
                     crate::api::AssetClass::Fuel => commands.spawn(crate::asteroid::Asteroid::new(
                         Position::new(asset.position.x, asset.position.y),
-                        Fuel::new(asset.fuel),
+                        Fuel::new(asset.fuel.unwrap()),
                         &asteroid_material,
+                    )),
+                    crate::api::AssetClass::Asteria => commands.spawn(crate::pot::Pot::new(
+                        Position::new(asset.position.x, asset.position.y),
+                        &pot_material,
                     )),
                 };
                 assets_on_map.push(AssetOnMap {
@@ -118,16 +123,12 @@ fn spawn_assets(
     }
 }
 
-fn spawn_pot(mut commands: Commands, pot_material: Res<crate::pot::Material>) {
-    commands.spawn(crate::pot::Pot::new(Position::new(0, 0), &pot_material));
-}
-
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<StreamEvent>()
-            .add_systems(Startup, (load_assets_map, spawn_pot))
+            .add_systems(Startup, load_assets_map)
             .add_systems(Update, (read_load_assets_stream, spawn_assets))
             .insert_state(MapState(Vec::new()));
     }
