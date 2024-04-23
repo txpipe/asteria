@@ -4,8 +4,14 @@ import {
   TxHash,
   Constr,
   UTxO,
+  Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { distance, lucidBase, required_fuel } from "../utils.ts";
+import {
+  distance,
+  fetchReferenceScript,
+  lucidBase,
+  required_fuel,
+} from "../utils.ts";
 import { ShipDatum, ShipDatumT } from "../types.ts";
 
 async function moveShip(
@@ -24,16 +30,11 @@ async function moveShip(
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
-  const spacetimeRef = await lucid.utxosByOutRef([
-    {
-      txHash: spacetimeRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const spacetimeValidator = spacetimeRef[0].scriptRef;
-  if (!spacetimeValidator) {
-    throw Error("Could not read spacetime validator from ref UTxO");
-  }
+  const spacetimeRef = await fetchReferenceScript(
+    lucid,
+    spacetimeRefTxHash.txHash
+  );
+  const spacetimeValidator = spacetimeRef.scriptRef as Script;
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
 
@@ -84,7 +85,7 @@ async function moveShip(
   const tx = await lucid
     .newTx()
     .collectFrom([ship], moveShipRedeemer)
-    .readFrom(spacetimeRef)
+    .readFrom([spacetimeRef])
     .payToContract(
       spacetimeAddressBech32,
       { inline: shipOutputDatum },

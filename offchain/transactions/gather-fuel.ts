@@ -4,8 +4,9 @@ import {
   TxHash,
   Constr,
   UTxO,
+  Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase } from "../utils.ts";
+import { fetchReferenceScript, lucidBase } from "../utils.ts";
 import {
   AssetClassT,
   PelletDatum,
@@ -30,35 +31,21 @@ async function gatherFuel(
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
-  const spacetimeRef = await lucid.utxosByOutRef([
-    {
-      txHash: spacetimeRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const spacetimeValidator = spacetimeRef[0].scriptRef;
-  if (!spacetimeValidator) {
-    throw Error("Could not read spacetime validator from ref UTxO");
-  }
+  const spacetimeRef = await fetchReferenceScript(
+    lucid,
+    spacetimeRefTxHash.txHash
+  );
+  const spacetimeValidator = spacetimeRef.scriptRef as Script;
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
+  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
   const pelletRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
-  const pelletRef = await lucid.utxosByOutRef([
-    {
-      txHash: pelletRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const pelletValidator = pelletRef[0].scriptRef;
-  if (!pelletValidator) {
-    throw Error("Could not read pellet validator from ref UTxO");
-  }
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
+  const pelletValidator = pelletRef.scriptRef as Script;
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
-
-  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
   const ship: UTxO = (
     await lucid.utxosByOutRef([
@@ -133,7 +120,7 @@ async function gatherFuel(
     .newTx()
     .collectFrom([ship], shipRedeemer)
     .collectFrom([pellet], pelletRedeemer)
-    .readFrom([spacetimeRef[0], pelletRef[0]])
+    .readFrom([spacetimeRef, pelletRef])
     .payToContract(
       spacetimeAddressBech32,
       { inline: shipOutputDatum },

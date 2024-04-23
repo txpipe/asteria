@@ -4,8 +4,9 @@ import {
   TxHash,
   Constr,
   UTxO,
+  Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase } from "../utils.ts";
+import { fetchReferenceScript, lucidBase } from "../utils.ts";
 import {
   AssetClassT,
   AsteriaDatum,
@@ -30,30 +31,17 @@ async function mineAsteria(
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
-  const spacetimeRef = await lucid.utxosByOutRef([
-    {
-      txHash: spacetimeRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const spacetimeValidator = spacetimeRef[0].scriptRef;
-  if (!spacetimeValidator) {
-    throw Error("Could not read spacetime validator from ref UTxO");
-  }
+  const spacetimeRef = await fetchReferenceScript(
+    lucid,
+    spacetimeRefTxHash.txHash
+  );
+  const spacetimeValidator = spacetimeRef.scriptRef as Script;
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
-  const asteriaRef = await lucid.utxosByOutRef([
-    {
-      txHash: asteriaRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const asteriaValidator = asteriaRef[0].scriptRef;
-  if (!asteriaValidator) {
-    throw Error("Could not read asteria validator from ref UTxO");
-  }
+  const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
+  const asteriaValidator = asteriaRef.scriptRef as Script;
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
 
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
@@ -126,7 +114,7 @@ async function mineAsteria(
     )
     .collectFrom([ship], shipRedeemer)
     .collectFrom([asteria], asteriaRedeemer)
-    .readFrom([spacetimeRef[0], asteriaRef[0], spacetimeRef[0]])
+    .readFrom([spacetimeRef, asteriaRef])
     .payToContract(
       asteriaAddressBech32,
       { inline: asteriaOutputDatum },
