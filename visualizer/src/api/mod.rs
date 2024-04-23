@@ -45,8 +45,7 @@ struct Response {
 }
 
 pub async fn get_assets() -> Result<Vec<AssetDto>, Box<dyn Error>> {
-    let client = reqwest::Client::new();
-
+    let client = reqwest::Client::builder().use_rustls_tls().build()?;
     let query = r"
         query QueryRoot($center: PositionInput!, $radius: Int!) {
             objectsInRadius(center: $center, radius: $radius) {
