@@ -39,6 +39,16 @@ impl ShipIdentity {
 #[derive(Component)]
 pub struct AsteroidIdentity;
 
+#[derive(Component)]
+pub struct PotIdentity {
+    pub total_rewards: u32,
+}
+impl PotIdentity {
+    pub fn new(total_rewards: u32) -> Self {
+        Self { total_rewards }
+    }
+}
+
 #[derive(Resource, Deref)]
 struct StreamReceiver(Receiver<Vec<AssetDto>>);
 
@@ -109,6 +119,7 @@ fn spawn_assets(
                         &asteroid_material,
                     )),
                     crate::api::AssetClass::Asteria => commands.spawn(crate::pot::Pot::new(
+                        PotIdentity::new(asset.total_rewards.unwrap()),
                         Position::new(asset.position.x, asset.position.y),
                         &pot_material,
                     )),

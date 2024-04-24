@@ -31,6 +31,7 @@ pub struct AssetDto {
     pub fuel: Option<u32>,
     pub position: AssetPositionDto,
     pub class: AssetClass,
+    pub total_rewards: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -74,6 +75,7 @@ pub async fn get_assets() -> Result<Vec<AssetDto>, Box<dyn Error>> {
                         x, y
                     }
                     class
+                    totalRewards
                 }
             }
         }

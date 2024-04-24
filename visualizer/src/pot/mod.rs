@@ -1,6 +1,9 @@
+use crate::map::{Position, PotIdentity};
 use bevy::prelude::*;
 
-use crate::map::Position;
+use self::hud::{render_hud, HudState};
+
+mod hud;
 
 const TILE_SIZE: u32 = 64;
 
@@ -36,10 +39,11 @@ impl FromWorld for Material {
 pub struct Pot {
     sprite_sheet: SpriteSheetBundle,
     position: Position,
+    identity: PotIdentity,
 }
 
 impl Pot {
-    pub fn new(position: Position, material: &Material) -> Self {
+    pub fn new(identity: PotIdentity, position: Position, material: &Material) -> Self {
         Self {
             sprite_sheet: SpriteSheetBundle {
                 atlas: TextureAtlas {
@@ -54,6 +58,7 @@ impl Pot {
                 ..Default::default()
             },
             position,
+            identity,
         }
     }
 }
@@ -72,6 +77,8 @@ pub struct PotPlugin;
 
 impl Plugin for PotPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Material>().add_systems(Update, render);
+        app.init_resource::<Material>()
+            .add_systems(Update, (render, render_hud))
+            .insert_state(HudState(None));
     }
 }
