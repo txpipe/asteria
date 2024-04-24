@@ -43,7 +43,7 @@ pub fn render_hud(
                                     padding: UiRect::all(Val::Px(12.)),
                                     ..default()
                                 },
-                                background_color: Color::rgba(0., 0., 0., 0.8).into(),
+                                background_color: Color::DARK_GRAY.into(),
                                 border_color: Color::GOLD.into(),
                                 ..default()
                             })
@@ -75,8 +75,7 @@ pub fn render_hud(
                                                         height: Val::Px(30.),
                                                         ..default()
                                                     },
-                                                    background_color: Color::rgba(0., 0., 0., 1.)
-                                                        .into(),
+                                                    background_color: Color::DARK_GRAY.into(),
                                                     ..default()
                                                 },
                                                 On::<Pointer<Click>>::run(move |mut commands: Commands, state: Res<State<HudState>>,| {
