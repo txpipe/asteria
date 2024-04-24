@@ -4,6 +4,7 @@ import {
   ship_mint_lovelace_fee,
 } from "../constants.ts";
 import { createShip } from "../transactions/create-ship.ts";
+import { printTxURL } from "../utils.ts";
 
 const pos_x = 7n;
 const pos_y = -10n;
@@ -21,4 +22,4 @@ const txHash = await createShip(
   asteria_tx_index
 );
 
-console.log(txHash);
+printTxURL(txHash);

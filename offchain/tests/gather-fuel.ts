@@ -1,5 +1,6 @@
 import { admin_token } from "../constants.ts";
 import { gatherFuel } from "../transactions/gather-fuel.ts";
+import { printTxURL } from "../utils.ts";
 
 const gather_amount = 20n;
 const ship_tx_hash =
@@ -14,4 +15,4 @@ const txHash = await gatherFuel(
   pellet_tx_hash
 );
 
-console.log(txHash);
+printTxURL(txHash);

@@ -7,6 +7,7 @@ import {
   initial_fuel,
   min_asteria_distance,
 } from "../../constants.ts";
+import { printTxURL } from "../../utils.ts";
 
 const txHash = await deploySpacetime(
   admin_token,
@@ -17,4 +18,4 @@ const txHash = await deploySpacetime(
   min_asteria_distance
 );
 
-console.log(txHash);
+printTxURL(txHash);

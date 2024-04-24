@@ -45,4 +45,8 @@ const required_fuel = (distance: bigint, fuel_per_step: bigint): bigint => {
   return distance * fuel_per_step;
 };
 
-export { lucidBase, writeJson, distance, required_fuel };
+const printTxURL = (txHash: string): void => {
+  console.log("https://preview.cexplorer.io/tx/" + txHash);
+};
+
+export { lucidBase, writeJson, distance, required_fuel, printTxURL };

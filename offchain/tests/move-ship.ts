@@ -1,5 +1,6 @@
 import { fuel_per_step } from "../constants.ts";
 import { moveShip } from "../transactions/move-ship.ts";
+import { printTxURL } from "../utils.ts";
 
 const delta_x = -7n;
 const delta_y = 10n;
@@ -8,4 +9,4 @@ const ship_tx_hash =
 
 const txHash = await moveShip(fuel_per_step, delta_x, delta_y, ship_tx_hash);
 
-console.log(txHash);
+printTxURL(txHash);

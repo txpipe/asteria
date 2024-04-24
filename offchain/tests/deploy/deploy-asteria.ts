@@ -4,6 +4,7 @@ import {
   max_asteria_mining,
   ship_mint_lovelace_fee,
 } from "../../constants.ts";
+import { printTxURL } from "../../utils.ts";
 
 const txHash = await deployAsteria(
   admin_token,
@@ -11,4 +12,4 @@ const txHash = await deployAsteria(
   max_asteria_mining
 );
 
-console.log(txHash);
+printTxURL(txHash);
