@@ -14,11 +14,19 @@ mod ships;
 struct MyCameraMarker;
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default()).insert(PanCam {
-        min_scale: 1.,
-        // max_scale: Some(3.),
-        ..default()
-    });
+    commands
+        .spawn(Camera2dBundle {
+            camera: Camera {
+                clear_color: ClearColorConfig::Custom(Color::BLACK),
+                ..default()
+            },
+            ..default()
+        })
+        .insert(PanCam {
+            min_scale: 1.,
+            // max_scale: Some(3.),
+            ..default()
+        });
 }
 
 fn main() {
