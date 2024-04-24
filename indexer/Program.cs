@@ -30,7 +30,7 @@ var dbContext = scope.ServiceProvider.GetRequiredService<AsteriaDbContext>();
 dbContext.Database.Migrate();
 
 var trackedAddressed = JsonSerializer.Deserialize<string[]>(builder.Configuration.GetValue<string>("UtxoAddresses") ?? "[]");
-
+var shipyardPolicyId = builder.Configuration.GetValue<string>("ShipyardPolicyId");
 // SQL to create the materialized view
 
 var dropViewSql = "DROP MATERIALIZED VIEW IF EXISTS mapobjects;";
@@ -44,12 +44,12 @@ select
     CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
     CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 1 ->> 'int' AS INTEGER) AS positionx,
     CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 2 ->> 'int' AS INTEGER) AS positiony,
-    CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 3 ->> 'bytes' AS VARCHAR(56)) AS shipyardpolicy,
-    CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS shiptokenname,
-    CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 5 ->> 'bytes' AS TEXT) AS pilottokenname,
+    '{shipyardPolicyId}' AS shipyardpolicy,
+    CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS shiptokenname,
+    CAST(utxo_plutus_data(""Era"", ""Cbor"") -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilottokenname,
     0 as totalrewards
 from ""UtxoCborByAddresses""
-where ""Address"" = '{trackedAddressed?[0]}'
+where ""Address"" = '{trackedAddressed?[0]}' and utxo_has_policy_id_output(""Era"", ""Cbor"", decode('{shipyardPolicyId}', 'hex'))
 union all
 select 
     ""TxHash"" || '#' || ""OutputIndex"" as id,
