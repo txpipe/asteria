@@ -2,16 +2,16 @@ import { fromText } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { AssetClassT } from "./types.ts";
 
 const admin_token: AssetClassT = {
-  policy: "f8ab3db3bc88f892d843e6d82ae78cee28c4eb073a6774390b880c7d",
-  name: fromText("admin"),
+  policy: "516238dd0a79bac4bebe041c44bad8bf880d74720733d2fc0d255d28",
+  name: fromText("asteriaAdmin"),
 };
-const ship_mint_lovelace_fee = 3_000_000n;
-const max_asteria_mining = 50n;
-const max_moving_distance = 20n;
-const max_ship_fuel = 100n;
+const ship_mint_lovelace_fee = 20_000_000n;
+const max_asteria_mining = 100n;
+const max_moving_distance = 5n;
+const max_ship_fuel = 30n;
 const fuel_per_step = 1n;
-const initial_fuel = 30n;
-const min_asteria_distance = 10n;
+const initial_fuel = max_ship_fuel;
+const min_asteria_distance = 50n;
 
 export {
   admin_token,
