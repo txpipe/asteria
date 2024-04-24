@@ -40,7 +40,11 @@ pub fn render_hud(
                                     height: Val::Percent(30.),
                                     border: UiRect::all(Val::Px(2.)),
                                     flex_wrap: FlexWrap::Wrap,
-                                    padding: UiRect::all(Val::Px(12.)),
+                                    padding: UiRect{
+                                        left: Val::Px(12.), 
+                                        right: Val::Px(12.), 
+                                        ..default()
+                                    },
                                     ..default()
                                 },
                                 background_color: Color::DARK_GRAY.into(),
