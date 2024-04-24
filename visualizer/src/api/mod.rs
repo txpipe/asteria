@@ -3,7 +3,7 @@ use serde_json::json;
 use std::error::Error;
 
 pub const API_URL: &str =
-    "https://dmtr_scrolls_v0_preprod_1v4ux6kn0wp24qdjz259lrkv2.scrolls-m0.demeter.run/graphql";
+    "https://dmtr_scrolls_v0_preview_1t9nhgnmxtpzrzm2gwv0723cu.scrolls-m0.demeter.run/graphql";
 
 #[derive(Debug, Deserialize)]
 pub enum AssetClass {
