@@ -1,8 +1,11 @@
 use aiken/list
 use aiken/math/rational.{compare_with, from_int}
+use aiken/option
 use aiken/transaction.{InlineDatum, ScriptContext, Spend, Transaction}
 use aiken/transaction/value.{ada_asset_name, ada_policy_id}
-use asteria/types.{AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, Mine}
+use asteria/types.{
+  AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
+}
 use asteria/utils
 
 validator(
@@ -21,15 +24,17 @@ validator(
     expect Spend(asteria_ref) = purpose
     expect [asteria_input] =
       list.filter(inputs, fn(input) { input.output_reference == asteria_ref })
-    expect [asteria_output] =
-      list.filter(
-        outputs,
-        fn(output) { output.address == asteria_input.output.address },
-      )
-    expect InlineDatum(asteria_output_datum) = asteria_output.datum
-    expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+
     when redeemer is {
       AddNewShip -> {
+        expect [asteria_output] =
+          list.filter(
+            outputs,
+            fn(output) { output.address == asteria_input.output.address },
+          )
+        expect InlineDatum(asteria_output_datum) = asteria_output.datum
+        expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+
         let must_hold_admin_token =
           value.quantity_of(
             asteria_input.output.value,
@@ -55,6 +60,14 @@ validator(
       }
 
       Mine -> {
+        expect [asteria_output] =
+          list.filter(
+            outputs,
+            fn(output) { output.address == asteria_input.output.address },
+          )
+        expect InlineDatum(asteria_output_datum) = asteria_output.datum
+        expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+
         expect Some(_) =
           list.find(
             inputs,
@@ -80,6 +93,21 @@ validator(
           must_respect_max_mining?,
           must_preserve_datum?,
         }
+      }
+
+      ConsumeAsteria -> {
+        let admin_token_input =
+          list.find(
+            inputs,
+            fn(input) {
+              utils.is_wallet_address(input.output.address) && value.quantity_of(
+                input.output.value,
+                admin_token.policy,
+                admin_token.name,
+              ) > 0
+            },
+          )
+        option.is_some(admin_token_input)?
       }
     }
   }

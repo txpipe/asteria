@@ -18,6 +18,8 @@ pub const asteria_credential = #"2222"
 
 pub const pilot_credential = #"3333"
 
+pub const admin_credential = #"4444"
+
 pub const ship_token_name = "SHIP7"
 
 pub const pilot_token_name = "PILOT7"

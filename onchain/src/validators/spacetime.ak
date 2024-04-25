@@ -1,6 +1,7 @@
 use aiken/bytearray
 use aiken/dict
 use aiken/list
+use aiken/option
 use aiken/string
 use aiken/transaction.{InlineDatum, Mint, ScriptContext, Spend, Transaction}
 use aiken/transaction/credential.{
@@ -230,13 +231,13 @@ validator(
       }
 
       BurnShip -> {
-        expect Some(_) =
+        let ship_input =
           list.find(
             inputs,
             fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
           )
         expect [(_, -1)] = minted_tokens
-        True
+        option.is_some(ship_input)
       }
     }
   }
