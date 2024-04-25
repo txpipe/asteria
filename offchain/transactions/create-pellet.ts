@@ -1,5 +1,10 @@
-import { Data, toUnit, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase } from "../utils.ts";
+import {
+  Data,
+  Script,
+  toUnit,
+  TxHash,
+} from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { fetchReferenceScript, lucidBase } from "../utils.ts";
 import { AssetClassT, PelletDatum, PelletDatumT } from "../types.ts";
 
 async function createPellet(
@@ -16,33 +21,20 @@ async function createPellet(
   lucid.selectWalletFromSeed(seed);
 
   const pelletRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./pellet-ref.json")
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
-  const pelletRef = await lucid.utxosByOutRef([
-    {
-      txHash: pelletRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const pelletValidator = pelletRef[0].scriptRef;
-  if (!pelletValidator) {
-    throw Error("Could not read pellet validator from ref UTxO");
-  }
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
+  const pelletValidator = pelletRef.scriptRef as Script;
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
-  const spacetimeRef = await lucid.utxosByOutRef([
-    {
-      txHash: spacetimeRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const spacetimeValidator = spacetimeRef[0].scriptRef;
-  if (!spacetimeValidator) {
-    throw Error("Could not read pellet validator from ref UTxO");
-  }
+  const spacetimeRef = await fetchReferenceScript(
+    lucid,
+    spacetimeRefTxHash.txHash
+  );
+  const spacetimeValidator = spacetimeRef.scriptRef as Script;
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
   const pelletInfo = {

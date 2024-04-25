@@ -19,12 +19,7 @@ validator(admin_token: AssetClass) {
     expect [own_input] =
       list.filter(inputs, fn(input) { input.output_reference == utxo_ref })
     expect [own_output] =
-      filter(
-        outputs,
-        fn(output) {
-          quantity_of(output.value, admin_token.policy, admin_token.name) == 1
-        },
-      )
+      filter(outputs, fn(output) { output.address == own_input.output.address })
     expect InlineDatum(out_datum) = own_output.datum
     expect out_datum: PelletDatum = out_datum
 

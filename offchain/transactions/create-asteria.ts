@@ -1,5 +1,10 @@
-import { Data, toUnit, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase } from "../utils.ts";
+import {
+  Data,
+  Script,
+  toUnit,
+  TxHash,
+} from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { fetchReferenceScript, lucidBase } from "../utils.ts";
 import { AssetClassT, AsteriaDatum, AsteriaDatumT } from "../types.ts";
 
 async function createAsteria(admin_token: AssetClassT): Promise<TxHash> {
@@ -11,22 +16,14 @@ async function createAsteria(admin_token: AssetClassT): Promise<TxHash> {
   lucid.selectWalletFromSeed(seed);
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./asteria-ref.json")
+    await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
-  const asteriaRef = await lucid.utxosByOutRef([
-    {
-      txHash: asteriaRefTxHash.txHash,
-      outputIndex: 0,
-    },
-  ]);
-  const asteriaValidator = asteriaRef[0].scriptRef;
-  if (!asteriaValidator) {
-    throw Error("Could not read Asteria validator from ref UTxO");
-  }
+  const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
+  const asteriaValidator = asteriaRef.scriptRef as Script;
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./spacetime-ref.json")
+    await Deno.readTextFile("./script-refs/spacetime-ref.json")
   );
   const spacetimeRef = await lucid.utxosByOutRef([
     {

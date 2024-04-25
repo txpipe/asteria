@@ -182,5 +182,4 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 
 #### BURN:
 * there is a `ShipState` input.
-* the `ShipState` input is at coordinates (0,0).
 * only one token is burnt.
