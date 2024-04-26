@@ -39,14 +39,17 @@ async function consumePellet(
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
 
+  const adminUTxO: UTxO = await lucid.wallet
+    .getUtxos()
+    .then((us) => us.filter((u) => u.assets[adminTokenUnit] >= 1n))
+    .then((us) => us[0]);
+
   const consumeRedeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
     .readFrom([asteriaRef])
     .collectFrom([pellet], consumeRedeemer)
-    .payToAddress(await lucid.wallet.address(), {
-      [adminTokenUnit]: BigInt(1),
-    })
+    .collectFrom([adminUTxO])
     .complete();
 
   const signedTx = await tx.sign().complete();
