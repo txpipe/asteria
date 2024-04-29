@@ -51,7 +51,7 @@ async function gatherFuel(
     await lucid.utxosByOutRef([
       {
         txHash: ship_tx_hash,
-        outputIndex: 0,
+        outputIndex: 1,
       },
     ])
   )[0];
@@ -122,19 +122,19 @@ async function gatherFuel(
     .collectFrom([pellet], pelletRedeemer)
     .readFrom([spacetimeRef, pelletRef])
     .payToContract(
-      spacetimeAddressBech32,
-      { inline: shipOutputDatum },
-      {
-        [shipTokenUnit]: BigInt(1),
-        lovelace: shipAda,
-      }
-    )
-    .payToContract(
       pelletAddressBech32,
       { inline: pelletOutputDatum },
       {
         [adminTokenUnit]: BigInt(1),
         lovelace: pelletAda,
+      }
+    )
+    .payToContract(
+      spacetimeAddressBech32,
+      { inline: shipOutputDatum },
+      {
+        [shipTokenUnit]: BigInt(1),
+        lovelace: shipAda,
       }
     )
     .payToAddress(await lucid.wallet.address(), {

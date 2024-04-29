@@ -6,11 +6,10 @@ import {
 import { createShip } from "../transactions/create-ship.ts";
 import { printTxURL } from "../utils.ts";
 
-const pos_x = 7n;
-const pos_y = -10n;
+const pos_x = -7n;
+const pos_y = 3n;
 const asteria_tx_hash =
-  "2ad4ee7c7cd9156de39f33c5a1c31e701fae299366bf886c85bbb00ac84f210b";
-const asteria_tx_index = 0;
+  "f76bb8c67e99a5fc9e5dff56b5534a1e47e2ca286361ab625d5ff5a21aa13140";
 
 const txHash = await createShip(
   admin_token,
@@ -18,8 +17,7 @@ const txHash = await createShip(
   initial_fuel,
   pos_x,
   pos_y,
-  asteria_tx_hash,
-  asteria_tx_index
+  asteria_tx_hash
 );
 
 printTxURL(txHash);

@@ -10,8 +10,7 @@ import { AssetClassT } from "../types.ts";
 
 async function consumeAsteria(
   admin_token: AssetClassT,
-  asteria_tx_hash: TxHash,
-  asteria_tx_index: number,
+  asteria_tx_hash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -21,7 +20,7 @@ async function consumeAsteria(
   lucid.selectWalletFromSeed(seed);
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./script-refs/asteria-ref.json"),
+    await Deno.readTextFile("./script-refs/asteria-ref.json")
   );
   const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
 
@@ -29,7 +28,7 @@ async function consumeAsteria(
     await lucid.utxosByOutRef([
       {
         txHash: asteria_tx_hash,
-        outputIndex: asteria_tx_index,
+        outputIndex: 0,
       },
     ])
   )[0];

@@ -10,8 +10,7 @@ import { AssetClassT } from "../types.ts";
 
 async function consumePellet(
   admin_token: AssetClassT,
-  pellet_tx_hash: TxHash,
-  pellet_tx_index: number,
+  pellet_tx_hash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -21,7 +20,7 @@ async function consumePellet(
   lucid.selectWalletFromSeed(seed);
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
-    await Deno.readTextFile("./script-refs/pellet-ref.json"),
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
   const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
 
@@ -29,7 +28,7 @@ async function consumePellet(
     await lucid.utxosByOutRef([
       {
         txHash: pellet_tx_hash,
-        outputIndex: pellet_tx_index,
+        outputIndex: 0,
       },
     ])
   )[0];

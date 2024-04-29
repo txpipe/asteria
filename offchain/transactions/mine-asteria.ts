@@ -66,7 +66,7 @@ async function mineAsteria(
     await lucid.utxosByOutRef([
       {
         txHash: asteria_tx_hash,
-        outputIndex: 1,
+        outputIndex: 0,
       },
     ])
   )[0];
