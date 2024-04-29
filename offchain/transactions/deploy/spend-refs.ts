@@ -1,4 +1,9 @@
-import { Data, TxHash, toUnit } from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import {
+  Data,
+  TxHash,
+  UTxO,
+  toUnit,
+} from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { buildDeployValidator } from "../../scripts/deploy.ts";
 import { lucidBase } from "../../utils.ts";
 import { AssetClassT } from "../../types.ts";
@@ -20,11 +25,14 @@ async function spendRefUTxOs(admin_token: AssetClassT): Promise<TxHash> {
   }
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+  const adminUTxO: UTxO = await lucid.wallet
+    .getUtxos()
+    .then((us) => us.filter((u) => u.assets[adminTokenUnit] >= 1n))
+    .then((us) => us[0]);
+
   const tx = await lucid
     .newTx()
-    .payToAddress(await lucid.wallet.address(), {
-      [adminTokenUnit]: BigInt(1),
-    })
+    .collectFrom([adminUTxO])
     .collectFrom(refUTxOs, Data.void())
     .attachSpendingValidator(deployValidator)
     .complete();
