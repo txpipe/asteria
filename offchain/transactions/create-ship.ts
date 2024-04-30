@@ -22,7 +22,8 @@ async function createShip(
   initial_fuel: bigint,
   pos_x: bigint,
   pos_y: bigint,
-  asteria_tx_hash: TxHash
+  asteria_tx_hash: TxHash,
+  asteria_tx_index: number
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -54,7 +55,7 @@ async function createShip(
     await lucid.utxosByOutRef([
       {
         txHash: asteria_tx_hash,
-        outputIndex: 0,
+        outputIndex: asteria_tx_index,
       },
     ])
   )[0];
@@ -109,19 +110,19 @@ async function createShip(
     )
     .collectFrom([asteria], addNewShipRedeemer)
     .payToContract(
-      asteriaAddressBech32,
-      { inline: asteriaOutputDatum },
-      {
-        [adminTokenUnit]: BigInt(1),
-        lovelace: asteriaInputAda + ship_mint_lovelace_fee,
-      }
-    )
-    .payToContract(
       spacetimeAddressBech32,
       { inline: shipDatum },
       {
         [shipTokenUnit]: BigInt(1),
         lovelace: 2_000_000n,
+      }
+    )
+    .payToContract(
+      asteriaAddressBech32,
+      { inline: asteriaOutputDatum },
+      {
+        [adminTokenUnit]: BigInt(1),
+        lovelace: asteriaInputAda + ship_mint_lovelace_fee,
       }
     )
     .complete();

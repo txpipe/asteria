@@ -9,7 +9,8 @@ import { printTxURL } from "../utils.ts";
 const pos_x = -7n;
 const pos_y = 3n;
 const asteria_tx_hash =
-  "f76bb8c67e99a5fc9e5dff56b5534a1e47e2ca286361ab625d5ff5a21aa13140";
+  "8884b2ccbb0d2cd5192459609f775f5b4e5681f5de8d6a4b6f9fc109ea601605";
+const asteria_tx_index = 0;
 
 const txHash = await createShip(
   admin_token,
@@ -17,7 +18,8 @@ const txHash = await createShip(
   initial_fuel,
   pos_x,
   pos_y,
-  asteria_tx_hash
+  asteria_tx_hash,
+  asteria_tx_index
 );
 
 printTxURL(txHash);

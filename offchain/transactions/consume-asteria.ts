@@ -10,7 +10,8 @@ import { AssetClassT } from "../types.ts";
 
 async function consumeAsteria(
   admin_token: AssetClassT,
-  asteria_tx_hash: TxHash
+  asteria_tx_hash: TxHash,
+  asteria_tx_index: number
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -28,7 +29,7 @@ async function consumeAsteria(
     await lucid.utxosByOutRef([
       {
         txHash: asteria_tx_hash,
-        outputIndex: 0,
+        outputIndex: asteria_tx_index,
       },
     ])
   )[0];

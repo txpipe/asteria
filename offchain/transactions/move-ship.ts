@@ -42,7 +42,7 @@ async function moveShip(
     await lucid.utxosByOutRef([
       {
         txHash: ship_tx_hash,
-        outputIndex: 1,
+        outputIndex: 0,
       },
     ])
   )[0];

@@ -30,7 +30,7 @@ async function quit(ship_tx_hash: TxHash): Promise<TxHash> {
     await lucid.utxosByOutRef([
       {
         txHash: ship_tx_hash,
-        outputIndex: 1,
+        outputIndex: 0,
       },
     ])
   )[0];
