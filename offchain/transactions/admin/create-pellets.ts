@@ -4,14 +4,12 @@ import {
   toUnit,
   TxHash,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
-import { AssetClassT, PelletDatum, PelletDatumT } from "../types.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
+import { AssetClassT, PelletDatum, PelletDatumT } from "../../types.ts";
 
-async function createPellet(
+async function createPellets(
   admin_token: AssetClassT,
-  fuel: bigint,
-  pos_x: bigint,
-  pos_y: bigint
+  params: { fuel: bigint; pos_x: bigint; pos_y: bigint }[]
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -37,34 +35,33 @@ async function createPellet(
   const spacetimeValidator = spacetimeRef.scriptRef as Script;
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
-  const pelletInfo = {
-    fuel: fuel,
-    pos_x: pos_x,
-    pos_y: pos_y,
-    shipyard_policy: shipyardPolicyId,
-  };
-
-  const pelletDatum = Data.to<PelletDatumT>(
-    pelletInfo,
-    PelletDatum as unknown as PelletDatumT
-  );
-
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+  let tx = await lucid.newTx();
 
-  const tx = await lucid
-    .newTx()
-    .payToContract(
+  for (const pellet of params) {
+    const pelletInfo = {
+      fuel: pellet.fuel,
+      pos_x: pellet.pos_x,
+      pos_y: pellet.pos_y,
+      shipyard_policy: shipyardPolicyId,
+    };
+    const pelletDatum = Data.to<PelletDatumT>(
+      pelletInfo,
+      PelletDatum as unknown as PelletDatumT
+    );
+
+    tx = tx.payToContract(
       pelletAddressBech32,
       { inline: pelletDatum },
       {
         [adminTokenUnit]: BigInt(1),
         lovelace: 2_000_000n,
       }
-    )
-    .complete();
-
-  const signedTx = await tx.sign().complete();
+    );
+  }
+  const completeTx = await tx.complete();
+  const signedTx = await completeTx.sign().complete();
   return signedTx.submit();
 }
 
-export { createPellet };
+export { createPellets };

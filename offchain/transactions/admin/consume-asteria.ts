@@ -5,8 +5,8 @@ import {
   Constr,
   UTxO,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
-import { AssetClassT } from "../types.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
+import { AssetClassT } from "../../types.ts";
 
 async function consumeAsteria(
   admin_token: AssetClassT,
@@ -33,12 +33,8 @@ async function consumeAsteria(
       },
     ])
   )[0];
-  if (!asteria.datum) {
-    throw Error("Asteria datum not found");
-  }
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
-
   const adminUTxO: UTxO = await lucid.wallet
     .getUtxos()
     .then((us) => us.filter((u) => u.assets[adminTokenUnit] >= 1n))

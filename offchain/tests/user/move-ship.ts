@@ -1,6 +1,6 @@
-import { fuel_per_step } from "../constants.ts";
-import { moveShip } from "../transactions/move-ship.ts";
-import { printTxURL } from "../utils.ts";
+import { fuel_per_step } from "../../constants.ts";
+import { moveShip } from "../../transactions/user/move-ship.ts";
+import { printTxURL } from "../../utils.ts";
 
 const delta_x = -7n;
 const delta_y = 10n;

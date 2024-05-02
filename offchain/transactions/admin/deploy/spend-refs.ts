@@ -4,9 +4,9 @@ import {
   UTxO,
   toUnit,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { buildDeployValidator } from "../../scripts/deploy.ts";
-import { lucidBase } from "../../utils.ts";
-import { AssetClassT } from "../../types.ts";
+import { buildDeployValidator } from "../../../scripts/deploy.ts";
+import { lucidBase } from "../../../utils.ts";
+import { AssetClassT } from "../../../types.ts";
 
 async function spendRefUTxOs(admin_token: AssetClassT): Promise<TxHash> {
   const lucid = await lucidBase();

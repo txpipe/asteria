@@ -1,4 +1,4 @@
-import { deploySpacetime } from "../../transactions/deploy/deploy-spacetime.ts";
+import { deploySpacetime } from "../../../transactions/admin/deploy/deploy-spacetime.ts";
 import {
   admin_token,
   max_moving_distance,
@@ -6,8 +6,8 @@ import {
   fuel_per_step,
   initial_fuel,
   min_asteria_distance,
-} from "../../constants.ts";
-import { printTxURL } from "../../utils.ts";
+} from "../../../constants.ts";
+import { printTxURL } from "../../../utils.ts";
 
 const txHash = await deploySpacetime(
   admin_token,

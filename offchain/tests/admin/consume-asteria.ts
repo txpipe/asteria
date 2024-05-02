@@ -1,6 +1,6 @@
-import { admin_token } from "../constants.ts";
-import { consumeAsteria } from "../transactions/consume-asteria.ts";
-import { printTxURL } from "../utils.ts";
+import { admin_token } from "../../constants.ts";
+import { consumeAsteria } from "../../transactions/admin/consume-asteria.ts";
+import { printTxURL } from "../../utils.ts";
 
 const asteria_tx_hash =
   "b661437c389a4bd8db770145980030af22729f9c03be442329c60389e4168c81";

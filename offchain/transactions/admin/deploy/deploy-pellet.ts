@@ -1,8 +1,8 @@
 import { Data, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase, writeJson } from "../../utils.ts";
-import { AssetClassT } from "../../types.ts";
-import { buildPelletValidator } from "../../scripts/pellet.ts";
-import { buildDeployValidator } from "../../scripts/deploy.ts";
+import { lucidBase, writeJson } from "../../../utils.ts";
+import { AssetClassT } from "../../../types.ts";
+import { buildPelletValidator } from "../../../scripts/pellet.ts";
+import { buildDeployValidator } from "../../../scripts/deploy.ts";
 
 async function deployPellet(admin_token: AssetClassT): Promise<TxHash> {
   const lucid = await lucidBase();

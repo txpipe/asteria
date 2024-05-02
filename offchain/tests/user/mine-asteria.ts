@@ -1,6 +1,6 @@
-import { admin_token, max_asteria_mining } from "../constants.ts";
-import { mineAsteria } from "../transactions/mine-asteria.ts";
-import { printTxURL } from "../utils.ts";
+import { admin_token, max_asteria_mining } from "../../constants.ts";
+import { mineAsteria } from "../../transactions/user/mine-asteria.ts";
+import { printTxURL } from "../../utils.ts";
 
 const ship_tx_hash =
   "a528f7e89227b16d769e46b81fae20ba223b3f8fd23d82bb61aa6298f53eb5be";

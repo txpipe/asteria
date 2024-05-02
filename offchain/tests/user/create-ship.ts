@@ -2,9 +2,9 @@ import {
   admin_token,
   initial_fuel,
   ship_mint_lovelace_fee,
-} from "../constants.ts";
-import { createShip } from "../transactions/create-ship.ts";
-import { printTxURL } from "../utils.ts";
+} from "../../constants.ts";
+import { createShip } from "../../transactions/user/create-ship.ts";
+import { printTxURL } from "../../utils.ts";
 
 const pos_x = -7n;
 const pos_y = 3n;

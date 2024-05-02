@@ -1,6 +1,6 @@
-import { admin_token } from "../constants.ts";
-import { gatherFuel } from "../transactions/gather-fuel.ts";
-import { printTxURL } from "../utils.ts";
+import { admin_token } from "../../constants.ts";
+import { gatherFuel } from "../../transactions/user/gather-fuel.ts";
+import { printTxURL } from "../../utils.ts";
 
 const gather_amount = 20n;
 const ship_tx_hash =
