@@ -6,10 +6,10 @@ import {
 import { createShip } from "../transactions/create-ship.ts";
 import { printTxURL } from "../utils.ts";
 
-const pos_x = 7n;
-const pos_y = -10n;
+const pos_x = -7n;
+const pos_y = 3n;
 const asteria_tx_hash =
-  "2ad4ee7c7cd9156de39f33c5a1c31e701fae299366bf886c85bbb00ac84f210b";
+  "8884b2ccbb0d2cd5192459609f775f5b4e5681f5de8d6a4b6f9fc109ea601605";
 const asteria_tx_index = 0;
 
 const txHash = await createShip(

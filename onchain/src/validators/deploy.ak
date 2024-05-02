@@ -3,6 +3,7 @@ use aiken/option.{is_some}
 use aiken/transaction.{ScriptContext, Transaction}
 use aiken/transaction/value
 use asteria/types.{AssetClass}
+use asteria/utils
 
 validator(admin_token: AssetClass) {
   fn spend(_datum: Data, _redeemer: Data, ctx: ScriptContext) -> Bool {
@@ -11,7 +12,7 @@ validator(admin_token: AssetClass) {
         list.find(
           ctx.transaction.inputs,
           fn(input) {
-            value.quantity_of(
+            utils.is_wallet_address(input.output.address) && value.quantity_of(
               input.output.value,
               admin_token.policy,
               admin_token.name,

@@ -3,6 +3,9 @@ use aiken/dict.{keys}
 use aiken/list.{any}
 use aiken/math
 use aiken/transaction.{Output}
+use aiken/transaction/credential.{
+  Address, ScriptCredential, VerificationKeyCredential,
+}
 use aiken/transaction/value.{AssetName, PolicyId, tokens}
 
 pub fn is_ship_token_in_utxo(utxo: Output, shipyard_policy: PolicyId) -> Bool {
@@ -29,4 +32,11 @@ pub fn distance(delta_x: Int, delta_y: Int) -> Int {
 
 pub fn required_fuel(distance: Int, fuel_per_step: Int) -> Int {
   distance * fuel_per_step
+}
+
+pub fn is_wallet_address(address: Address) -> Bool {
+  when address.payment_credential is {
+    VerificationKeyCredential(_) -> True
+    ScriptCredential(_) -> False
+  }
 }

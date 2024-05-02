@@ -6,7 +6,7 @@ const lucidBase = async (): Promise<Lucid> => {
       "https://cardano-preview.blockfrost.io/api/v0",
       Deno.env.get("BLOCKFROST_PROJECT_ID")
     ),
-    "Preprod"
+    "Preview"
   );
   return lucid;
 };

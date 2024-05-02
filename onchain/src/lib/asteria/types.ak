@@ -34,6 +34,7 @@ pub type PelletDatum {
 
 pub type PelletRedeemer {
   Provide { amount: Int }
+  ConsumePellet
 }
 
 pub type AsteriaDatum {
@@ -44,6 +45,7 @@ pub type AsteriaDatum {
 pub type AsteriaRedeemer {
   AddNewShip
   Mine
+  ConsumeAsteria
 }
 
 pub type ShipyardRedeemer {
