@@ -21,9 +21,7 @@ async function createShip(
   ship_mint_lovelace_fee: bigint,
   initial_fuel: bigint,
   pos_x: bigint,
-  pos_y: bigint,
-  asteria_tx_hash: TxHash,
-  asteria_tx_index: number
+  pos_y: bigint
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -51,14 +49,7 @@ async function createShip(
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
 
-  const asteria: UTxO = (
-    await lucid.utxosByOutRef([
-      {
-        txHash: asteria_tx_hash,
-        outputIndex: asteria_tx_index,
-      },
-    ])
-  )[0];
+  const asteria: UTxO = (await lucid.utxosAt(asteriaAddressBech32))[0];
   if (!asteria.datum) {
     throw Error("Asteria datum not found");
   }
