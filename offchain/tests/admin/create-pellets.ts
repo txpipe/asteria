@@ -6,7 +6,6 @@ import { parse } from "jsr:@std/csv";
 const text = await Deno.readTextFile("tests/admin/pellets.csv");
 const data = parse(text, {
   skipFirstRow: true,
-  strip: true,
   columns: ["fuel", "pos_x", "pos_y"],
 });
 const params = data.map((p) => ({
