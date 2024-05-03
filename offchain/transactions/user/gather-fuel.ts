@@ -6,14 +6,14 @@ import {
   UTxO,
   Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
 import {
   AssetClassT,
   PelletDatum,
   PelletDatumT,
   ShipDatum,
   ShipDatumT,
-} from "../types.ts";
+} from "../../types.ts";
 
 async function gatherFuel(
   admin_token: AssetClassT,

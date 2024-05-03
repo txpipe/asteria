@@ -1,8 +1,8 @@
 import { Data, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { lucidBase, writeJson } from "../../utils.ts";
-import { AssetClassT } from "../../types.ts";
-import { buildSpacetimeValidator } from "../../scripts/spacetime.ts";
-import { buildDeployValidator } from "../../scripts/deploy.ts";
+import { lucidBase, writeJson } from "../../../utils.ts";
+import { AssetClassT } from "../../../types.ts";
+import { buildSpacetimeValidator } from "../../../scripts/spacetime.ts";
+import { buildDeployValidator } from "../../../scripts/deploy.ts";
 
 async function deploySpacetime(
   admin_token: AssetClassT,

@@ -7,14 +7,14 @@ import {
   fromText,
   Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
 import {
   AssetClassT,
   AsteriaDatum,
   AsteriaDatumT,
   ShipDatum,
   ShipDatumT,
-} from "../types.ts";
+} from "../../types.ts";
 
 async function createShip(
   admin_token: AssetClassT,

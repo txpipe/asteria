@@ -6,8 +6,8 @@ import {
   UTxO,
   Script,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
-import { ShipDatum, ShipDatumT } from "../types.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
+import { ShipDatum, ShipDatumT } from "../../types.ts";
 
 async function quit(ship_tx_hash: TxHash): Promise<TxHash> {
   const lucid = await lucidBase();

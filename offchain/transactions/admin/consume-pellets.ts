@@ -5,12 +5,13 @@ import {
   Constr,
   UTxO,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../utils.ts";
-import { AssetClassT } from "../types.ts";
+import { fetchReferenceScript, lucidBase } from "../../utils.ts";
+import { AssetClassT } from "../../types.ts";
 
-async function consumePellet(
+async function consumePellets(
   admin_token: AssetClassT,
-  pellet_tx_hash: TxHash
+  pellets_tx_hash: TxHash,
+  pellets_tx_indexes: number[]
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -19,25 +20,19 @@ async function consumePellet(
   }
   lucid.selectWalletFromSeed(seed);
 
-  const asteriaRefTxHash: { txHash: string } = JSON.parse(
+  const pelletRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/pellet-ref.json")
   );
-  const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
 
-  const pellet: UTxO = (
-    await lucid.utxosByOutRef([
-      {
-        txHash: pellet_tx_hash,
-        outputIndex: 0,
-      },
-    ])
-  )[0];
-  if (!pellet.datum) {
-    throw Error("Pellet datum not found");
-  }
+  const pellets: UTxO[] = await lucid.utxosByOutRef(
+    pellets_tx_indexes.map((i) => ({
+      txHash: pellets_tx_hash,
+      outputIndex: i,
+    }))
+  );
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
-
   const adminUTxO: UTxO = await lucid.wallet
     .getUtxos()
     .then((us) => us.filter((u) => u.assets[adminTokenUnit] >= 1n))
@@ -46,8 +41,8 @@ async function consumePellet(
   const consumeRedeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
-    .readFrom([asteriaRef])
-    .collectFrom([pellet], consumeRedeemer)
+    .readFrom([pelletRef])
+    .collectFrom(pellets, consumeRedeemer)
     .collectFrom([adminUTxO])
     .complete();
 
@@ -55,4 +50,4 @@ async function consumePellet(
   return signedTx.submit();
 }
 
-export { consumePellet };
+export { consumePellets };

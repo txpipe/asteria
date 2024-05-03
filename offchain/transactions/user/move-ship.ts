@@ -11,8 +11,8 @@ import {
   fetchReferenceScript,
   lucidBase,
   required_fuel,
-} from "../utils.ts";
-import { ShipDatum, ShipDatumT } from "../types.ts";
+} from "../../utils.ts";
+import { ShipDatum, ShipDatumT } from "../../types.ts";
 
 async function moveShip(
   fuel_per_step: bigint,
