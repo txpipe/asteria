@@ -19,7 +19,8 @@ async function gatherFuel(
   admin_token: AssetClassT,
   gather_amount: bigint,
   ship_tx_hash: TxHash,
-  pellet_tx_hash: TxHash
+  pellet_tx_hash: TxHash,
+  pellet_tx_index: number
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -64,7 +65,7 @@ async function gatherFuel(
     await lucid.utxosByOutRef([
       {
         txHash: pellet_tx_hash,
-        outputIndex: 0,
+        outputIndex: pellet_tx_index,
       },
     ])
   )[0];
