@@ -8,11 +8,13 @@ const data = parse(text, {
   skipFirstRow: true,
   columns: ["fuel", "pos_x", "pos_y"],
 });
-const params = data.map((p) => ({
-  fuel: BigInt(p.fuel),
-  pos_x: BigInt(p.pos_x),
-  pos_y: BigInt(p.pos_y),
-}));
+const params: { fuel: bigint; pos_x: bigint; pos_y: bigint }[] = data.map(
+  (p) => ({
+    fuel: BigInt(p.fuel),
+    pos_x: BigInt(p.pos_x),
+    pos_y: BigInt(p.pos_y),
+  })
+);
 
 const txHash = await createPellets(admin_token, params);
 printTxURL(txHash);
