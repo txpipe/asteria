@@ -4,8 +4,8 @@ import {
   toUnit,
   TxHash,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { fetchReferenceScript, lucidBase } from "../../utils.ts";
-import { AssetClassT, PelletDatum, PelletDatumT } from "../../types.ts";
+import { fetchReferenceScript, lucidBase } from "../../../utils.ts";
+import { AssetClassT, PelletDatum, PelletDatumT } from "../../../types.ts";
 
 async function createPellets(
   admin_token: AssetClassT,
