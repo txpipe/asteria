@@ -1,5 +1,5 @@
 import { admin_token } from "../../../constants.ts";
-import { consumePellets } from "../../../transactions/admin/pellet/consume-pellets.ts";
+import { consumePellets } from "../../../transactions/admin/pellets/consume-pellets.ts";
 import { printTxURL } from "../../../utils.ts";
 
 const pellets_tx_hash =
