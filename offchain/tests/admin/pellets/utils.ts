@@ -24,26 +24,26 @@ function getRandomSubarray<T>(arr: Array<T>, size: number) {
  * @param r Diamond diagonal.
  */
 function getDiamondCoordinates(r: bigint): Coordinates {
-  const cs = [];
+  const coordinates = [];
   for (let i = 0n; i < r; i++) {
-    cs.push({
+    coordinates.push({
       pos_x: r - i,
       pos_y: i,
     });
-    cs.push({
+    coordinates.push({
       pos_x: -r + i,
       pos_y: -i,
     });
-    cs.push({
+    coordinates.push({
       pos_x: -i,
       pos_y: r - i,
     });
-    cs.push({
+    coordinates.push({
       pos_x: i,
       pos_y: -r + i,
     });
   }
-  return cs;
+  return coordinates;
 }
 
 /**
@@ -61,11 +61,11 @@ function getDiamondAreaCoordinates(
       "inner_r must be a positive number less than or equal to outer_r"
     );
   }
-  const pellets = [];
+  const coordinates = [];
   for (let r = inner_r; r <= outer_r; r++) {
-    pellets.push(getDiamondCoordinates(r));
+    coordinates.push(getDiamondCoordinates(r));
   }
-  return pellets.flat();
+  return coordinates.flat();
 }
 
 /**
