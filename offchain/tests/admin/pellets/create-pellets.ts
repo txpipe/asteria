@@ -3,6 +3,6 @@ import { createPellets } from "../../../transactions/admin/pellets/create-pellet
 import { readPelletsCSV } from "./utils.ts";
 import { printTxURL } from "../../../utils.ts";
 
-const params = await readPelletsCSV("tests/admin/pellets.csv");
+const params = await readPelletsCSV("tests/admin/pellets/pellets.csv");
 const txHash = await createPellets(admin_token, params);
 printTxURL(txHash);
