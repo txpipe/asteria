@@ -73,21 +73,32 @@ function getDiamondAreaCoordinates(
  * between two diamonds with diagonals inner_r and outer_r respectively.
  * @param inner_r Inner diamond diagonal. Must be greater than or equal to 0.
  * @param outer_r Outer diamond diagonal. Must be greater than or equal to inner_r.
+ * @param min_fuel Minimum fuel held by the sample pellets. Must be greater than or equal to 0.
+ * @param max_fuel Maximum fuel held by the sample pellets. Must be greater than or equal to min_fuel.
  * @param density Density of the sample: equals 1 if every diamond point is taken. Must be in the range 0 - 1, inclusive.
  */
 function getDiamondAreaSample(
   inner_r: bigint,
   outer_r: bigint,
+  min_fuel: bigint,
+  max_fuel: bigint,
   density: number
 ): PelletParams {
   if (density > 1 || density < 0) {
     throw Error("Density must be a number between 0 and 1.");
   }
+  if (min_fuel < 0 || min_fuel > max_fuel) {
+    throw Error(
+      "min_fuel must be a positive number less than or equal to max_fuel"
+    );
+  }
   const coordinates = getDiamondAreaCoordinates(inner_r, outer_r);
   const sample_size = Math.floor(coordinates.length * density);
   const sample_coordinates = getRandomSubarray(coordinates, sample_size);
   const pellets = sample_coordinates.map((c) => ({
-    fuel: Math.floor(Math.random() * 60 + 30), //random amount between 30 and 90.
+    fuel: Math.floor(
+      Math.random() * Number(max_fuel - min_fuel) + Number(min_fuel)
+    ),
     pos_x: c.pos_x,
     pos_y: c.pos_y,
   }));
