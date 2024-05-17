@@ -1,4 +1,10 @@
-import { getDiamondAreaSample, writePelletsCSV } from "./utils.ts";
+import {
+  getRingAreaSample,
+  getDiamondAreaSample,
+  writePelletsCSV,
+} from "./utils.ts";
 
-const pellets = getDiamondAreaSample(50n, 80n, 10n, 1n, 0.2);
-writePelletsCSV(pellets, "tests/admin/pellets/sample4.csv");
+const pellets = getRingAreaSample(20, 30, 30n, 80n, 0.15);
+//const pellets = getDiamondAreaSample(0n, 9n, 30n, 50n, 0.05);
+
+writePelletsCSV(pellets, "tests/admin/pellets/circle1.csv");
