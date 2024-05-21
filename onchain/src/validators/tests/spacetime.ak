@@ -15,6 +15,7 @@ use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{
   AssetClass, GatherFuel, MineAsteria, MoveShip, PelletDatum, Quit, ShipDatum,
+  Speed,
 }
 use asteria/utils.{distance}
 use spacetime
@@ -36,6 +37,8 @@ type MoveTestOptions {
   update_x: Bool,
   update_y: Bool,
   update_fuel: Bool,
+  update_latest_time: Bool,
+  respect_latest_time: Bool,
 }
 
 fn default_move_options() {
@@ -52,6 +55,8 @@ fn default_move_options() {
     update_x: True,
     update_y: True,
     update_fuel: True,
+    update_latest_time: True,
+    respect_latest_time: True,
   }
 }
 
@@ -59,11 +64,19 @@ fn move(options: MoveTestOptions) -> Bool {
   let min_ada = from_lovelace(2_000_000)
   let initial_x = -20
   let initial_y = -20
-  let max_moving_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_pellet_fuel = 40
   let min_asteria_distance = 10
+  let max_speed = Speed { distance: 1, time: 1_000 }
+  let earliest_time =
+    if options.respect_latest_time {
+      10_000
+    } else {
+      0
+    }
+  let latest_time = earliest_time + 20_000
+  let last_move_latest_time = 5_000
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = MoveShip(options.delta_x, options.delta_y)
@@ -91,7 +104,7 @@ fn move(options: MoveTestOptions) -> Bool {
       pos_y: initial_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
-      last_move_upper_bound: 0,
+      last_move_latest_time,
     }
   let ship_datum_out =
     ShipDatum {
@@ -119,7 +132,11 @@ fn move(options: MoveTestOptions) -> Bool {
       } else {
         "FOO"
       },
-      last_move_upper_bound: 0,
+      last_move_latest_time: if options.update_latest_time {
+        latest_time
+      } else {
+        last_move_latest_time
+      },
     }
   let ship_in = {
     let output =
@@ -188,9 +205,12 @@ fn move(options: MoveTestOptions) -> Bool {
       certificates: [],
       withdrawals: dict.new(),
       validity_range: Interval {
-        lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
+        lower_bound: IntervalBound {
+          bound_type: Finite(earliest_time),
+          is_inclusive: True,
+        },
         upper_bound: IntervalBound {
-          bound_type: Finite(10),
+          bound_type: Finite(latest_time),
           is_inclusive: True,
         },
       },
@@ -235,7 +255,7 @@ fn move(options: MoveTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_moving_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_pellet_fuel,
@@ -293,8 +313,16 @@ test move_no_update_fuel() fail {
   move(MoveTestOptions { ..default_move_options(), update_fuel: False })
 }
 
-test move_exceed_max_distance() fail {
+test move_no_update_upper_bound() fail {
+  move(MoveTestOptions { ..default_move_options(), update_latest_time: False })
+}
+
+test move_exceed_max_speed() fail {
   move(MoveTestOptions { ..default_move_options(), delta_x: 30, delta_y: 1 })
+}
+
+test move_no_respect_latset_time() fail {
+  move(MoveTestOptions { ..default_move_options(), respect_latest_time: False })
 }
 
 // ==============================================================================================
@@ -309,6 +337,7 @@ type GatherTestOptions {
   update_fuel: Bool,
   preserve_pos_x: Bool,
   include_ship_token: Bool,
+  respect_latest_time: Bool,
 }
 
 fn default_gather_options() {
@@ -320,6 +349,7 @@ fn default_gather_options() {
     update_fuel: True,
     preserve_pos_x: True,
     include_ship_token: True,
+    respect_latest_time: True,
   }
 }
 
@@ -328,11 +358,19 @@ fn gather(options: GatherTestOptions) -> Bool {
   let pellet_fuel = 20
   let pellet_pos_x = 10
   let pellet_pos_y = 10
-  let max_moving_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_pellet_fuel = 40
   let min_asteria_distance = 10
+  let max_speed = Speed { distance: 1, time: 1_000 }
+  let earliest_time =
+    if options.respect_latest_time {
+      10_000
+    } else {
+      0
+    }
+  let latest_time = earliest_time + 20_000
+  let last_move_latest_time = 5_000
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = GatherFuel(options.amount)
@@ -388,7 +426,7 @@ fn gather(options: GatherTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
-      last_move_upper_bound: 0,
+      last_move_latest_time,
     }
   let ship_datum_out =
     ShipDatum {
@@ -405,7 +443,7 @@ fn gather(options: GatherTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
-      last_move_upper_bound: 0,
+      last_move_latest_time,
     }
 
   let ship_in = {
@@ -459,9 +497,12 @@ fn gather(options: GatherTestOptions) -> Bool {
       certificates: [],
       withdrawals: dict.new(),
       validity_range: Interval {
-        lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
+        lower_bound: IntervalBound {
+          bound_type: Finite(earliest_time),
+          is_inclusive: True,
+        },
         upper_bound: IntervalBound {
-          bound_type: Finite(10),
+          bound_type: Finite(latest_time),
           is_inclusive: True,
         },
       },
@@ -506,7 +547,7 @@ fn gather(options: GatherTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_moving_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_pellet_fuel,
@@ -550,6 +591,12 @@ test gather_alter_pos_x() fail {
   )
 }
 
+test gather_no_respect_latset_time() fail {
+  gather(
+    GatherTestOptions { ..default_gather_options(), respect_latest_time: False },
+  )
+}
+
 // ==============================================================================================
 // MineAsteria Tests
 // ==============================================================================================
@@ -560,6 +607,7 @@ type MineTestOptions {
   include_asteria_input: Bool,
   burn_ship_token: Bool,
   include_ship_token: Bool,
+  respect_latest_time: Bool,
 }
 
 fn default_mine_options() {
@@ -569,16 +617,25 @@ fn default_mine_options() {
     include_asteria_input: True,
     burn_ship_token: True,
     include_ship_token: True,
+    respect_latest_time: True,
   }
 }
 
 fn mine(options: MineTestOptions) -> Bool {
   let min_ada = from_lovelace(2_000_000)
-  let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_fuel = 40
   let min_distance = 10
+  let max_speed = Speed { distance: 1, time: 1_000 }
+  let earliest_time =
+    if options.respect_latest_time {
+      10_000
+    } else {
+      0
+    }
+  let latest_time = earliest_time + 20_000
+  let last_move_latest_time = 5_000
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = MineAsteria
@@ -627,7 +684,7 @@ fn mine(options: MineTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
-      last_move_upper_bound: 0,
+      last_move_latest_time,
     }
 
   let ship_in = {
@@ -691,9 +748,12 @@ fn mine(options: MineTestOptions) -> Bool {
       certificates: [],
       withdrawals: dict.new(),
       validity_range: Interval {
-        lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
+        lower_bound: IntervalBound {
+          bound_type: Finite(earliest_time),
+          is_inclusive: True,
+        },
         upper_bound: IntervalBound {
-          bound_type: Finite(10),
+          bound_type: Finite(latest_time),
           is_inclusive: True,
         },
       },
@@ -738,7 +798,7 @@ fn mine(options: MineTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_fuel,
@@ -791,11 +851,11 @@ fn default_quit_options() {
 
 fn quit(options: QuitTestOptions) -> Bool {
   let min_ada = from_lovelace(2_000_000)
-  let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_fuel = 40
   let min_distance = 10
+  let max_speed = Speed { distance: 1, time: 1_000 }
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = Quit
@@ -823,7 +883,7 @@ fn quit(options: QuitTestOptions) -> Bool {
       pos_y: 10,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
-      last_move_upper_bound: 0,
+      last_move_latest_time: 0,
     }
 
   let ship_in = {
@@ -923,7 +983,7 @@ fn quit(options: QuitTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_fuel,
