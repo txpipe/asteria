@@ -13,7 +13,7 @@ use aiken/transaction/value.{from_minted_value, quantity_of}
 use asteria/types.{
   AssetClass, AsteriaDatum, BurnShip, GatherFuel, MineAsteria, MintShip,
   MoveShip, PelletDatum, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
-  ShipyardRedeemer,
+  ShipyardRedeemer, Speed,
 }
 use asteria/utils
 
@@ -21,7 +21,7 @@ validator(
   pellet_validator_address: ScriptAddress,
   asteria_validator_address: ScriptAddress,
   _admin_token: AssetClass,
-  max_moving_speed: Int,
+  max_speed: Speed,
   max_ship_fuel: Int,
   fuel_per_step: Int,
   initial_fuel: Int,
@@ -37,15 +37,18 @@ validator(
       pos_y,
       ship_token_name,
       pilot_token_name,
-      last_move_upper_bound,
+      last_move_latest_time,
     } = datum
 
+    expect Some(max_speed_rational) =
+      rational.new(max_speed.distance, max_speed.time)
     expect Spend(ship_ref) = purpose
     expect [ship_input] =
       list.filter(inputs, fn(input) { input.output_reference == ship_ref })
-    expect ScriptCredential(credential) =
+    expect ScriptCredential(shipyard_policy) =
       ship_input.output.address.payment_credential
-    let shipyard_policy = credential
+    expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
+    expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
 
     expect Some(_) =
       list.find(
@@ -58,8 +61,10 @@ validator(
           )
         },
       )
+
     let must_hold_ship_token =
       quantity_of(ship_input.output.value, shipyard_policy, ship_token_name) == 1
+    let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
 
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
@@ -71,13 +76,10 @@ validator(
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
 
-        expect Finite(tx_lower_bound) = validity_range.lower_bound.bound_type
-        expect Finite(tx_upper_bound) = validity_range.upper_bound.bound_type
-
         let distance = utils.distance(delta_x, delta_y)
         let required_fuel = utils.required_fuel(distance, fuel_per_step)
         expect Some(speed) =
-          rational.new(distance, tx_upper_bound - tx_lower_bound)
+          rational.new(distance, tx_latest_time - tx_earliest_time)
 
         let must_have_enough_fuel = required_fuel <= fuel
         let must_preserve_ship_value =
@@ -88,10 +90,9 @@ validator(
         let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
         let must_update_fuel = ship_output_datum.fuel == fuel - required_fuel
         let must_update_upper_bound =
-          ship_output_datum.last_move_upper_bound == tx_upper_bound
+          ship_output_datum.last_move_latest_time == tx_latest_time
         let must_respect_max_speed =
-          rational.compare_with(speed, <=, rational.from_int(max_moving_speed))
-        let must_respect_latest_time = last_move_upper_bound <= tx_lower_bound
+          rational.compare_with(speed, <=, max_speed_rational)
 
         and {
           must_update_x?,
@@ -143,6 +144,7 @@ validator(
           must_not_exceed_capacity?,
           must_update_datum?,
           must_preserve_ship_value?,
+          must_respect_latest_time?,
         }
       }
       MineAsteria -> {
@@ -164,6 +166,7 @@ validator(
           must_hold_ship_token?,
           must_have_asteria_position?,
           must_burn_ship_token?,
+          must_respect_latest_time?,
         }
       }
       Quit -> {
@@ -219,7 +222,7 @@ validator(
           transaction.find_script_outputs(outputs, policy_id)
         expect InlineDatum(ship_datum) = ship_state.datum
         expect ship_datum: ShipDatum = ship_datum
-        expect Finite(tx_upper_bound) = validity_range.upper_bound.bound_type
+        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
 
         let must_respect_ship_name =
           ship_token_name == bytearray.concat(
@@ -238,8 +241,8 @@ validator(
         let must_have_ship_name = ship_datum.ship_token_name == ship_token_name
         let must_have_pilot_name =
           ship_datum.pilot_token_name == pilot_token_name
-        let must_have_upper_bound =
-          ship_datum.last_move_upper_bound == tx_upper_bound
+        let must_have_latest_time =
+          ship_datum.last_move_latest_time == tx_latest_time
         let must_hold_ship_token =
           value.quantity_of(ship_state.value, policy_id, ship_token_name) == 1
 
@@ -251,7 +254,7 @@ validator(
           must_have_initial_fuel?,
           must_have_ship_name?,
           must_have_pilot_name?,
-          must_have_upper_bound?,
+          must_have_latest_time?,
           must_hold_ship_token?,
         }
       }
@@ -263,7 +266,7 @@ validator(
             fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
           )
         expect [(_, -1)] = minted_tokens
-        option.is_some(ship_input)
+        option.is_some(ship_input)?
       }
     }
   }

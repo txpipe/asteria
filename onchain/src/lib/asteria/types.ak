@@ -17,7 +17,7 @@ pub type ShipDatum {
   pos_y: Int,
   ship_token_name: AssetName,
   pilot_token_name: AssetName,
-  last_move_upper_bound: PosixTime,
+  last_move_latest_time: PosixTime,
 }
 
 pub type ShipRedeemer {
@@ -53,4 +53,9 @@ pub type AsteriaRedeemer {
 pub type ShipyardRedeemer {
   MintShip
   BurnShip
+}
+
+pub type Speed {
+  distance: Int,
+  time: Int,
 }
