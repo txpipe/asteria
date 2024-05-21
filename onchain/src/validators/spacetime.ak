@@ -87,6 +87,8 @@ validator(
         let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
         let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
         let must_update_fuel = ship_output_datum.fuel == fuel - required_fuel
+        let must_update_upper_bound =
+          ship_output_datum.last_move_upper_bound == tx_upper_bound
         let must_respect_max_speed =
           rational.compare_with(speed, <=, rational.from_int(max_moving_speed))
         let must_respect_latest_time = last_move_upper_bound <= tx_lower_bound
@@ -95,6 +97,7 @@ validator(
           must_update_x?,
           must_update_y?,
           must_update_fuel?,
+          must_update_upper_bound?,
           must_hold_ship_token?,
           must_have_enough_fuel?,
           must_preserve_ship_value?,
