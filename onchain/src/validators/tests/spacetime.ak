@@ -91,6 +91,7 @@ fn move(options: MoveTestOptions) -> Bool {
       pos_y: initial_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
+      last_move_upper_bound: 0,
     }
   let ship_datum_out =
     ShipDatum {
@@ -118,6 +119,7 @@ fn move(options: MoveTestOptions) -> Bool {
       } else {
         "FOO"
       },
+      last_move_upper_bound: 0,
     }
   let ship_in = {
     let output =
@@ -386,6 +388,7 @@ fn gather(options: GatherTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
+      last_move_upper_bound: 0,
     }
   let ship_datum_out =
     ShipDatum {
@@ -402,7 +405,9 @@ fn gather(options: GatherTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
+      last_move_upper_bound: 0,
     }
+
   let ship_in = {
     let output =
       Output {
@@ -622,7 +627,9 @@ fn mine(options: MineTestOptions) -> Bool {
       pos_y: options.ship_pos_y,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
+      last_move_upper_bound: 0,
     }
+
   let ship_in = {
     let output =
       Output {
@@ -816,7 +823,9 @@ fn quit(options: QuitTestOptions) -> Bool {
       pos_y: 10,
       ship_token_name: mock.ship_token_name,
       pilot_token_name: mock.pilot_token_name,
+      last_move_upper_bound: 0,
     }
+
   let ship_in = {
     let output =
       Output {

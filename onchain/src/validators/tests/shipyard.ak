@@ -62,6 +62,7 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
       pos_y: args.initial_y,
       ship_token_name: args.ship_token_name,
       pilot_token_name: args.pilot_token_name,
+      last_move_upper_bound: 0,
     }
   let ship_value =
     from_lovelace(2_000_000)
@@ -312,6 +313,7 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
       pos_y: options.pos_y,
       ship_token_name,
       pilot_token_name,
+      last_move_upper_bound: 0,
     }
   let ship_in = {
     let output = {

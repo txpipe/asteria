@@ -1,6 +1,8 @@
 use aiken/bytearray
 use aiken/dict
+use aiken/interval.{Finite}
 use aiken/list
+use aiken/math/rational
 use aiken/option
 use aiken/string
 use aiken/transaction.{InlineDatum, Mint, ScriptContext, Spend, Transaction}
@@ -19,7 +21,7 @@ validator(
   pellet_validator_address: ScriptAddress,
   asteria_validator_address: ScriptAddress,
   _admin_token: AssetClass,
-  max_moving_distance: Int,
+  max_moving_speed: Int,
   max_ship_fuel: Int,
   fuel_per_step: Int,
   initial_fuel: Int,
@@ -28,9 +30,15 @@ validator(
   // SPACETIME VALIDATOR:
   pub fn spend(datum: ShipDatum, redeemer: ShipRedeemer, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, mint, .. } = transaction
-    let ShipDatum { fuel, pos_x, pos_y, ship_token_name, pilot_token_name } =
-      datum
+    let Transaction { inputs, outputs, mint, validity_range, .. } = transaction
+    let ShipDatum {
+      fuel,
+      pos_x,
+      pos_y,
+      ship_token_name,
+      pilot_token_name,
+      last_move_upper_bound,
+    } = datum
 
     expect Spend(ship_ref) = purpose
     expect [ship_input] =
@@ -63,8 +71,14 @@ validator(
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
 
+        expect Finite(tx_lower_bound) = validity_range.lower_bound.bound_type
+        expect Finite(tx_upper_bound) = validity_range.upper_bound.bound_type
+
         let distance = utils.distance(delta_x, delta_y)
         let required_fuel = utils.required_fuel(distance, fuel_per_step)
+        expect Some(speed) =
+          rational.new(distance, tx_upper_bound - tx_lower_bound)
+
         let must_have_enough_fuel = required_fuel <= fuel
         let must_preserve_ship_value =
           ship_input.output.value == ship_output.value
@@ -73,7 +87,9 @@ validator(
         let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
         let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
         let must_update_fuel = ship_output_datum.fuel == fuel - required_fuel
-        let must_respect_max_distance = distance <= max_moving_distance
+        let must_respect_max_speed =
+          rational.compare_with(speed, <=, rational.from_int(max_moving_speed))
+        let must_respect_latest_time = last_move_upper_bound <= tx_lower_bound
 
         and {
           must_update_x?,
@@ -83,7 +99,8 @@ validator(
           must_have_enough_fuel?,
           must_preserve_ship_value?,
           must_preserve_pilot_token?,
-          must_respect_max_distance?,
+          must_respect_max_speed?,
+          must_respect_latest_time?,
         }
       }
 
@@ -160,7 +177,7 @@ validator(
   // SHIPYARD POLICY:
   pub fn mint(redeemer: ShipyardRedeemer, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, mint, .. } = transaction
+    let Transaction { inputs, outputs, mint, validity_range, .. } = transaction
     expect Mint(policy_id) = purpose
     let minted_tokens =
       mint
@@ -181,9 +198,9 @@ validator(
               }
             },
           )
-
         expect InlineDatum(asteria_datum) = asteria_input.output.datum
         expect asteria_datum: AsteriaDatum = asteria_datum
+
         expect [(ship_token_name, 1)] =
           list.filter(
             minted_tokens,
@@ -194,38 +211,44 @@ validator(
             minted_tokens,
             fn(token) { utils.has_prefix("PILOT", token.1st) },
           )
+
         expect [ship_state] =
           transaction.find_script_outputs(outputs, policy_id)
         expect InlineDatum(ship_datum) = ship_state.datum
         expect ship_datum: ShipDatum = ship_datum
+        expect Finite(tx_upper_bound) = validity_range.upper_bound.bound_type
+
         let must_respect_ship_name =
           ship_token_name == bytearray.concat(
             "SHIP",
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
-
         let must_respect_pilot_name =
           pilot_token_name == bytearray.concat(
             "PILOT",
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
         let must_mint_two_assets = list.length(minted_tokens) == 2
-        let must_have_initial_fuel = ship_datum.fuel == initial_fuel
         let must_respect_min_distance =
           utils.distance(ship_datum.pos_x, ship_datum.pos_y) >= min_asteria_distance
+        let must_have_initial_fuel = ship_datum.fuel == initial_fuel
         let must_have_ship_name = ship_datum.ship_token_name == ship_token_name
         let must_have_pilot_name =
           ship_datum.pilot_token_name == pilot_token_name
+        let must_have_upper_bound =
+          ship_datum.last_move_upper_bound == tx_upper_bound
         let must_hold_ship_token =
           value.quantity_of(ship_state.value, policy_id, ship_token_name) == 1
+
         and {
           must_mint_two_assets?,
           must_respect_ship_name?,
           must_respect_pilot_name?,
-          must_have_initial_fuel?,
           must_respect_min_distance?,
+          must_have_initial_fuel?,
           must_have_ship_name?,
           must_have_pilot_name?,
+          must_have_upper_bound?,
           must_hold_ship_token?,
         }
       }
