@@ -47,8 +47,6 @@ validator(
       list.filter(inputs, fn(input) { input.output_reference == ship_ref })
     expect ScriptCredential(shipyard_policy) =
       ship_input.output.address.payment_credential
-    expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
-    expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
 
     expect Some(_) =
       list.find(
@@ -64,7 +62,6 @@ validator(
 
     let must_hold_ship_token =
       quantity_of(ship_input.output.value, shipyard_policy, ship_token_name) == 1
-    let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
 
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
@@ -75,6 +72,8 @@ validator(
           )
         expect InlineDatum(ship_output_datum) = ship_output.datum
         expect ship_output_datum: ShipDatum = ship_output_datum
+        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
+        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
 
         let distance = utils.distance(delta_x, delta_y)
         let required_fuel = utils.required_fuel(distance, fuel_per_step)
@@ -93,6 +92,7 @@ validator(
           ship_output_datum.last_move_latest_time == tx_latest_time
         let must_respect_max_speed =
           rational.compare_with(speed, <=, max_speed_rational)
+        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
 
         and {
           must_update_x?,
@@ -129,6 +129,7 @@ validator(
           )
         expect InlineDatum(pellet_datum) = pellet_input.output.datum
         expect pellet_datum: PelletDatum = pellet_datum
+        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
 
         let must_have_pellet_position =
           pos_x == pellet_datum.pos_x && pos_y == pellet_datum.pos_y
@@ -137,6 +138,7 @@ validator(
           ship_output_datum == ShipDatum { ..datum, fuel: fuel + amount }
         let must_preserve_ship_value =
           ship_input.output.value == ship_output.value
+        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
 
         and {
           must_hold_ship_token?,
@@ -159,9 +161,13 @@ validator(
               }
             },
           )
+        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
+
         let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
+        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
+
         and {
           must_hold_ship_token?,
           must_have_asteria_position?,
