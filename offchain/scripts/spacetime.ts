@@ -1,6 +1,6 @@
 import { Address, Data, SpendingValidator, applyParamsToScript } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import plutusBlueprint from "../../onchain/src/plutus.json" with { type: "json" };
-import { AssetClass, AssetClassT } from "../types.ts";
+import { AssetClass, AssetClassT, Speed, SpeedT } from "../types.ts";
 
 const spacetimeValidator = plutusBlueprint.validators.find(
   ({ title }) => title === "spacetime.spend"
@@ -17,7 +17,7 @@ const ValidatorParam = Data.Tuple([
   Data.Bytes(),
   Data.Bytes(),
   AssetClass,
-  Data.Integer({ minimum: 0 }),
+  Speed,
   Data.Integer({ minimum: 0 }),
   Data.Integer({ minimum: 0 }),
   Data.Integer({ minimum: 0 }),
@@ -29,7 +29,7 @@ function buildSpacetimeValidator(
   pellet_validator_address: Address,
   asteria_validator_address: Address,
   admin_token: AssetClassT,
-  max_moving_distance: bigint,
+  max_speed: SpeedT,
   max_ship_fuel: bigint,
   fuel_per_step: bigint,
   initial_fuel: bigint,
@@ -41,7 +41,7 @@ function buildSpacetimeValidator(
       pellet_validator_address,
       asteria_validator_address,
       admin_token,
-      max_moving_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_fuel,

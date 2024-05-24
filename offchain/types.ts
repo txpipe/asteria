@@ -6,6 +6,12 @@ const AssetClass = Data.Object({
 });
 type AssetClassT = Data.Static<typeof AssetClass>;
 
+const Speed = Data.Object({
+  distance: Data.Integer(),
+  time: Data.Integer(),
+});
+type SpeedT = Data.Static<typeof Speed>;
+
 const AsteriaDatum = Data.Object({
   ship_counter: Data.Integer(),
   shipyard_policy: Data.Bytes({ maxLength: 28 }),
@@ -26,59 +32,9 @@ const ShipDatum = Data.Object({
   pos_y: Data.Integer(),
   ship_token_name: Data.Bytes(),
   pilot_token_name: Data.Bytes(),
+  last_move_latest_time: Data.Integer(),
 });
 type ShipDatumT = Data.Static<typeof ShipDatum>;
 
-const ShipRedeemerSchema = Data.Enum([
-  Data.Object({
-    MoveShip: Data.Object({
-      delta_x: Data.Integer(),
-      delta_y: Data.Integer(),
-    }),
-  }),
-  Data.Object({
-    GatherFuel: Data.Object({
-      amount: Data.Integer(),
-    }),
-  }),
-  Data.Literal("MineAsteria"),
-  Data.Literal("Quit"),
-]);
-
-type ShipRedeemerT = Data.Static<typeof ShipRedeemerSchema>;
-
-// deno-lint-ignore no-namespace
-namespace ShipRedeemer {
-  export const MoveShip = (delta_x: bigint, delta_y: bigint) =>
-    Data.to<ShipRedeemerT>(
-      {
-        MoveShip: {
-          delta_x,
-          delta_y,
-        },
-      },
-      ShipRedeemerSchema as unknown as ShipRedeemerT
-    );
-  export const GatherFuel = (amount: bigint) =>
-    Data.to<ShipRedeemerT>(
-      {
-        GatherFuel: {
-          amount,
-        },
-      },
-      ShipRedeemerSchema as unknown as ShipRedeemerT
-    );
-  export const MineAsteria = () =>
-    Data.to<ShipRedeemerT>(
-      "MineAsteria",
-      ShipRedeemerSchema as unknown as ShipRedeemerT
-    );
-  export const Quit = () =>
-    Data.to<ShipRedeemerT>(
-      "Quit",
-      ShipRedeemerSchema as unknown as ShipRedeemerT
-    );
-}
-
-export { AssetClass, AsteriaDatum, PelletDatum, ShipDatum, ShipRedeemer };
-export type { AssetClassT, AsteriaDatumT, PelletDatumT, ShipDatumT };
+export { AssetClass, AsteriaDatum, PelletDatum, ShipDatum, Speed };
+export type { AssetClassT, AsteriaDatumT, PelletDatumT, ShipDatumT, SpeedT };

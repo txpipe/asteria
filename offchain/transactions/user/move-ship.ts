@@ -18,6 +18,8 @@ async function moveShip(
   fuel_per_step: bigint,
   delta_x: bigint,
   delta_y: bigint,
+  tx_earliest_posix_time: bigint,
+  tx_latest_posix_time: bigint,
   ship_tx_hash: TxHash
 ): Promise<TxHash> {
   const lucid = await lucidBase();
@@ -63,6 +65,7 @@ async function moveShip(
     pos_y: shipInputDatum.pos_y + delta_y,
     ship_token_name: shipInputDatum.ship_token_name,
     pilot_token_name: shipInputDatum.pilot_token_name,
+    last_move_latest_time: tx_latest_posix_time,
   };
   const shipOutputDatum = Data.to<ShipDatumT>(
     shipInfo,
@@ -84,6 +87,8 @@ async function moveShip(
   );
   const tx = await lucid
     .newTx()
+    .validFrom(Number(tx_earliest_posix_time))
+    .validTo(Number(tx_latest_posix_time))
     .collectFrom([ship], moveShipRedeemer)
     .readFrom([spacetimeRef])
     .payToContract(

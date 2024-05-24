@@ -4,17 +4,19 @@ import { printTxURL } from "../../utils.ts";
 
 const gather_amount = 20n;
 const ship_tx_hash =
-  "f1079755f32839c7c55796335e6835a0aafa8ce9b3e15fed287e0d971826881c";
+  "707cae59afc77d21bacf5064b75c698648e7f510dba900260b3630f8629a87ed";
 const pellet_tx_hash =
-  "f7f8f8298876cabb81357c1d7e89e2e01bf8956a566063f12ceee7b6901d0334";
-const pellet_tx_index = 1;
+  "59cd679ce5f4e340754de739002f1971bb83358db7b2b380cef808e2dac37525";
+const pellet_tx_index = 0;
+const tx_earliest_posix_time = 1716500380n * 1000n;
 
 const txHash = await gatherFuel(
   admin_token,
   gather_amount,
   ship_tx_hash,
   pellet_tx_hash,
-  pellet_tx_index
+  pellet_tx_index,
+  tx_earliest_posix_time
 );
 
 printTxURL(txHash);

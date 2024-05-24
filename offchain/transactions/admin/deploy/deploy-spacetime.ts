@@ -1,12 +1,12 @@
 import { Data, TxHash } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucidBase, writeJson } from "../../../utils.ts";
-import { AssetClassT } from "../../../types.ts";
+import { AssetClassT, SpeedT } from "../../../types.ts";
 import { buildSpacetimeValidator } from "../../../scripts/spacetime.ts";
 import { buildDeployValidator } from "../../../scripts/deploy.ts";
 
 async function deploySpacetime(
   admin_token: AssetClassT,
-  max_moving_distance: bigint,
+  max_speed: SpeedT,
   max_ship_fuel: bigint,
   fuel_per_step: bigint,
   initial_fuel: bigint,
@@ -57,7 +57,7 @@ async function deploySpacetime(
     pelletScriptAddress,
     asteriaScriptAddress,
     admin_token,
-    max_moving_distance,
+    max_speed,
     max_ship_fuel,
     fuel_per_step,
     initial_fuel,
