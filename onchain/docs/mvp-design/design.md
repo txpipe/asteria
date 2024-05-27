@@ -8,7 +8,7 @@ There will be a single `AsteriaUtxo`, several `PelletState` UTxOs and a `ShipSta
 
 Each ship will be identified by a `ShipToken`, with a fixed policy id but a token name of their own. This is the token that is minted by the `ShipyardPolicy`, described in the validators section.
 
-## Glossary of Constants
+## Constants Glossary
 
 - `MAX_SPEED`: maximum speed allowed for ship's movement.
 - `INITIAL_FUEL`: ship's fuel upon creation.
@@ -22,55 +22,55 @@ Each ship will be identified by a `ShipToken`, with a fixed policy id but a toke
 
 ### ShipState UTxO
 
-#### Address
-
+>#### Address
+>
 >- Parameterized on `AdminToken`, Asteria validator address, pellet validator address, MAX_SPEED, MAX_SHIP_FUEL, FUEL_PER_STEP, INITIAL_FUEL and MIN_ASTERIA_DISTANCE.
-
-#### Datum
-
+>
+>#### Datum
+>
 >- fuel: **Int**
 >- pos_x: **Int**
 >- pos_y: **Int**
 >- ship_token_name: **AssetName**
 >- pilot_token_name: **AssetName**
 >- last_move_latest_time: **PosixTime**
-
-#### Value
-
+>
+>#### Value
+>
 >- minADA
 >- `ShipToken`
 
 ### PelletState UTxO
 
-#### Address
-
+>#### Address
+>
 >- Parameterized on the `AdminToken`.
-
-#### Datum
-
+>
+>#### Datum
+>
 >- fuel: **Int**
 >- pos_x: **Int**
 >- pos_y: **Int**
 >- shipyard_policy: **PolicyId**
-
-#### Value
-
+>
+>#### Value
+>
 >- minADA
 >- `AdminToken`
 
 ### Asteria Utxo:
 
-#### Address
-
+>#### Address
+>
 >- Parameterized on the `AdminToken`, SHIP_MINT_LOVELACE_FEE, MAX_ASTERIA_MINING.
-
-#### Datum
-
+>
+>#### Datum
+>
 >- ship_counter: **Int**
 >- shipyard_policy: **PolicyId**
-
-#### Value
-
+>
+>#### Value
+>
 >- minADA + total_rewards
 >- `AdminToken`
 >
@@ -89,12 +89,6 @@ This transaction creates the unique `AsteriaUtxo` locking min ada and an `AdminT
 Creates one `PelletState` UTxO locking min ada and an `AdminToken`, setting in the datum the `pos_x` and `pos_y` coordinates where the pellet will be located on the grid and the `fuel` value equal to some initial value.
 
 ![createPellet diagram](img/createPellet.png)
-
-### Consume PelletState UTxO
-
-Pays the admin the value locked in the `PelletState` UTxO.
-
-![consumePellet diagram](img/consumePellet.png)
 
 ### Create a ShipState UTxO
 
@@ -120,17 +114,23 @@ Subtracts from the `AsteriaUTxO` at most `MAX_ASTERIA_MINING`% of the ada value,
 
 ![mineAsteria diagram](img/mineAsteria.png)
 
+### Quit Game
+
+Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns the `ShipToken`.
+
+![quit diagram](img/quit.png)
+
 ### Consume Asteria UTxO
 
 Pays the admin the value locked in the `AsteriaUtxo`.
 
 ![consumeAsteria diagram](img/consumeAsteria.png)
 
-### Quit Game
+### Consume PelletState UTxO
 
-Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns the `ShipToken`.
+Pays the admin the value locked in the `PelletState` UTxO.
 
-![quit diagram](img/quit.png)
+![consumePellet diagram](img/consumePellet.png)
 
 ## Validators & Minting Policies
 
@@ -180,12 +180,14 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 - there is a single `ShipState` input.
 - there is a single `ShipState` output.
 - the `PilotToken` is present in an input.
-- the `ShipState` input has enough fuel to move the desired delta.
 - the `ShipState` output value doesn't change.
-- the pilot_token datum field is not changed.
-- the x and y output datum values are updated as the previous ones (input values) plus the corresponding deltas.
-- the output fuel datum field equals the input fuel minus the fuel required for the displacement.
+- the `ShipState` input has enough fuel to move the desired delta.
 - the distance advanced divided by the tx validity range (posix time) doesn't exceed the maximum speed.
+- the `ShipState` input `last_move_latest_time` datum field is not greater than the earliest posix time of the tx validity range.
+- the output `fuel` datum field equals the input fuel minus the fuel required for the displacement.
+- the `pos_X` and `pos_y` output datum values are updated as the previous ones (input values) plus the corresponding deltas.
+- the output `last_move_latest_time` datum field is set as the latest posix time of the tx validity range.
+- the pilot_token datum field is not changed.
 
 #### *GatherFuel Redeemer (includes gathering amount)*
 
@@ -197,15 +199,17 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 - the amount specified plus the fuel before charging does not exceed `MAX_SHIP_FUEL` capacity.
 - the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
 - the `ShipState` output value is the same as the input.
+- `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 
 #### *MineAsteria Redeemer*
 
-- `ShipToken` is present.
 - there is a single `ShipState` input.
 - `PilotToken` is present.
-- `ShipState` position is (0,0).
-- `AsteriaUTxO` is input.
+- `ShipToken` is present.
 - `ShipToken` is burnt.
+- `AsteriaUTxO` is input.
+- `ShipState` position is (0,0).
+- `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 
 #### *Quit Redeemer*
 
@@ -225,10 +229,11 @@ Pays the min ada locked in the `ShipState` UTxO back to the ship owner and burns
 - the name of one token is the `ship_counter` of the `AsteriaUTxO` datum appended to the string `SHIP`. We refer to this token as the `ShipToken`.
 - the name of one token is the `ship_counter` of the `AsteriaUTxO` datum appended to the string `PILOT`. We refer to this token as the `PilotToken`
 - there is a single `ShipState` output.
-- the `ShipState` fuel datum field equals some initial value.
-- the `ShipState` output datum has x and y coordinates such that distance from (0,0) is above the minimum distance.
+- the `ShipState` fuel datum field equals INITIAL_FUEL.
+- the `ShipState` output datum has x and y coordinates such that distance from (0,0) is above MIN_ASTERIA_DISTANCE.
 - the `ShipState` output datum has the `ship_token_name` set as the name of the `ShipToken`.
 - the `ShipState` output datum has the `pilot_token_name` set as the name of the `PilotToken`.
+- the `ShipState` output datum has the `last_move_latest_time` set as the latest posix time of the tx validity range.
 - the `ShipToken` is paid to the `SpaceTimeScript` validator address.
 
 #### *BurnShip Redeemer*
