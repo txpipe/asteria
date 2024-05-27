@@ -18,7 +18,8 @@ import {
 async function mineAsteria(
   admin_token: AssetClassT,
   max_asteria_mining: bigint,
-  ship_tx_hash: TxHash
+  ship_tx_hash: TxHash,
+  tx_earliest_posix_time: bigint
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -61,7 +62,13 @@ async function mineAsteria(
     ShipDatum as unknown as ShipDatumT
   );
 
-  const asteria: UTxO = (await lucid.utxosAt(asteriaAddressBech32))[0];
+  const asterias: UTxO[] = await lucid.utxosAt(asteriaAddressBech32);
+  if (asterias.length != 1) {
+    throw Error(
+      "Expected only one Asteria UTxO, but found: " + asterias.length
+    );
+  }
+  const asteria = asterias[0];
   if (!asteria.datum) {
     throw Error("Asteria datum not found");
   }
@@ -98,6 +105,7 @@ async function mineAsteria(
   const burnRedeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
+    .validFrom(Number(tx_earliest_posix_time))
     .mintAssets(
       {
         [shipTokenUnit]: BigInt(-1),

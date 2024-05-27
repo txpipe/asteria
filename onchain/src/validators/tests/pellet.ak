@@ -199,13 +199,13 @@ test provide_ok() {
   provide(default_provide_test_options())
 }
 
-test not_enough_fuel() fail {
+test provide_not_enough_fuel() fail {
   let options =
     ProvideTestOptions { ..default_provide_test_options(), provided_amount: 60 }
   provide(options)
 }
 
-test wrong_datum_update() fail {
+test provide_wrong_datum_update() fail {
   let default = default_provide_test_options()
   let options =
     ProvideTestOptions {
@@ -215,7 +215,7 @@ test wrong_datum_update() fail {
   provide(options)
 }
 
-test no_ship_token() fail {
+test provide_no_ship_token() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),
@@ -224,7 +224,7 @@ test no_ship_token() fail {
   provide(options)
 }
 
-test wrong_ship_token_name() fail {
+test provide_wrong_ship_token_name() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),
@@ -233,7 +233,7 @@ test wrong_ship_token_name() fail {
   provide(options)
 }
 
-test no_admin_token() fail {
+test provide_no_admin_token() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),
@@ -243,7 +243,7 @@ test no_admin_token() fail {
   provide(options)
 }
 
-test wrong_value_update() fail {
+test provide_wrong_value_update() fail {
   let default = default_provide_test_options()
   let options =
     ProvideTestOptions {

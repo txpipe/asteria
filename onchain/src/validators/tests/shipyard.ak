@@ -8,7 +8,9 @@ use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{AssetName, PolicyId, Value, add, from_lovelace}
 use asteria/test_mock as mock
 use asteria/test_utils
-use asteria/types.{AssetClass, AsteriaDatum, BurnShip, MintShip, ShipDatum}
+use asteria/types.{
+  AssetClass, AsteriaDatum, BurnShip, MintShip, ShipDatum, Speed,
+}
 use spacetime
 
 // ==============================================================================================
@@ -19,12 +21,13 @@ type MintTestOptions {
   initial_fuel: Int,
   initial_x: Int,
   initial_y: Int,
+  latest_time: Int,
   ship_counter: Int,
   shipyard_policy: PolicyId,
   ship_token_name: AssetName,
   pilot_token_name: AssetName,
-  no_asteria_input: Bool,
-  no_ship_output: Bool,
+  include_asteria_input: Bool,
+  include_ship_output: Bool,
   ship_datum: ShipDatum,
   ship_value: Value,
 }
@@ -33,11 +36,13 @@ type MintTestArgs {
   initial_fuel: Int,
   initial_x: Int,
   initial_y: Int,
+  latest_time: Int,
   ship_counter: Int,
   ship_token_name: AssetName,
   pilot_token_name: AssetName,
-  no_asteria_input: Bool,
-  no_ship_output: Bool,
+  include_asteria_input: Bool,
+  include_ship_output: Bool,
+  correct_latest_time: Bool,
 }
 
 fn default_args() {
@@ -45,11 +50,13 @@ fn default_args() {
     initial_fuel: 40,
     initial_x: 10,
     initial_y: 10,
+    latest_time: 10_000,
     ship_counter: 7,
     ship_token_name: mock.ship_token_name,
     pilot_token_name: mock.pilot_token_name,
-    no_asteria_input: False,
-    no_ship_output: False,
+    include_asteria_input: True,
+    include_ship_output: True,
+    correct_latest_time: True,
   }
 }
 
@@ -62,6 +69,11 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
       pos_y: args.initial_y,
       ship_token_name: args.ship_token_name,
       pilot_token_name: args.pilot_token_name,
+      last_move_latest_time: if args.correct_latest_time {
+        args.latest_time
+      } else {
+        0
+      },
     }
   let ship_value =
     from_lovelace(2_000_000)
@@ -70,11 +82,12 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
     initial_fuel: args.initial_fuel,
     initial_x: args.initial_x,
     initial_y: args.initial_y,
+    latest_time: args.latest_time,
     ship_counter: args.ship_counter,
     ship_token_name: args.ship_token_name,
     pilot_token_name: args.pilot_token_name,
-    no_asteria_input: args.no_asteria_input,
-    no_ship_output: args.no_ship_output,
+    include_asteria_input: args.include_asteria_input,
+    include_ship_output: args.include_ship_output,
     shipyard_policy,
     ship_datum,
     ship_value,
@@ -82,12 +95,12 @@ fn set_mint_test_options(args: MintTestArgs) -> MintTestOptions {
 }
 
 fn ship_mint(options: MintTestOptions) -> Bool {
-  let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_fuel = 40
   let min_distance = 10
   let shipyard_policy = options.shipyard_policy
+  let max_speed = Speed { distance: 1, time: 1_000 }
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let ship_address =
@@ -135,16 +148,16 @@ fn ship_mint(options: MintTestOptions) -> Bool {
     }
   let tx =
     Transaction {
-      inputs: if options.no_asteria_input {
-        []
-      } else {
+      inputs: if options.include_asteria_input {
         [asteria_in]
+      } else {
+        []
       },
       reference_inputs: [],
-      outputs: if options.no_ship_output {
-        []
-      } else {
+      outputs: if options.include_ship_output {
         [ship_out]
+      } else {
+        []
       },
       fee: value.from_lovelace(5_000),
       mint: value.to_minted_value(
@@ -156,7 +169,7 @@ fn ship_mint(options: MintTestOptions) -> Bool {
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
-          bound_type: Finite(10),
+          bound_type: Finite(options.latest_time),
           is_inclusive: True,
         },
       },
@@ -180,7 +193,7 @@ fn ship_mint(options: MintTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_fuel,
@@ -195,47 +208,47 @@ test mint_ok() {
   ship_mint(set_mint_test_options(default_args()))
 }
 
-test no_asteria_input() fail {
-  let args = MintTestArgs { ..default_args(), no_asteria_input: True }
+test mint_no_asteria_input() fail {
+  let args = MintTestArgs { ..default_args(), include_asteria_input: False }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_ship_token_prefix() fail {
+test mint_wrong_ship_token_prefix() fail {
   let args = MintTestArgs { ..default_args(), ship_token_name: "SHI7" }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_ship_token_count() fail {
+test mint_wrong_ship_token_count() fail {
   let args = MintTestArgs { ..default_args(), ship_token_name: "SHIP8" }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_pilot_token_prefix() fail {
+test mint_wrong_pilot_token_prefix() fail {
   let args = MintTestArgs { ..default_args(), pilot_token_name: "PILO7" }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_pilot_token_count() fail {
+test mint_wrong_pilot_token_count() fail {
   let args = MintTestArgs { ..default_args(), pilot_token_name: "PILOT8" }
   ship_mint(set_mint_test_options(args))
 }
 
-test no_ship_output() fail {
-  let args = MintTestArgs { ..default_args(), no_ship_output: True }
+test mint_no_ship_output() fail {
+  let args = MintTestArgs { ..default_args(), include_ship_output: False }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_initial_fuel() fail {
+test mint_wrong_initial_fuel() fail {
   let args = MintTestArgs { ..default_args(), initial_fuel: 30 }
   ship_mint(set_mint_test_options(args))
 }
 
-test initial_distance_below_min() fail {
+test mint_initial_distance_below_min() fail {
   let args = MintTestArgs { ..default_args(), initial_x: 3, initial_y: 3 }
   ship_mint(set_mint_test_options(args))
 }
 
-test wrong_ship_name_in_datum() fail {
+test mint_wrong_ship_name_in_datum() fail {
   let default_options = set_mint_test_options(default_args())
   let wrong_datum =
     ShipDatum { ..default_options.ship_datum, ship_token_name: "FOO" }
@@ -243,7 +256,7 @@ test wrong_ship_name_in_datum() fail {
   ship_mint(options)
 }
 
-test wrong_pilot_name_in_datum() fail {
+test mint_wrong_pilot_name_in_datum() fail {
   let default_options = set_mint_test_options(default_args())
   let wrong_datum =
     ShipDatum { ..default_options.ship_datum, pilot_token_name: "FOO" }
@@ -251,7 +264,15 @@ test wrong_pilot_name_in_datum() fail {
   ship_mint(options)
 }
 
-test ship_token_not_paid() fail {
+test mint_wrong_latest_time_in_datum() fail {
+  let options =
+    set_mint_test_options(
+      MintTestArgs { ..default_args(), correct_latest_time: False },
+    )
+  ship_mint(options)
+}
+
+test mint_ship_token_not_paid() fail {
   let wrong_value = value.from_lovelace(2_000_000)
   let options =
     MintTestOptions {
@@ -270,7 +291,7 @@ type BurnTestOptions {
   pos_y: Int,
   ship_addr: Address,
   shipyard_policy: PolicyId,
-  no_ship_input: Bool,
+  include_ship_input: Bool,
   burnt_value: Value,
 }
 
@@ -287,13 +308,12 @@ fn set_burn_test_options() -> BurnTestOptions {
     pos_y: -12,
     ship_addr,
     shipyard_policy: mock.shipyard_policy,
-    no_ship_input: False,
+    include_ship_input: True,
     burnt_value,
   }
 }
 
 fn ship_burn(options: BurnTestOptions) -> Bool {
-  let max_distance = 30
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_fuel = 40
@@ -302,6 +322,7 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
   let pilot_token_name = mock.pilot_token_name
   let shipyard_policy = options.shipyard_policy
   let transaction_id = mock.transaction_id_1
+  let max_speed = Speed { distance: 1, time: 1_000 }
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = BurnShip
@@ -312,6 +333,7 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
       pos_y: options.pos_y,
       ship_token_name,
       pilot_token_name,
+      last_move_latest_time: 0,
     }
   let ship_in = {
     let output = {
@@ -335,10 +357,10 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
   }
   let tx =
     Transaction {
-      inputs: if options.no_ship_input {
-        []
-      } else {
+      inputs: if options.include_ship_input {
         [ship_in]
+      } else {
+        []
       },
       reference_inputs: [],
       outputs: [],
@@ -373,7 +395,7 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
-      max_distance,
+      max_speed,
       max_ship_fuel,
       fuel_per_step,
       initial_fuel,
@@ -388,9 +410,9 @@ test burn_ok() {
   ship_burn(set_burn_test_options())
 }
 
-test no_ship_input() fail {
+test burn_no_ship_input() fail {
   let options =
-    BurnTestOptions { ..set_burn_test_options(), no_ship_input: True }
+    BurnTestOptions { ..set_burn_test_options(), include_ship_input: False }
   ship_burn(options)
 }
 

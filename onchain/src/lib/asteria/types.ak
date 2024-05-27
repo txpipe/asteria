@@ -1,4 +1,5 @@
 use aiken/hash.{Blake2b_224, Hash}
+use aiken/time.{PosixTime}
 use aiken/transaction/credential.{Script}
 use aiken/transaction/value.{AssetName, PolicyId}
 
@@ -16,6 +17,7 @@ pub type ShipDatum {
   pos_y: Int,
   ship_token_name: AssetName,
   pilot_token_name: AssetName,
+  last_move_latest_time: PosixTime,
 }
 
 pub type ShipRedeemer {
@@ -51,4 +53,9 @@ pub type AsteriaRedeemer {
 pub type ShipyardRedeemer {
   MintShip
   BurnShip
+}
+
+pub type Speed {
+  distance: Int,
+  time: Int,
 }

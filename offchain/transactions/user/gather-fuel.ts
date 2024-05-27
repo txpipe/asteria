@@ -20,7 +20,8 @@ async function gatherFuel(
   gather_amount: bigint,
   ship_tx_hash: TxHash,
   pellet_tx_hash: TxHash,
-  pellet_tx_index: number
+  pellet_tx_index: number,
+  tx_earliest_posix_time: bigint
 ): Promise<TxHash> {
   const lucid = await lucidBase();
   const seed = Deno.env.get("SEED");
@@ -84,6 +85,7 @@ async function gatherFuel(
     pos_y: shipInputDatum.pos_y,
     ship_token_name: shipInputDatum.ship_token_name,
     pilot_token_name: shipInputDatum.pilot_token_name,
+    last_move_latest_time: shipInputDatum.last_move_latest_time,
   };
   const shipOutputDatum = Data.to<ShipDatumT>(
     shipInfo,
@@ -119,6 +121,7 @@ async function gatherFuel(
   const pelletRedeemer = Data.to(new Constr(0, [gather_amount]));
   const tx = await lucid
     .newTx()
+    .validFrom(Number(tx_earliest_posix_time))
     .collectFrom([ship], shipRedeemer)
     .collectFrom([pellet], pelletRedeemer)
     .readFrom([spacetimeRef, pelletRef])
