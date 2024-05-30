@@ -9,7 +9,7 @@ import { fetchReferenceScript, lucidBase } from "../../../utils.ts";
 import { AssetClassT, PelletDatum, PelletDatumT } from "../../../types.ts";
 
 async function createPellets(
-  price_tokens: Assets,
+  prize_tokens: Assets,
   admin_token: AssetClassT,
   params: { fuel: bigint; pos_x: bigint; pos_y: bigint }[]
 ): Promise<TxHash> {
@@ -58,7 +58,7 @@ async function createPellets(
       {
         [adminTokenUnit]: BigInt(1),
         lovelace: 2_000_000n,
-        ...price_tokens,
+        ...prize_tokens,
       }
     );
   }

@@ -19,11 +19,11 @@ const tokenB: AssetClassT = {
 };
 const tokenAUnit = toUnit(tokenA.policy, tokenA.name);
 const tokenBUnit = toUnit(tokenB.policy, tokenB.name);
-const price_tokens: Assets = {
+const prize_tokens: Assets = {
   [tokenAUnit]: 1n,
   [tokenBUnit]: 2n,
 };
 
 const params = await readPelletsCSV("tests/admin/pellets/pellets.csv");
-const txHash = await createPellets(price_tokens, admin_token, params);
+const txHash = await createPellets(prize_tokens, admin_token, params);
 printTxURL(txHash);
