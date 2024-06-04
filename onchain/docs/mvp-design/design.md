@@ -57,6 +57,7 @@ Each ship will be identified by a `ShipToken`, with a fixed policy id but a toke
 >
 >- minADA
 >- `AdminToken`
+>- prizeTokens
 
 ### Asteria Utxo:
 
@@ -86,7 +87,7 @@ This transaction creates the unique `AsteriaUtxo` locking min ada and an `AdminT
 
 ### Create a PelletState UTxO
 
-Creates one `PelletState` UTxO locking min ada and an `AdminToken`, setting in the datum the `pos_x` and `pos_y` coordinates where the pellet will be located on the grid and the `fuel` value equal to some initial value.
+Creates one `PelletState` UTxO locking min ada, an `AdminToken` and some extra tokens ("prize tokens") that ship owners can retrieve besides gathering fuel when they reach the pellet. Also sets the `pos_x` and `pos_y` datum coordinates where the pellet will be located on the grid and the `fuel` value equal to some initial value.
 
 ![createPellet diagram](img/createPellet.png)
 
@@ -104,7 +105,7 @@ Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by 
 
 ### Gather Fuel
 
-Updates the `fuel` datum field of both the `ShipState` and `PelletState` UTxOs, adding the `amount` (specified in the redeemer) from the first and subtracting it from the latter.
+Updates the `fuel` datum field of both the `ShipState` and `PelletState` UTxOs, adding the `amount` (specified in the redeemer) from the first and subtracting it from the latter. Also allows the ship owner to get any amount of the prize tokens held in the pellet.
 
 ![gatherFuel diagram](img/gatherFuel.png)
 
@@ -164,7 +165,7 @@ Pays the admin the value locked in the `PelletState` UTxO.
 - the amount specified is not greater than the fuel available in the pellet.
 - the amount specified is subtracted from the output `PelletState` fuel datum field, and the other fields remain unchanged.
 - The admin token is present in the input `PelletState`.
-- The `PelletState` value doesn't change.
+- The admin token is present in the output `PelletState`.
 
 #### *ConsumePellet Redeemer*
 

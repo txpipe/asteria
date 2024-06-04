@@ -8,9 +8,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{
   Address, ScriptCredential, VerificationKeyCredential,
 }
-use aiken/transaction/value.{
-  PolicyId, Value, add, from_lovelace, without_lovelace, zero,
-}
+use aiken/transaction/value.{PolicyId, Value, add, from_lovelace, zero}
 use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{AssetClass, ConsumePellet, PelletDatum, Provide}
@@ -243,12 +241,11 @@ test provide_no_admin_token() fail {
   provide(options)
 }
 
-test provide_wrong_value_update() fail {
-  let default = default_provide_test_options()
+test provide_no_admin_token_output() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),
-      pellet_output_value: without_lovelace(default.pellet_input_value),
+      pellet_output_value: from_lovelace(2_000_000),
     }
   provide(options)
 }

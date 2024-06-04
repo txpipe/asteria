@@ -45,15 +45,16 @@ validator(admin_token: AssetClass) {
             admin_token.policy,
             admin_token.name,
           ) == 1
-        let value_not_changed = own_input.output.value == own_output.value
+        let own_output_has_admin_token =
+          quantity_of(own_output.value, admin_token.policy, admin_token.name) == 1
         let datum_update_ok =
           out_datum == PelletDatum { ..datum, fuel: fuel - amount }
 
         and {
           has_enough_fuel?,
           datum_update_ok?,
-          value_not_changed?,
           own_input_has_admin_token?,
+          own_output_has_admin_token?,
         }
       }
 
