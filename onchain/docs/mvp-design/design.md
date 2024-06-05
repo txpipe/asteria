@@ -181,7 +181,7 @@ Pays the admin the value locked in the `PelletState` UTxO.
 - there is a single `ShipState` input.
 - there is a single `ShipState` output.
 - the `PilotToken` is present in an input.
-- the `ShipState` output value doesn't change.
+- the `ShipState` output value only has the `ShipToken` and some amount of ada.
 - the `ShipState` input has enough fuel to move the desired delta.
 - the distance advanced divided by the tx validity range (posix time) doesn't exceed the maximum speed.
 - the `ShipState` input `last_move_latest_time` datum field is not greater than the earliest posix time of the tx validity range.
@@ -196,10 +196,10 @@ Pays the admin the value locked in the `PelletState` UTxO.
 - there is a single `ShipState` input.
 - there is a single `ShipState` output.
 - `PilotToken` is present.
+- the `ShipState` output value only has the `ShipToken` and some amount of ada.
 - there is a `PelletState` input with the same x and y datum coordinates as the `ShipState` UTxO.
 - the amount specified plus the fuel before charging does not exceed `MAX_SHIP_FUEL` capacity.
 - the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
-- the `ShipState` output value is the same as the input.
 - `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 
 #### *MineAsteria Redeemer*
@@ -235,7 +235,7 @@ Pays the admin the value locked in the `PelletState` UTxO.
 - the `ShipState` output datum has the `ship_token_name` set as the name of the `ShipToken`.
 - the `ShipState` output datum has the `pilot_token_name` set as the name of the `PilotToken`.
 - the `ShipState` output datum has the `last_move_latest_time` set as the latest posix time of the tx validity range.
-- the `ShipToken` is paid to the `SpaceTimeScript` validator address.
+- the `ShipState` output value only has the `ShipToken` and some amount of ada.
 
 #### *BurnShip Redeemer*
 
