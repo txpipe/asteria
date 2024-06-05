@@ -257,8 +257,12 @@ validator(
           ship_datum.pilot_token_name == pilot_token_name
         let must_have_latest_time =
           ship_datum.last_move_latest_time == tx_latest_time
-        let must_hold_ship_token =
-          value.quantity_of(ship_state.value, policy_id, ship_token_name) == 1
+        let must_have_token_and_minada =
+          list.length(ship_state.value |> value.flatten) == 2 && quantity_of(
+            ship_state.value,
+            policy_id,
+            ship_token_name,
+          ) == 1
 
         and {
           must_mint_two_assets?,
@@ -269,7 +273,7 @@ validator(
           must_have_ship_name?,
           must_have_pilot_name?,
           must_have_latest_time?,
-          must_hold_ship_token?,
+          must_have_token_and_minada?,
         }
       }
 

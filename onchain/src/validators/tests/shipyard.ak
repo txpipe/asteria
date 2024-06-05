@@ -282,6 +282,20 @@ test mint_ship_token_not_paid() fail {
   ship_mint(options)
 }
 
+test mint_add_extra_token() fail {
+  let options = set_mint_test_options(default_args())
+  let wrong_value =
+    from_lovelace(2_000_000)
+      |> add(options.shipyard_policy, options.ship_token_name, 1)
+      |> add("aaaa", "tokenA", 1)
+  let options =
+    MintTestOptions {
+      ..set_mint_test_options(default_args()),
+      ship_value: wrong_value,
+    }
+  ship_mint(options)
+}
+
 // ==============================================================================================
 // Burn Tests
 // ==============================================================================================
