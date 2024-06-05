@@ -72,9 +72,9 @@ async function mineAsteria(
   if (!asteria.datum) {
     throw Error("Asteria datum not found");
   }
-  const rewards = asteria.assets.lovelace - 2_000_000n;
+  const rewards = asteria.assets.lovelace;
   const minedRewards = BigInt(
-    (Number(rewards) * Number(max_asteria_mining)) / 100
+    Math.floor((Number(rewards) * Number(max_asteria_mining)) / 100)
   );
 
   const asteriaInputDatum = Data.from<AsteriaDatumT>(
@@ -120,7 +120,7 @@ async function mineAsteria(
       { inline: asteriaOutputDatum },
       {
         [adminTokenUnit]: BigInt(1),
-        lovelace: rewards - minedRewards + 2_000_000n,
+        lovelace: rewards - minedRewards,
       }
     )
     .payToAddress(await lucid.wallet.address(), {
