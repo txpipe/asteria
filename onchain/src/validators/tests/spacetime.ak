@@ -8,9 +8,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{
   Address, ScriptCredential, VerificationKeyCredential,
 }
-use aiken/transaction/value.{
-  ada_asset_name, ada_policy_id, add, from_lovelace, zero,
-}
+use aiken/transaction/value.{add, from_lovelace, lovelace_of, zero}
 use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{
@@ -32,7 +30,8 @@ type MoveTestOptions {
   include_ship_input: Bool,
   include_ship_output: Bool,
   include_pilot_token: Bool,
-  preserve_value: Bool,
+  include_ship_token_output: Bool,
+  exclude_extra_token: Bool,
   preserve_pilot_token: Bool,
   update_x: Bool,
   update_y: Bool,
@@ -50,7 +49,8 @@ fn default_move_options() {
     include_ship_input: True,
     include_ship_output: True,
     include_pilot_token: True,
-    preserve_value: True,
+    include_ship_token_output: True,
+    exclude_extra_token: True,
     preserve_pilot_token: True,
     update_x: True,
     update_y: True,
@@ -179,10 +179,14 @@ fn move(options: MoveTestOptions) -> Bool {
   let ship_out =
     Output {
       address: ship_address,
-      value: if options.preserve_value {
-        ship_in.output.value
+      value: if options.include_ship_token_output {
+        if options.exclude_extra_token {
+          ship_in.output.value
+        } else {
+          ship_in.output.value |> value.add("aaaa", "tokenA", 1)
+        }
       } else {
-        ship_in.output.value |> add(ada_policy_id, ada_asset_name, 1)
+        ship_in.output.value |> lovelace_of |> from_lovelace
       },
       datum: InlineDatum(ship_datum_out),
       reference_script: None,
@@ -291,8 +295,17 @@ test move_not_enough_fuel() fail {
   move(MoveTestOptions { ..default_move_options(), initial_fuel: 5 })
 }
 
-test move_alter_ship_value() fail {
-  move(MoveTestOptions { ..default_move_options(), preserve_value: False })
+test move_no_ship_token_output() fail {
+  move(
+    MoveTestOptions {
+      ..default_move_options(),
+      include_ship_token_output: False,
+    },
+  )
+}
+
+test move_add_extra_token() fail {
+  move(MoveTestOptions { ..default_move_options(), exclude_extra_token: False })
 }
 
 test move_alter_pilot_token() fail {
@@ -321,7 +334,7 @@ test move_exceed_max_speed() fail {
   move(MoveTestOptions { ..default_move_options(), delta_x: 30, delta_y: 1 })
 }
 
-test move_no_respect_latset_time() fail {
+test move_no_respect_latest_time() fail {
   move(MoveTestOptions { ..default_move_options(), respect_latest_time: False })
 }
 
@@ -338,6 +351,8 @@ type GatherTestOptions {
   preserve_pos_x: Bool,
   include_ship_token: Bool,
   respect_latest_time: Bool,
+  include_ship_token_output: Bool,
+  exclude_extra_token: Bool,
 }
 
 fn default_gather_options() {
@@ -350,6 +365,8 @@ fn default_gather_options() {
     preserve_pos_x: True,
     include_ship_token: True,
     respect_latest_time: True,
+    include_ship_token_output: True,
+    exclude_extra_token: True,
   }
 }
 
@@ -483,7 +500,15 @@ fn gather(options: GatherTestOptions) -> Bool {
   let ship_out =
     Output {
       address: ship_address,
-      value: ship_in.output.value,
+      value: if options.include_ship_token_output {
+        if options.exclude_extra_token {
+          ship_in.output.value
+        } else {
+          ship_in.output.value |> value.add("aaaa", "tokenA", 1)
+        }
+      } else {
+        ship_in.output.value |> lovelace_of |> from_lovelace
+      },
       datum: InlineDatum(ship_datum_out),
       reference_script: None,
     }
@@ -594,6 +619,21 @@ test gather_alter_pos_x() fail {
 test gather_no_respect_latset_time() fail {
   gather(
     GatherTestOptions { ..default_gather_options(), respect_latest_time: False },
+  )
+}
+
+test gather_no_ship_token_output() fail {
+  gather(
+    GatherTestOptions {
+      ..default_gather_options(),
+      include_ship_token_output: False,
+    },
+  )
+}
+
+test gather_add_extra_token() fail {
+  gather(
+    GatherTestOptions { ..default_gather_options(), exclude_extra_token: False },
   )
 }
 

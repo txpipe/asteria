@@ -80,9 +80,6 @@ validator(
         expect Some(speed) =
           rational.new(distance, tx_latest_time - tx_earliest_time)
 
-        let must_have_enough_fuel = required_fuel <= fuel
-        let must_preserve_ship_value =
-          ship_input.output.value == ship_output.value
         let must_preserve_pilot_token =
           pilot_token_name == ship_output_datum.pilot_token_name
         let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
@@ -93,6 +90,13 @@ validator(
         let must_respect_max_speed =
           rational.compare_with(speed, <=, max_speed_rational)
         let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
+        let must_have_enough_fuel = required_fuel <= fuel
+        let must_have_token_and_minada =
+          list.length(ship_output.value |> value.flatten) == 2 && quantity_of(
+            ship_output.value,
+            shipyard_policy,
+            ship_token_name,
+          ) == 1
 
         and {
           must_update_x?,
@@ -101,10 +105,10 @@ validator(
           must_update_upper_bound?,
           must_hold_ship_token?,
           must_have_enough_fuel?,
-          must_preserve_ship_value?,
           must_preserve_pilot_token?,
           must_respect_max_speed?,
           must_respect_latest_time?,
+          must_have_token_and_minada?,
         }
       }
 
@@ -136,17 +140,21 @@ validator(
         let must_not_exceed_capacity = fuel + amount <= max_ship_fuel
         let must_update_datum =
           ship_output_datum == ShipDatum { ..datum, fuel: fuel + amount }
-        let must_preserve_ship_value =
-          ship_input.output.value == ship_output.value
         let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
+        let must_have_token_and_minada =
+          list.length(ship_output.value |> value.flatten) == 2 && quantity_of(
+            ship_output.value,
+            shipyard_policy,
+            ship_token_name,
+          ) == 1
 
         and {
           must_hold_ship_token?,
           must_have_pellet_position?,
           must_not_exceed_capacity?,
           must_update_datum?,
-          must_preserve_ship_value?,
           must_respect_latest_time?,
+          must_have_token_and_minada?,
         }
       }
       MineAsteria -> {
