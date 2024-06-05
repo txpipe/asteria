@@ -21,7 +21,7 @@ async function deployPellet(admin_token: AssetClassT): Promise<TxHash> {
     .payToContract(
       deployAddressBech32,
       { inline: Data.void(), scriptRef: pelletValidator },
-      { lovelace: 2_000_000n }
+      {}
     )
     .complete();
 

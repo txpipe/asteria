@@ -30,7 +30,7 @@ async function deployAsteria(
     .payToContract(
       deployAddressBech32,
       { inline: Data.void(), scriptRef: asteriaValidator },
-      { lovelace: 2_000_000n }
+      {}
     )
     .complete();
 
