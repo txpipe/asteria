@@ -171,6 +171,10 @@ Pays the admin the value locked in the `PelletState` UTxO.
 
 - `AdminToken` is present in some wallet input.
 
+## Ship Multivalidator
+
+Includes the Spacetime validator and the Shipyard policy.
+
 ### SpaceTime validator
 
 - Params: `AdminToken`, Asteria validator address, pellet validator address, MAX_SPEED, MAX_SHIP_FUEL, FUEL_PER_STEP, INITIAL_FUEL and MIN_ASTERIA_DISTANCE.
@@ -219,7 +223,7 @@ Pays the admin the value locked in the `PelletState` UTxO.
 - the `PilotToken` is present in an input.
 - `ShipToken` is burnt.
 
-### Ship minting policy or "ShipyardPolicy"
+### Shipyard policy
 
 - Params: same as SpaceTime validator.
 
