@@ -181,6 +181,7 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *MoveShip Redeemer (includes delta_x and delta_y displacements)*
 
+- the `ShipState` input is the only script input.
 - there is a single `ShipState` output.
 - the `PilotToken` is present in an input.
 - the `ShipState` output value only has the `ShipToken` and some amount of ada.
@@ -194,24 +195,26 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *GatherFuel Redeemer (includes gathering amount)*
 
+- there are two script inputs: `ShipState` and `PelletState`.
 - there is a single `ShipState` output.
 - `PilotToken` is present.
 - the `ShipState` output value only has the `ShipToken` and some amount of ada.
-- there is a `PelletState` input with the same x and y datum coordinates as the `ShipState` UTxO.
+- the `PelletState` input has the same x and y datum coordinates as the `ShipState` UTxO.
 - the amount specified plus the fuel before charging does not exceed `MAX_SHIP_FUEL` capacity.
 - the amount specified is added to the output `ShipState` fuel datum field, and the other fields remain unchanged.
 - `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 
 #### *MineAsteria Redeemer*
 
+- there are two script inputs: `ShipState` and `AsteriaUTxO`.
 - `PilotToken` is present.
 - `ShipToken` is burnt.
-- `AsteriaUTxO` is input.
 - `ShipState` position is (0,0).
 - `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 
 #### *Quit Redeemer*
 
+- the `ShipState` input is the only script input.
 - the `PilotToken` is present in an input.
 - `ShipToken` is burnt.
 

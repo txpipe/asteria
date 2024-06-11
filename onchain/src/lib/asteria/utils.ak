@@ -17,9 +17,9 @@ pub fn required_fuel(distance: Int, fuel_per_step: Int) -> Int {
   distance * fuel_per_step
 }
 
-pub fn is_wallet_address(address: Address) -> Bool {
+pub fn is_script_address(address: Address) -> Bool {
   when address.payment_credential is {
-    VerificationKeyCredential(_) -> True
-    ScriptCredential(_) -> False
+    VerificationKeyCredential(_) -> False
+    ScriptCredential(_) -> True
   }
 }

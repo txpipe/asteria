@@ -12,7 +12,7 @@ validator(admin_token: AssetClass) {
         list.find(
           ctx.transaction.inputs,
           fn(input) {
-            utils.is_wallet_address(input.output.address) && value.quantity_of(
+            not(utils.is_script_address(input.output.address)) && value.quantity_of(
               input.output.value,
               admin_token.policy,
               admin_token.name,

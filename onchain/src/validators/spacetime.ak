@@ -94,6 +94,13 @@ validator(
             shipyard_policy,
             ship_token_name,
           ) == 1
+        let must_spend_one_script_input =
+          list.length(
+            list.filter(
+              inputs,
+              fn(input) { utils.is_script_address(input.output.address) },
+            ),
+          ) == 1
 
         and {
           must_update_x?,
@@ -105,6 +112,7 @@ validator(
           must_respect_max_speed?,
           must_respect_latest_time?,
           must_have_token_and_minada?,
+          must_spend_one_script_input?,
         }
       }
 
@@ -127,6 +135,13 @@ validator(
               }
             },
           )
+        let must_be_valid_pellet =
+          value.quantity_of(
+            pellet_input.output.value,
+            admin_token.policy,
+            admin_token.name,
+          ) > 0
+
         expect InlineDatum(pellet_datum) = pellet_input.output.datum
         expect pellet_datum: PelletDatum = pellet_datum
         expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
@@ -143,18 +158,27 @@ validator(
             shipyard_policy,
             ship_token_name,
           ) == 1
+        let must_spend_two_script_inputs =
+          list.length(
+            list.filter(
+              inputs,
+              fn(input) { utils.is_script_address(input.output.address) },
+            ),
+          ) == 2
 
         and {
+          must_be_valid_pellet?,
           must_have_pellet_position?,
           must_not_exceed_capacity?,
           must_update_datum?,
           must_respect_latest_time?,
           must_have_token_and_minada?,
+          must_spend_two_script_inputs?,
         }
       }
       MineAsteria -> {
         // check that the Asteria UTxO is present as an input
-        expect Some(_) =
+        expect Some(asteria_input) =
           list.find(
             inputs,
             fn(input) {
@@ -165,23 +189,46 @@ validator(
               }
             },
           )
+        let must_be_valid_asteria =
+          value.quantity_of(
+            asteria_input.output.value,
+            admin_token.policy,
+            admin_token.name,
+          ) > 0
+
         expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
 
         let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
         let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
+        let must_spend_two_script_inputs =
+          list.length(
+            list.filter(
+              inputs,
+              fn(input) { utils.is_script_address(input.output.address) },
+            ),
+          ) == 2
 
         and {
+          must_be_valid_asteria?,
           must_have_asteria_position?,
           must_burn_ship_token?,
           must_respect_latest_time?,
+          must_spend_two_script_inputs?,
         }
       }
       Quit -> {
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
-        must_burn_ship_token?
+        let must_spend_one_script_input =
+          list.length(
+            list.filter(
+              inputs,
+              fn(input) { utils.is_script_address(input.output.address) },
+            ),
+          ) == 1
+        must_burn_ship_token? && must_spend_one_script_input?
       }
     }
   }
@@ -208,7 +255,7 @@ validator(
               }
             },
           )
-        let asteria_is_valid =
+        let must_be_valid_asteria =
           value.quantity_of(
             asteria_input.output.value,
             admin_token.policy,
@@ -255,7 +302,7 @@ validator(
           ) == 1
 
         and {
-          asteria_is_valid?,
+          must_be_valid_asteria?,
           must_mint_ship_and_pilot_tokens?,
           must_respect_min_distance?,
           must_have_initial_fuel?,
