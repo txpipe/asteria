@@ -275,10 +275,6 @@ test move_ok() {
   move(default_move_options())
 }
 
-test move_no_ship_token() fail {
-  move(MoveTestOptions { ..default_move_options(), include_ship_token: False })
-}
-
 test move_no_ship_input() fail {
   move(MoveTestOptions { ..default_move_options(), include_ship_input: False })
 }
@@ -289,10 +285,6 @@ test move_no_ship_output() fail {
 
 test move_no_pilot_token() fail {
   move(MoveTestOptions { ..default_move_options(), include_pilot_token: False })
-}
-
-test move_not_enough_fuel() fail {
-  move(MoveTestOptions { ..default_move_options(), initial_fuel: 5 })
 }
 
 test move_no_ship_token_output() fail {
@@ -308,10 +300,20 @@ test move_add_extra_token() fail {
   move(MoveTestOptions { ..default_move_options(), exclude_extra_token: False })
 }
 
-test move_alter_pilot_token() fail {
-  move(
-    MoveTestOptions { ..default_move_options(), preserve_pilot_token: False },
-  )
+test move_not_enough_fuel() fail {
+  move(MoveTestOptions { ..default_move_options(), initial_fuel: 5 })
+}
+
+test move_exceed_max_speed() fail {
+  move(MoveTestOptions { ..default_move_options(), delta_x: 30, delta_y: 1 })
+}
+
+test move_no_respect_latest_time() fail {
+  move(MoveTestOptions { ..default_move_options(), respect_latest_time: False })
+}
+
+test move_no_update_fuel() fail {
+  move(MoveTestOptions { ..default_move_options(), update_fuel: False })
 }
 
 test move_no_update_x() fail {
@@ -322,20 +324,14 @@ test move_no_update_y() fail {
   move(MoveTestOptions { ..default_move_options(), update_y: False })
 }
 
-test move_no_update_fuel() fail {
-  move(MoveTestOptions { ..default_move_options(), update_fuel: False })
-}
-
 test move_no_update_upper_bound() fail {
   move(MoveTestOptions { ..default_move_options(), update_latest_time: False })
 }
 
-test move_exceed_max_speed() fail {
-  move(MoveTestOptions { ..default_move_options(), delta_x: 30, delta_y: 1 })
-}
-
-test move_no_respect_latest_time() fail {
-  move(MoveTestOptions { ..default_move_options(), respect_latest_time: False })
+test move_alter_pilot_token() fail {
+  move(
+    MoveTestOptions { ..default_move_options(), preserve_pilot_token: False },
+  )
 }
 
 // ==============================================================================================
@@ -349,6 +345,7 @@ type GatherTestOptions {
   ship_pos_y: Int,
   update_fuel: Bool,
   preserve_pos_x: Bool,
+  include_pilot_token: Bool,
   include_ship_token: Bool,
   respect_latest_time: Bool,
   include_ship_token_output: Bool,
@@ -363,6 +360,7 @@ fn default_gather_options() {
     ship_pos_y: 10,
     update_fuel: True,
     preserve_pos_x: True,
+    include_pilot_token: True,
     include_ship_token: True,
     respect_latest_time: True,
     include_ship_token_output: True,
@@ -481,8 +479,12 @@ fn gather(options: GatherTestOptions) -> Bool {
   let pilot_in = {
     let output = {
       let value =
-        min_ada
-          |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        if options.include_pilot_token {
+          min_ada
+            |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        } else {
+          min_ada
+        }
       Output {
         address: pilot_address,
         value,
@@ -588,9 +590,24 @@ test gather_ok() {
   gather(default_gather_options())
 }
 
-test gather_no_ship_token() fail {
+test gather_no_pilot_token() fail {
   gather(
-    GatherTestOptions { ..default_gather_options(), include_ship_token: False },
+    GatherTestOptions { ..default_gather_options(), include_pilot_token: False },
+  )
+}
+
+test gather_no_ship_token_output() fail {
+  gather(
+    GatherTestOptions {
+      ..default_gather_options(),
+      include_ship_token_output: False,
+    },
+  )
+}
+
+test gather_add_extra_token() fail {
+  gather(
+    GatherTestOptions { ..default_gather_options(), exclude_extra_token: False },
   )
 }
 
@@ -622,21 +639,6 @@ test gather_no_respect_latset_time() fail {
   )
 }
 
-test gather_no_ship_token_output() fail {
-  gather(
-    GatherTestOptions {
-      ..default_gather_options(),
-      include_ship_token_output: False,
-    },
-  )
-}
-
-test gather_add_extra_token() fail {
-  gather(
-    GatherTestOptions { ..default_gather_options(), exclude_extra_token: False },
-  )
-}
-
 // ==============================================================================================
 // MineAsteria Tests
 // ==============================================================================================
@@ -644,6 +646,7 @@ test gather_add_extra_token() fail {
 type MineTestOptions {
   ship_pos_x: Int,
   ship_pos_y: Int,
+  include_pilot_token: Bool,
   include_asteria_input: Bool,
   burn_ship_token: Bool,
   include_ship_token: Bool,
@@ -654,6 +657,7 @@ fn default_mine_options() {
   MineTestOptions {
     ship_pos_x: 0,
     ship_pos_y: 0,
+    include_pilot_token: True,
     include_asteria_input: True,
     burn_ship_token: True,
     include_ship_token: True,
@@ -745,8 +749,12 @@ fn mine(options: MineTestOptions) -> Bool {
   let pilot_in = {
     let output = {
       let value =
-        min_ada
-          |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        if options.include_pilot_token {
+          min_ada
+            |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        } else {
+          min_ada
+        }
       Output {
         address: pilot_address,
         value,
@@ -854,8 +862,18 @@ test mine_mine_ok() {
   mine(default_mine_options())
 }
 
-test mine_no_ship_token() fail {
-  mine(MineTestOptions { ..default_mine_options(), include_ship_token: False })
+test mine_no_pilot_token() fail {
+  mine(MineTestOptions { ..default_mine_options(), include_pilot_token: False })
+}
+
+test mine_ship_token_not_burnt() fail {
+  mine(MineTestOptions { ..default_mine_options(), burn_ship_token: False })
+}
+
+test mine_no_asteria_input() fail {
+  mine(
+    MineTestOptions { ..default_mine_options(), include_asteria_input: False },
+  )
 }
 
 test mine_wrong_x_pos() fail {
@@ -866,14 +884,8 @@ test mine_wrong_y_pos() fail {
   mine(MineTestOptions { ..default_mine_options(), ship_pos_y: 1 })
 }
 
-test mine_no_asteria_input() fail {
-  mine(
-    MineTestOptions { ..default_mine_options(), include_asteria_input: False },
-  )
-}
-
-test mine_ship_token_not_burnt() fail {
-  mine(MineTestOptions { ..default_mine_options(), burn_ship_token: False })
+test mine_no_respect_latset_time() fail {
+  mine(MineTestOptions { ..default_mine_options(), respect_latest_time: False })
 }
 
 // ==============================================================================================
@@ -882,11 +894,16 @@ test mine_ship_token_not_burnt() fail {
 
 type QuitTestOptions {
   burn_ship_token: Bool,
+  include_pilot_token: Bool,
   include_ship_token: Bool,
 }
 
 fn default_quit_options() {
-  QuitTestOptions { burn_ship_token: True, include_ship_token: True }
+  QuitTestOptions {
+    burn_ship_token: True,
+    include_pilot_token: True,
+    include_ship_token: True,
+  }
 }
 
 fn quit(options: QuitTestOptions) -> Bool {
@@ -944,8 +961,12 @@ fn quit(options: QuitTestOptions) -> Bool {
   let pilot_in = {
     let output = {
       let value =
-        min_ada
-          |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        if options.include_pilot_token {
+          min_ada
+            |> add(mock.shipyard_policy, mock.pilot_token_name, 1)
+        } else {
+          min_ada
+        }
       Output {
         address: pilot_address,
         value,
@@ -1039,10 +1060,10 @@ test quit_ok() {
   quit(default_quit_options())
 }
 
-test quit_ship_token_not_burnt() fail {
-  quit(QuitTestOptions { ..default_quit_options(), burn_ship_token: False })
+test quit_no_pilot_token() fail {
+  quit(QuitTestOptions { ..default_quit_options(), include_pilot_token: False })
 }
 
-test quit_no_ship_token() fail {
-  quit(QuitTestOptions { ..default_quit_options(), include_ship_token: False })
+test quit_ship_token_not_burnt() fail {
+  quit(QuitTestOptions { ..default_quit_options(), burn_ship_token: False })
 }

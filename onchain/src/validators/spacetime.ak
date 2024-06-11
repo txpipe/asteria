@@ -3,9 +3,10 @@ use aiken/dict
 use aiken/interval.{Finite}
 use aiken/list
 use aiken/math/rational
-use aiken/option
 use aiken/string
-use aiken/transaction.{InlineDatum, Mint, ScriptContext, Spend, Transaction}
+use aiken/transaction.{
+  InlineDatum, Mint, ScriptContext, Spend, Transaction, find_input,
+}
 use aiken/transaction/credential.{
   Address, ScriptCredential, VerificationKeyCredential,
 }
@@ -20,7 +21,7 @@ use asteria/utils
 validator(
   pellet_validator_address: ScriptAddress,
   asteria_validator_address: ScriptAddress,
-  _admin_token: AssetClass,
+  admin_token: AssetClass,
   max_speed: Speed,
   max_ship_fuel: Int,
   fuel_per_step: Int,
@@ -43,25 +44,21 @@ validator(
     expect Some(max_speed_rational) =
       rational.new(max_speed.distance, max_speed.time)
     expect Spend(ship_ref) = purpose
-    expect [ship_input] =
-      list.filter(inputs, fn(input) { input.output_reference == ship_ref })
+    expect Some(ship_input) = find_input(inputs, ship_ref)
     expect ScriptCredential(shipyard_policy) =
       ship_input.output.address.payment_credential
 
+    // check if pilot_token is present in some input
     expect Some(_) =
       list.find(
         inputs,
         fn(input) {
-          utils.is_pilot_token_in_utxo(
-            input.output,
-            shipyard_policy,
-            pilot_token_name,
+          list.any(
+            dict.keys(value.tokens(input.output.value, shipyard_policy)),
+            fn(name) { name == pilot_token_name },
           )
         },
       )
-
-    let must_hold_ship_token =
-      quantity_of(ship_input.output.value, shipyard_policy, ship_token_name) == 1
 
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
@@ -103,7 +100,6 @@ validator(
           must_update_y?,
           must_update_fuel?,
           must_update_upper_bound?,
-          must_hold_ship_token?,
           must_have_enough_fuel?,
           must_preserve_pilot_token?,
           must_respect_max_speed?,
@@ -149,7 +145,6 @@ validator(
           ) == 1
 
         and {
-          must_hold_ship_token?,
           must_have_pellet_position?,
           must_not_exceed_capacity?,
           must_update_datum?,
@@ -158,6 +153,7 @@ validator(
         }
       }
       MineAsteria -> {
+        // check that the Asteria UTxO is present as an input
         expect Some(_) =
           list.find(
             inputs,
@@ -177,7 +173,6 @@ validator(
         let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
 
         and {
-          must_hold_ship_token?,
           must_have_asteria_position?,
           must_burn_ship_token?,
           must_respect_latest_time?,
@@ -186,10 +181,7 @@ validator(
       Quit -> {
         let must_burn_ship_token =
           quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
-        and {
-          must_hold_ship_token?,
-          must_burn_ship_token?,
-        }
+        must_burn_ship_token?
       }
     }
   }
@@ -199,11 +191,9 @@ validator(
     let ScriptContext { transaction, purpose } = ctx
     let Transaction { inputs, outputs, mint, validity_range, .. } = transaction
     expect Mint(policy_id) = purpose
-    let minted_tokens =
+    let minted_value =
       mint
         |> value.from_minted_value
-        |> value.tokens(policy_id)
-        |> dict.to_list()
 
     when redeemer is {
       MintShip -> {
@@ -218,19 +208,14 @@ validator(
               }
             },
           )
+        let asteria_is_valid =
+          value.quantity_of(
+            asteria_input.output.value,
+            admin_token.policy,
+            admin_token.name,
+          ) > 0
         expect InlineDatum(asteria_datum) = asteria_input.output.datum
         expect asteria_datum: AsteriaDatum = asteria_datum
-
-        expect [(ship_token_name, 1)] =
-          list.filter(
-            minted_tokens,
-            fn(token) { utils.has_prefix("SHIP", token.1st) },
-          )
-        expect [(pilot_token_name, 1)] =
-          list.filter(
-            minted_tokens,
-            fn(token) { utils.has_prefix("PILOT", token.1st) },
-          )
 
         expect [ship_state] =
           transaction.find_script_outputs(outputs, policy_id)
@@ -238,17 +223,22 @@ validator(
         expect ship_datum: ShipDatum = ship_datum
         expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
 
-        let must_respect_ship_name =
-          ship_token_name == bytearray.concat(
+        let ship_token_name =
+          bytearray.concat(
             "SHIP",
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
-        let must_respect_pilot_name =
-          pilot_token_name == bytearray.concat(
+        let pilot_token_name =
+          bytearray.concat(
             "PILOT",
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
-        let must_mint_two_assets = list.length(minted_tokens) == 2
+        let expected_minted_value =
+          value.from_asset(policy_id, ship_token_name, 1)
+            |> value.add(policy_id, pilot_token_name, 1)
+
+        let must_mint_ship_and_pilot_tokens =
+          minted_value == expected_minted_value
         let must_respect_min_distance =
           utils.distance(ship_datum.pos_x, ship_datum.pos_y) >= min_asteria_distance
         let must_have_initial_fuel = ship_datum.fuel == initial_fuel
@@ -265,9 +255,8 @@ validator(
           ) == 1
 
         and {
-          must_mint_two_assets?,
-          must_respect_ship_name?,
-          must_respect_pilot_name?,
+          asteria_is_valid?,
+          must_mint_ship_and_pilot_tokens?,
           must_respect_min_distance?,
           must_have_initial_fuel?,
           must_have_ship_name?,
@@ -278,13 +267,13 @@ validator(
       }
 
       BurnShip -> {
-        let ship_input =
-          list.find(
-            inputs,
-            fn(input) { utils.is_ship_token_in_utxo(input.output, policy_id) },
-          )
+        let minted_tokens =
+          minted_value
+            |> value.tokens(policy_id)
+            |> dict.to_list()
+        // check that only one token is burnt
         expect [(_, -1)] = minted_tokens
-        option.is_some(ship_input)?
+        True
       }
     }
   }

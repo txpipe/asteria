@@ -424,12 +424,6 @@ test burn_ok() {
   ship_burn(set_burn_test_options())
 }
 
-test burn_no_ship_input() fail {
-  let options =
-    BurnTestOptions { ..set_burn_test_options(), include_ship_input: False }
-  ship_burn(options)
-}
-
 test burn_more_than_one() fail {
   let def_options = set_burn_test_options()
   let burnt_value =

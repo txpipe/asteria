@@ -1,7 +1,10 @@
+use aiken/dict
 use aiken/list
 use aiken/math/rational.{compare_with, from_int}
 use aiken/option
-use aiken/transaction.{InlineDatum, ScriptContext, Spend, Transaction}
+use aiken/transaction.{
+  InlineDatum, ScriptContext, Spend, Transaction, find_input,
+}
 use aiken/transaction/value.{ada_asset_name, ada_policy_id}
 use asteria/types.{
   AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
@@ -22,8 +25,7 @@ validator(
     let Transaction { inputs, outputs, .. } = transaction
     let AsteriaDatum { ship_counter, shipyard_policy } = datum
     expect Spend(asteria_ref) = purpose
-    expect [asteria_input] =
-      list.filter(inputs, fn(input) { input.output_reference == asteria_ref })
+    expect Some(asteria_input) = find_input(inputs, asteria_ref)
 
     when redeemer is {
       AddNewShip -> {
@@ -68,11 +70,15 @@ validator(
         expect InlineDatum(asteria_output_datum) = asteria_output.datum
         expect asteria_output_datum: AsteriaDatum = asteria_output_datum
 
+        // check if ship_token is present in some input
         expect Some(_) =
           list.find(
             inputs,
             fn(input) {
-              utils.is_ship_token_in_utxo(input.output, shipyard_policy)
+              list.any(
+                dict.keys(value.tokens(input.output.value, shipyard_policy)),
+                fn(name) { utils.has_prefix("SHIP", name) },
+              )
             },
           )
         expect Some(percentage) = rational.new(max_asteria_mining, 100)
@@ -95,6 +101,7 @@ validator(
       }
 
       ConsumeAsteria -> {
+        // check that there is a wallet input with the admin token
         let admin_token_input =
           list.find(
             inputs,

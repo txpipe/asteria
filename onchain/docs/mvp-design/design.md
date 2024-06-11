@@ -24,7 +24,7 @@ Each ship will be identified by a `ShipToken`, with a fixed policy id but a toke
 
 >#### Address
 >
->- Parameterized on `AdminToken`, Asteria validator address, pellet validator address, MAX_SPEED, MAX_SHIP_FUEL, FUEL_PER_STEP, INITIAL_FUEL and MIN_ASTERIA_DISTANCE.
+>- Parameterized on `AdminToken`, Asteria validator address, pellet validator address, MAX_SPEED, MAX_SHIP_FUEL, FUEL_PER_STEP, INITIAL_FUEL and MIN_ASTERIA_DISTANCE. The validator corresponding to this address is in `spacetime.ak`.
 >
 >#### Datum
 >
@@ -181,8 +181,6 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *MoveShip Redeemer (includes delta_x and delta_y displacements)*
 
-- `ShipToken` is present.
-- there is a single `ShipState` input.
 - there is a single `ShipState` output.
 - the `PilotToken` is present in an input.
 - the `ShipState` output value only has the `ShipToken` and some amount of ada.
@@ -196,8 +194,6 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *GatherFuel Redeemer (includes gathering amount)*
 
-- `ShipToken` is present.
-- there is a single `ShipState` input.
 - there is a single `ShipState` output.
 - `PilotToken` is present.
 - the `ShipState` output value only has the `ShipToken` and some amount of ada.
@@ -208,9 +204,7 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *MineAsteria Redeemer*
 
-- there is a single `ShipState` input.
 - `PilotToken` is present.
-- `ShipToken` is present.
 - `ShipToken` is burnt.
 - `AsteriaUTxO` is input.
 - `ShipState` position is (0,0).
@@ -218,8 +212,6 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *Quit Redeemer*
 
-- `ShipToken` is present.
-- there is a single `ShipState` input.
 - the `PilotToken` is present in an input.
 - `ShipToken` is burnt.
 
@@ -243,5 +235,4 @@ Includes the Spacetime validator and the Shipyard policy.
 
 #### *BurnShip Redeemer*
 
-- there is a `ShipState` input.
 - only one token is burnt.
