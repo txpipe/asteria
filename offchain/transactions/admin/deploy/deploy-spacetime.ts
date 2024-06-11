@@ -72,7 +72,7 @@ async function deploySpacetime(
     .payToContract(
       deployAddressBech32,
       { inline: Data.void(), scriptRef: spacetimeValidator },
-      { lovelace: 2_000_000n }
+      {}
     )
     .complete();
 

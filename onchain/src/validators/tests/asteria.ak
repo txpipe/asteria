@@ -178,7 +178,7 @@ type MineTestOptions {
 
 fn default_mine_options() {
   MineTestOptions {
-    lovelace_mined: 4_000_000,
+    lovelace_mined: 6_000_000,
     preserve_counter: True,
     include_ship_token: True,
   }
@@ -186,7 +186,7 @@ fn default_mine_options() {
 
 fn mine(options: MineTestOptions) -> Bool {
   let ship_mint_lovelace_fee = 2_000
-  let max_asteria_mining = 40
+  let max_asteria_mining = 50
   let ship_counter = 7
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
@@ -329,7 +329,7 @@ test mine_no_ship_token() fail {
 }
 
 test mine_exceed_mining() fail {
-  mine(MineTestOptions { ..default_mine_options(), lovelace_mined: 4_000_001 })
+  mine(MineTestOptions { ..default_mine_options(), lovelace_mined: 6_000_001 })
 }
 
 test mine_alter_counter() fail {

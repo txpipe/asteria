@@ -197,22 +197,6 @@ test provide_ok() {
   provide(default_provide_test_options())
 }
 
-test provide_not_enough_fuel() fail {
-  let options =
-    ProvideTestOptions { ..default_provide_test_options(), provided_amount: 60 }
-  provide(options)
-}
-
-test provide_wrong_datum_update() fail {
-  let default = default_provide_test_options()
-  let options =
-    ProvideTestOptions {
-      ..default,
-      datum_out: PelletDatum { ..default.datum_out, fuel: 1000 },
-    }
-  provide(options)
-}
-
 test provide_no_ship_token() fail {
   let options =
     ProvideTestOptions {
@@ -231,7 +215,23 @@ test provide_wrong_ship_token_name() fail {
   provide(options)
 }
 
-test provide_no_admin_token() fail {
+test provide_not_enough_fuel() fail {
+  let options =
+    ProvideTestOptions { ..default_provide_test_options(), provided_amount: 60 }
+  provide(options)
+}
+
+test provide_wrong_datum_update() fail {
+  let default = default_provide_test_options()
+  let options =
+    ProvideTestOptions {
+      ..default,
+      datum_out: PelletDatum { ..default.datum_out, fuel: 1000 },
+    }
+  provide(options)
+}
+
+test provide_no_admin_token_input() fail {
   let options =
     ProvideTestOptions {
       ..default_provide_test_options(),

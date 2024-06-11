@@ -1,6 +1,9 @@
+use aiken/dict
 use aiken/list.{filter}
 use aiken/option
-use aiken/transaction.{InlineDatum, Output, ScriptContext, Spend, Transaction}
+use aiken/transaction.{
+  InlineDatum, Output, ScriptContext, Spend, Transaction, find_input,
+}
 use aiken/transaction/value.{quantity_of}
 use asteria/types.{
   AssetClass, ConsumePellet, PelletDatum, PelletRedeemer, Provide,
@@ -19,9 +22,8 @@ validator(admin_token: AssetClass) {
       Provide(amount) -> {
         let PelletDatum { fuel, shipyard_policy, .. } = datum
 
-        expect Spend(utxo_ref) = purpose
-        expect [own_input] =
-          list.filter(inputs, fn(input) { input.output_reference == utxo_ref })
+        expect Spend(pellet_ref) = purpose
+        expect Some(own_input) = find_input(inputs, pellet_ref)
         expect [own_output] =
           filter(
             outputs,
@@ -30,11 +32,15 @@ validator(admin_token: AssetClass) {
         expect InlineDatum(out_datum) = own_output.datum
         expect out_datum: PelletDatum = out_datum
 
+        // check if ship_token is present in some input
         expect Some(_) =
           list.find(
             inputs,
             fn(input) {
-              utils.is_ship_token_in_utxo(input.output, shipyard_policy)
+              list.any(
+                dict.keys(value.tokens(input.output.value, shipyard_policy)),
+                fn(name) { utils.has_prefix("SHIP", name) },
+              )
             },
           )
 
@@ -59,11 +65,12 @@ validator(admin_token: AssetClass) {
       }
 
       ConsumePellet -> {
+        // check that there is a wallet input with the admin token
         let admin_token_input =
           list.find(
             inputs,
             fn(input) {
-              utils.is_wallet_address(input.output.address) && value.quantity_of(
+              not(utils.is_script_address(input.output.address)) && value.quantity_of(
                 input.output.value,
                 admin_token.policy,
                 admin_token.name,

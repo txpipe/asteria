@@ -6,7 +6,7 @@ const admin_token: AssetClassT = {
   name: fromText("asteriaAdmin"),
 };
 const ship_mint_lovelace_fee = 3_000_000n;
-const max_asteria_mining = 100n;
+const max_asteria_mining = 50n;
 const max_speed: SpeedT = {
   distance: 1n,
   time: 30n * 1000n, //milliseconds

@@ -57,7 +57,6 @@ async function createPellets(
       { inline: pelletDatum },
       {
         [adminTokenUnit]: BigInt(1),
-        lovelace: 2_000_000n,
         ...prize_tokens,
       }
     );
