@@ -22,6 +22,7 @@ type AddTestOptions {
   pay_fee: Bool,
   include_admin_token: Bool,
   update_counter: Bool,
+  preserve_policy: Bool,
 }
 
 fn default_add_options() {
@@ -29,6 +30,7 @@ fn default_add_options() {
     pay_fee: True,
     include_admin_token: True,
     update_counter: True,
+    preserve_policy: True,
   }
 }
 
@@ -78,7 +80,11 @@ fn addNewShip(options: AddTestOptions) -> Bool {
         asteria_in.output.value
       },
       datum: if options.update_counter {
-        InlineDatum(AsteriaDatum { ..asteria_datum, ship_counter: 8 })
+        if options.preserve_policy {
+          InlineDatum(AsteriaDatum { ..asteria_datum, ship_counter: 8 })
+        } else {
+          InlineDatum(AsteriaDatum { shipyard_policy: "ffff", ship_counter: 8 })
+        }
       } else {
         InlineDatum(asteria_datum)
       },
@@ -164,6 +170,10 @@ test add_no_admin_token() fail {
 
 test add_counter_not_updated() fail {
   addNewShip(AddTestOptions { ..default_add_options(), update_counter: False })
+}
+
+test add_shipyard_policy_not_preserved() fail {
+  addNewShip(AddTestOptions { ..default_add_options(), preserve_policy: False })
 }
 
 // ==============================================================================================

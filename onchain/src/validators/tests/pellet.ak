@@ -28,44 +28,45 @@ type ProvideTestOptions {
   shipyard_policy: PolicyId,
   ship_token_name: ByteArray,
   ship_token_amount: Int,
+  datum_in: PelletDatum,
   datum_out: PelletDatum,
 }
 
 fn default_provide_test_options() -> ProvideTestOptions {
-  let shipyard_policy = mock.shipyard_policy
-  let admin_policy = mock.admin_policy
-  let admin_token_name = mock.admin_token_name
-  let value =
+  let initial_fuel = 40
+  let provided_amount = 15
+  let pellet_input_value =
     from_lovelace(2_000_000)
-      |> add(admin_policy, admin_token_name, 1)
+      |> add(mock.admin_policy, mock.admin_token_name, 1)
+      |> add(mock.pellet_credential, "FUEL", initial_fuel)
+  let pellet_output_value =
+    from_lovelace(2_000_000)
+      |> add(mock.admin_policy, mock.admin_token_name, 1)
+      |> add(mock.pellet_credential, "FUEL", initial_fuel - provided_amount)
+  let pellet_datum =
+    PelletDatum { pos_x: 1, pos_y: 2, shipyard_policy: mock.shipyard_policy }
   ProvideTestOptions {
-    initial_fuel: 40,
-    provided_amount: 15,
-    pellet_input_value: value,
-    pellet_output_value: value,
-    admin_policy,
-    admin_token_name,
-    shipyard_policy,
+    initial_fuel,
+    provided_amount,
+    pellet_input_value,
+    pellet_output_value,
+    admin_policy: mock.admin_policy,
+    admin_token_name: mock.admin_token_name,
+    shipyard_policy: mock.shipyard_policy,
     ship_token_name: mock.ship_token_name,
     ship_token_amount: 1,
-    datum_out: PelletDatum { fuel: 25, pos_x: 1, pos_y: 2, shipyard_policy },
+    datum_in: pellet_datum,
+    datum_out: pellet_datum,
   }
 }
 
 fn provide(options: ProvideTestOptions) -> Bool {
-  let ship_addr = mock.ship_credential
   let admin_asset =
     AssetClass { policy: options.admin_policy, name: options.admin_token_name }
   let transaction_id_1 = mock.transaction_id_1
   let transaction_id_2 = mock.transaction_id_2
   let redeemer = Provide(options.provided_amount)
-  let datum_in =
-    PelletDatum {
-      fuel: options.initial_fuel,
-      pos_x: 1,
-      pos_y: 2,
-      shipyard_policy: options.shipyard_policy,
-    }
+  let datum_in = options.datum_in
   let pellet_in = {
     let output = {
       let address =
@@ -129,7 +130,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
   let ship_out = {
     let address =
       Address {
-        payment_credential: ScriptCredential(ship_addr),
+        payment_credential: ScriptCredential(mock.ship_credential),
         stake_credential: None,
       }
     let value =
@@ -215,37 +216,38 @@ test provide_wrong_ship_token_name() fail {
   provide(options)
 }
 
+test provide_no_admin_token_output() fail {
+  let options =
+    ProvideTestOptions {
+      ..default_provide_test_options(),
+      pellet_output_value: from_lovelace(2_000_000),
+    }
+  provide(options)
+}
+
 test provide_not_enough_fuel() fail {
   let options =
     ProvideTestOptions { ..default_provide_test_options(), provided_amount: 60 }
   provide(options)
 }
 
-test provide_wrong_datum_update() fail {
-  let default = default_provide_test_options()
+test provide_fuel_not_subtracted() fail {
+  let default_options = default_provide_test_options()
   let options =
     ProvideTestOptions {
-      ..default,
-      datum_out: PelletDatum { ..default.datum_out, fuel: 1000 },
+      ..default_options,
+      pellet_output_value: default_options.pellet_input_value,
     }
   provide(options)
 }
 
-test provide_no_admin_token_input() fail {
+test provide_datum_not_preserved() fail {
+  let default_options = default_provide_test_options()
+  let datum_in = default_options.datum_in
   let options =
     ProvideTestOptions {
-      ..default_provide_test_options(),
-      pellet_input_value: from_lovelace(2_000_000),
-      pellet_output_value: from_lovelace(2_000_000),
-    }
-  provide(options)
-}
-
-test provide_no_admin_token_output() fail {
-  let options =
-    ProvideTestOptions {
-      ..default_provide_test_options(),
-      pellet_output_value: from_lovelace(2_000_000),
+      ..default_options,
+      datum_out: PelletDatum { ..datum_in, pos_x: datum_in.pos_x + 1 },
     }
   provide(options)
 }
@@ -256,11 +258,16 @@ test provide_no_admin_token_output() fail {
 
 type ConsumeTestOptions {
   is_wallet_address: Bool,
-  include_admin_input: Bool,
+  includes_admin_input: Bool,
+  burns_remaining_fuel: Bool,
 }
 
 fn default_consume_options() {
-  ConsumeTestOptions { is_wallet_address: True, include_admin_input: True }
+  ConsumeTestOptions {
+    is_wallet_address: True,
+    includes_admin_input: True,
+    burns_remaining_fuel: True,
+  }
 }
 
 fn consume(options: ConsumeTestOptions) -> Bool {
@@ -303,18 +310,14 @@ fn consume(options: ConsumeTestOptions) -> Bool {
       stake_credential: None,
     }
   let pellet_datum =
-    PelletDatum {
-      fuel: 40,
-      pos_x: 3,
-      pos_y: -8,
-      shipyard_policy: mock.shipyard_policy,
-    }
+    PelletDatum { pos_x: 3, pos_y: -8, shipyard_policy: mock.shipyard_policy }
   let pellet_in = {
     let output =
       Output {
         address: pellet_address,
         value: value.from_lovelace(2_000_000)
-          |> value.add(mock.admin_policy, mock.admin_token_name, 1),
+          |> value.add(mock.admin_policy, mock.admin_token_name, 1)
+          |> value.add(mock.pellet_credential, "FUEL", 20),
         datum: InlineDatum(pellet_datum),
         reference_script: None,
       }
@@ -328,7 +331,7 @@ fn consume(options: ConsumeTestOptions) -> Bool {
 
   let tx =
     Transaction {
-      inputs: if options.include_admin_input {
+      inputs: if options.includes_admin_input {
         [admin_in, pellet_in]
       } else {
         [pellet_in]
@@ -336,7 +339,13 @@ fn consume(options: ConsumeTestOptions) -> Bool {
       reference_inputs: [],
       outputs: [],
       fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(value.zero()),
+      mint: if options.burns_remaining_fuel {
+        value.to_minted_value(
+          value.from_asset(mock.pellet_credential, "FUEL", -20),
+        )
+      } else {
+        value.to_minted_value(value.zero())
+      },
       certificates: [],
       withdrawals: dict.new(),
       validity_range: Interval {
@@ -400,7 +409,16 @@ test consume_no_admin_input() fail {
   consume(
     ConsumeTestOptions {
       ..default_consume_options(),
-      include_admin_input: False,
+      includes_admin_input: False,
+    },
+  )
+}
+
+test consume_remaining_fuel_not_burnt() fail {
+  consume(
+    ConsumeTestOptions {
+      ..default_consume_options(),
+      burns_remaining_fuel: False,
     },
   )
 }
