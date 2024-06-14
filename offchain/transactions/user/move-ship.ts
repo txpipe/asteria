@@ -5,6 +5,7 @@ import {
   Constr,
   UTxO,
   Script,
+  fromText,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import {
   distance,
@@ -40,6 +41,13 @@ async function moveShip(
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
 
+  const pelletRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
+  );
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
+  const pelletValidator = pelletRef.scriptRef as Script;
+  const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
+
   const ship: UTxO = (
     await lucid.utxosByOutRef([
       {
@@ -57,10 +65,9 @@ async function moveShip(
     ShipDatum as unknown as ShipDatumT
   );
 
-  const moved_distance = distance(delta_x, delta_y);
-  const spent_fuel = required_fuel(moved_distance, fuel_per_step);
+  const movedDistance = distance(delta_x, delta_y);
+  const spentFuel = required_fuel(movedDistance, fuel_per_step);
   const shipInfo = {
-    fuel: shipInputDatum.fuel - spent_fuel,
     pos_x: shipInputDatum.pos_x + delta_x,
     pos_y: shipInputDatum.pos_y + delta_y,
     ship_token_name: shipInputDatum.ship_token_name,
@@ -81,21 +88,31 @@ async function moveShip(
     shipyardPolicyId,
     shipInputDatum.pilot_token_name
   );
+  const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
+  const shipFuel = ship.assets.fuelTokenUnit;
 
   const moveShipRedeemer = Data.to(
     new Constr(1, [new Constr(0, [delta_x, delta_y])])
   );
+  const mintFuelRedeemer = Data.to(new Constr(0, []));
   const tx = await lucid
     .newTx()
     .validFrom(Number(tx_earliest_posix_time))
     .validTo(Number(tx_latest_posix_time))
     .collectFrom([ship], moveShipRedeemer)
-    .readFrom([spacetimeRef])
+    .readFrom([spacetimeRef, pelletRef])
+    .mintAssets(
+      {
+        [fuelTokenUnit]: BigInt(1),
+      },
+      mintFuelRedeemer
+    )
     .payToContract(
       spacetimeAddressBech32,
       { inline: shipOutputDatum },
       {
         [shipTokenUnit]: BigInt(1),
+        [fuelTokenUnit]: BigInt(shipFuel) - spentFuel,
         lovelace: shipAda,
       }
     )

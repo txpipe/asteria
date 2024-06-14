@@ -50,6 +50,13 @@ async function createShip(
   const spacetimeAddressBech32 =
     lucid.utils.validatorToAddress(spacetimeValidator);
 
+  const pelletRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
+  );
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
+  const pelletValidator = pelletRef.scriptRef as Script;
+  const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
+
   const asterias: UTxO[] = await lucid.utxosAt(asteriaAddressBech32);
   if (asterias.length != 1) {
     throw Error(
@@ -76,10 +83,10 @@ async function createShip(
     AsteriaDatum as unknown as AsteriaDatumT
   );
 
+  const fuelTokenName = fromText("FUEL");
   const shipTokenName = fromText("SHIP" + asteriaInputDatum.ship_counter);
   const pilotTokenName = fromText("PILOT" + asteriaInputDatum.ship_counter);
   const shipInfo = {
-    fuel: initial_fuel,
     pos_x: pos_x,
     pos_y: pos_y,
     ship_token_name: shipTokenName,
@@ -92,21 +99,29 @@ async function createShip(
   );
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+  const fuelTokenUnit = toUnit(fuelPolicyId, fuelTokenName);
   const shipTokenUnit = toUnit(shipyardPolicyId, shipTokenName);
   const pilotTokenUnit = toUnit(shipyardPolicyId, pilotTokenName);
 
   const addNewShipRedeemer = Data.to(new Constr(0, []));
-  const mintRedeemer = Data.to(new Constr(0, []));
+  const mintFuelRedeemer = Data.to(new Constr(0, []));
+  const mintShipRedeemer = Data.to(new Constr(0, []));
   const tx = await lucid
     .newTx()
     .validTo(Number(tx_latest_posix_time))
-    .readFrom([asteriaRef, spacetimeRef])
+    .readFrom([asteriaRef, spacetimeRef, pelletRef])
     .mintAssets(
       {
         [shipTokenUnit]: BigInt(1),
         [pilotTokenUnit]: BigInt(1),
       },
-      mintRedeemer
+      mintShipRedeemer
+    )
+    .mintAssets(
+      {
+        [fuelTokenUnit]: initial_fuel,
+      },
+      mintFuelRedeemer
     )
     .collectFrom([asteria], addNewShipRedeemer)
     .payToContract(
@@ -114,6 +129,7 @@ async function createShip(
       { inline: shipDatum },
       {
         [shipTokenUnit]: BigInt(1),
+        [fuelTokenUnit]: initial_fuel,
       }
     )
     .payToContract(
