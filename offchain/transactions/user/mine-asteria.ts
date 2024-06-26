@@ -5,6 +5,7 @@ import {
   Constr,
   UTxO,
   Script,
+  fromText,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { fetchReferenceScript, lucidBase } from "../../utils.ts";
 import {
@@ -36,6 +37,15 @@ async function mineAsteria(
     spacetimeRefTxHash.txHash
   );
   const spacetimeValidator = spacetimeRef.scriptRef as Script;
+  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
+
+  const pelletRefTxHash: { txHash: string } = JSON.parse(
+    await Deno.readTextFile("./script-refs/pellet-ref.json")
+  );
+  const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
+  const pelletValidator = pelletRef.scriptRef as Script;
+  const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
+  const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
 
   const asteriaRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/asteria-ref.json")
@@ -43,8 +53,6 @@ async function mineAsteria(
   const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
   const asteriaValidator = asteriaRef.scriptRef as Script;
   const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
-
-  const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
   const ship: UTxO = (
     await lucid.utxosByOutRef([
@@ -61,6 +69,7 @@ async function mineAsteria(
     ship.datum as string,
     ShipDatum as unknown as ShipDatumT
   );
+  const shipFuel = ship.assets[fuelTokenUnit];
 
   const asterias: UTxO[] = await lucid.utxosAt(asteriaAddressBech32);
   if (asterias.length != 1) {
@@ -91,6 +100,7 @@ async function mineAsteria(
   );
 
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+
   const shipTokenUnit = toUnit(
     shipyardPolicyId,
     shipInputDatum.ship_token_name
@@ -102,7 +112,8 @@ async function mineAsteria(
 
   const shipRedeemer = Data.to(new Constr(1, [new Constr(2, [])]));
   const asteriaRedeemer = Data.to(new Constr(1, []));
-  const burnRedeemer = Data.to(new Constr(1, []));
+  const burnShipRedeemer = Data.to(new Constr(1, []));
+  const burnFuelRedeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
     .validFrom(Number(tx_earliest_posix_time))
@@ -110,11 +121,17 @@ async function mineAsteria(
       {
         [shipTokenUnit]: BigInt(-1),
       },
-      burnRedeemer
+      burnShipRedeemer
+    )
+    .mintAssets(
+      {
+        [fuelTokenUnit]: -shipFuel,
+      },
+      burnFuelRedeemer
     )
     .collectFrom([ship], shipRedeemer)
     .collectFrom([asteria], asteriaRedeemer)
-    .readFrom([spacetimeRef, asteriaRef])
+    .readFrom([spacetimeRef, asteriaRef, pelletRef])
     .payToContract(
       asteriaAddressBech32,
       { inline: asteriaOutputDatum },
