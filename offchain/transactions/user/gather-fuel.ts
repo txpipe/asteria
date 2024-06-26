@@ -5,6 +5,7 @@ import {
   Constr,
   UTxO,
   Script,
+  fromText,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { fetchReferenceScript, lucidBase } from "../../utils.ts";
 import {
@@ -48,6 +49,7 @@ async function gatherFuel(
   const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
   const pelletValidator = pelletRef.scriptRef as Script;
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
+  const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
 
   const ship: UTxO = (
     await lucid.utxosByOutRef([
@@ -80,7 +82,6 @@ async function gatherFuel(
     ShipDatum as unknown as ShipDatumT
   );
   const shipInfo = {
-    fuel: shipInputDatum.fuel + gather_amount,
     pos_x: shipInputDatum.pos_x,
     pos_y: shipInputDatum.pos_y,
     ship_token_name: shipInputDatum.ship_token_name,
@@ -97,7 +98,6 @@ async function gatherFuel(
     PelletDatum as unknown as PelletDatumT
   );
   const pelletInfo = {
-    fuel: pelletInputDatum.fuel - gather_amount,
     pos_x: pelletInputDatum.pos_x,
     pos_y: pelletInputDatum.pos_y,
     shipyard_policy: shipyardPolicyId,
@@ -117,8 +117,14 @@ async function gatherFuel(
   );
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
 
+  const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
+  const shipFuel = ship.assets[fuelTokenUnit];
+  const pelletFuel = pellet.assets[fuelTokenUnit];
+
   const shipRedeemer = Data.to(new Constr(1, [new Constr(1, [gather_amount])]));
-  const pelletRedeemer = Data.to(new Constr(0, [gather_amount]));
+  const pelletRedeemer = Data.to(
+    new Constr(1, [new Constr(0, [gather_amount])])
+  );
   const tx = await lucid
     .newTx()
     .validFrom(Number(tx_earliest_posix_time))
@@ -130,6 +136,7 @@ async function gatherFuel(
       { inline: shipOutputDatum },
       {
         [shipTokenUnit]: BigInt(1),
+        [fuelTokenUnit]: shipFuel + gather_amount,
         lovelace: shipAda,
       }
     )
@@ -138,6 +145,7 @@ async function gatherFuel(
       { inline: pelletOutputDatum },
       {
         [adminTokenUnit]: BigInt(1),
+        [fuelTokenUnit]: pelletFuel - gather_amount,
         lovelace: pelletAda,
       }
     )
