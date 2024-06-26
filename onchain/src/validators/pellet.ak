@@ -19,7 +19,7 @@ validator(admin_token: AssetClass) {
     ctx: ScriptContext,
   ) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, mint, .. } = transaction
+    let Transaction { inputs, outputs, .. } = transaction
 
     expect Spend(pellet_ref) = purpose
     expect Some(pellet_input) = find_input(inputs, pellet_ref)
@@ -84,18 +84,13 @@ validator(admin_token: AssetClass) {
               ) > 0
             },
           )
-        let minted_value =
-          mint
-            |> value.from_minted_value
-        let must_burn_fuel_tokens =
-          quantity_of(minted_value, fuel_policy, "FUEL") == -remaining_fuel
 
-        option.is_some(admin_token_input)? && must_burn_fuel_tokens?
+        option.is_some(admin_token_input)?
       }
     }
   }
 
-  pub fn mint(redeemer: FuelRedeemer, ctx: ScriptContext) -> Bool {
+  fn mint(redeemer: FuelRedeemer, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
     let Transaction { mint, .. } = transaction
     expect Mint(fuel_policy) = purpose
@@ -104,8 +99,8 @@ validator(admin_token: AssetClass) {
         |> value.from_minted_value
 
     when redeemer is {
-      MintFuel -> quantity_of(minted_value, fuel_policy, "FUEL") > 0
-      BurnFuel -> quantity_of(minted_value, fuel_policy, "FUEL") < 0
+      MintFuel -> (quantity_of(minted_value, fuel_policy, "FUEL") > 0)?
+      BurnFuel -> (quantity_of(minted_value, fuel_policy, "FUEL") < 0)?
     }
   }
 }

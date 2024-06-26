@@ -413,12 +413,3 @@ test consume_no_admin_input() fail {
     },
   )
 }
-
-test consume_remaining_fuel_not_burnt() fail {
-  consume(
-    ConsumeTestOptions {
-      ..default_consume_options(),
-      burns_remaining_fuel: False,
-    },
-  )
-}
