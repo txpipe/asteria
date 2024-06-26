@@ -89,12 +89,12 @@ async function moveShip(
     shipInputDatum.pilot_token_name
   );
   const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
-  const shipFuel = ship.assets.fuelTokenUnit;
+  const shipFuel = ship.assets[fuelTokenUnit];
 
   const moveShipRedeemer = Data.to(
     new Constr(1, [new Constr(0, [delta_x, delta_y])])
   );
-  const mintFuelRedeemer = Data.to(new Constr(0, []));
+  const burnFuelRedeemer = Data.to(new Constr(1, []));
   const tx = await lucid
     .newTx()
     .validFrom(Number(tx_earliest_posix_time))
@@ -103,16 +103,16 @@ async function moveShip(
     .readFrom([spacetimeRef, pelletRef])
     .mintAssets(
       {
-        [fuelTokenUnit]: BigInt(1),
+        [fuelTokenUnit]: -spentFuel,
       },
-      mintFuelRedeemer
+      burnFuelRedeemer
     )
     .payToContract(
       spacetimeAddressBech32,
       { inline: shipOutputDatum },
       {
         [shipTokenUnit]: BigInt(1),
-        [fuelTokenUnit]: BigInt(shipFuel) - spentFuel,
+        [fuelTokenUnit]: shipFuel - spentFuel,
         lovelace: shipAda,
       }
     )
