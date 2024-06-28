@@ -90,17 +90,40 @@ validator(admin_token: AssetClass) {
     }
   }
 
-  fn mint(redeemer: FuelRedeemer, ctx: ScriptContext) -> Bool {
+  pub fn mint(redeemer: FuelRedeemer, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = ctx
-    let Transaction { mint, .. } = transaction
+    let Transaction { inputs, mint, .. } = transaction
     expect Mint(fuel_policy) = purpose
     let minted_value =
       mint
         |> value.from_minted_value
 
     when redeemer is {
-      MintFuel -> (quantity_of(minted_value, fuel_policy, "FUEL") > 0)?
-      BurnFuel -> (quantity_of(minted_value, fuel_policy, "FUEL") < 0)?
+      MintFuel -> {
+        // check that there is an input with the admin token
+        let admin_token_input =
+          list.find(
+            inputs,
+            fn(input) {
+              value.quantity_of(
+                input.output.value,
+                admin_token.policy,
+                admin_token.name,
+              ) > 0
+            },
+          )
+
+        let must_mint_fuel_tokens =
+          quantity_of(minted_value, fuel_policy, "FUEL") > 0
+
+        option.is_some(admin_token_input)? && must_mint_fuel_tokens?
+      }
+      BurnFuel -> {
+        let must_burn_fuel_tokens =
+          quantity_of(minted_value, fuel_policy, "FUEL") < 0
+
+        must_burn_fuel_tokens?
+      }
     }
   }
 }

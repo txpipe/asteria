@@ -167,7 +167,7 @@ Includes the Pellet validator and the Fuel policy.
 #### *Provide Redeemer (includes gathering amount)*
 
 - `ShipToken` is present in some input.
-- The admin token is present in the output `PelletState`.
+- the admin token is present in the output `PelletState`.
 - the specified amount is not greater than the fuel available in the pellet.
 - the specified amount of fuel tokens is subtracted from the output `PelletState` value.
 - the datum is preserved.
@@ -182,11 +182,12 @@ Includes the Pellet validator and the Fuel policy.
 
 #### *MintFuel Redeemer*
 
--
+- `AdminToken` is present in some input.
+- some amount of tokens with name "FUEL" are minted.
 
 #### *BurnFuel Redeemer*
 
-- 
+- some amount of tokens with name "FUEL" are burnt.
 
 ## Ship Multivalidator
 
