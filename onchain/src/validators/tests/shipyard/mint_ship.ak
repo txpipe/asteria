@@ -59,7 +59,7 @@ fn get_default_mint_options() {
   }
 }
 
-fn ship_mint(options: MintTestOptions) -> Bool {
+fn mint_ship(options: MintTestOptions) -> Bool {
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let min_distance = 10
@@ -195,11 +195,11 @@ fn ship_mint(options: MintTestOptions) -> Bool {
 }
 
 test mint_ok() {
-  ship_mint(get_default_mint_options())
+  mint_ship(get_default_mint_options())
 }
 
 test no_asteria_input() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       includes_asteria_input: False,
@@ -208,7 +208,7 @@ test no_asteria_input() fail {
 }
 
 test ship_token_not_minted() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       ship_token_minted_amount: 0,
@@ -217,7 +217,7 @@ test ship_token_not_minted() fail {
 }
 
 test ship_token_wrong_amount() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       ship_token_minted_amount: 2,
@@ -226,7 +226,7 @@ test ship_token_wrong_amount() fail {
 }
 
 test pilot_token_not_minted() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       pilot_token_minted_amount: 0,
@@ -235,7 +235,7 @@ test pilot_token_not_minted() fail {
 }
 
 test pilot_token_wrong_amount() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       pilot_token_minted_amount: 2,
@@ -244,43 +244,43 @@ test pilot_token_wrong_amount() fail {
 }
 
 test fuel_tokens_not_minted() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), fuel_minted_amount: 0 },
   )
 }
 
 test fuel_tokens_wrong_amount() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), fuel_minted_amount: 50 },
   )
 }
 
 test wrong_ship_token_prefix() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), ship_token_name: "SHI7" },
   )
 }
 
 test wrong_ship_token_count() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), ship_token_name: "SHP8" },
   )
 }
 
 test wrong_pilot_token_prefix() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), pilot_token_name: "PILO7" },
   )
 }
 
 test wrong_pilot_token_count() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), pilot_token_name: "PILOT8" },
   )
 }
 
 test no_ship_output() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       includes_ship_output: False,
@@ -289,25 +289,25 @@ test no_ship_output() fail {
 }
 
 test initial_distance_below_min() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), initial_x: 3, initial_y: 3 },
   )
 }
 
 test wrong_ship_name_in_datum() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), datum_ship_name: "FOO" },
   )
 }
 
 test wrong_pilot_name_in_datum() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), datum_pilot_name: "FOO" },
   )
 }
 
 test wrong_latest_time_in_datum() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions {
       ..get_default_mint_options(),
       uses_correct_latest_time: False,
@@ -316,17 +316,17 @@ test wrong_latest_time_in_datum() fail {
 }
 
 test ship_token_not_paid() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), ship_tokens_paid: 0 },
   )
 }
 
 test wrong_initial_fuel() fail {
-  ship_mint(MintTestOptions { ..get_default_mint_options(), fuel_paid: 30 })
+  mint_ship(MintTestOptions { ..get_default_mint_options(), fuel_paid: 30 })
 }
 
 test add_extra_token() fail {
-  ship_mint(
+  mint_ship(
     MintTestOptions { ..get_default_mint_options(), extra_token_amount: 1 },
   )
 }

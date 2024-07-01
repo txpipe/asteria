@@ -40,7 +40,7 @@ fn get_default_burn_options() -> BurnTestOptions {
   }
 }
 
-fn ship_burn(options: BurnTestOptions) -> Bool {
+fn burn_ship(options: BurnTestOptions) -> Bool {
   let fuel_per_step = 1
   let max_ship_fuel = 100
   let initial_fuel = 40
@@ -133,7 +133,7 @@ fn ship_burn(options: BurnTestOptions) -> Bool {
 }
 
 test burn_ok() {
-  ship_burn(get_default_burn_options())
+  burn_ship(get_default_burn_options())
 }
 
 test burn_more_than_one() fail {
@@ -142,5 +142,5 @@ test burn_more_than_one() fail {
     value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
       |> value.add(mock.shipyard_policy, mock.pilot_token_name, -1)
   let options = BurnTestOptions { ..def_options, burnt_value: burnt_value }
-  ship_burn(options)
+  burn_ship(options)
 }
