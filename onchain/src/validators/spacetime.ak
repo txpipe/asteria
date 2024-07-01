@@ -179,6 +179,7 @@ validator(
               fn(input) { utils.is_script_address(input.output.address) },
             ),
           ) == 2
+        let must_not_mint_tokens = from_minted_value(mint) == value.zero()
 
         and {
           must_spend_two_script_inputs?,
@@ -191,6 +192,7 @@ validator(
           must_preserve_datum?,
           must_hold_ship_token?,
           must_hold_3_assets?,
+          must_not_mint_tokens?,
         }
       }
       MineAsteria -> {

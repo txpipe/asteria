@@ -225,6 +225,7 @@ Includes the Spacetime validator and the Shipyard policy.
 - `ShipState` datum's `last_move_latest_time` is not greater than the earliest posix time of the tx validity range.
 - the datum is preserved.
 - the `ShipToken` is present in the output `ShipState`.
+- no tokens are minted.
 
 #### *MineAsteria Redeemer*
 

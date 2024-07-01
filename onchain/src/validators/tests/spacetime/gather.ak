@@ -8,7 +8,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{
   Address, ScriptCredential, VerificationKeyCredential,
 }
-use aiken/transaction/value.{add, from_lovelace}
+use aiken/transaction/value.{add, from_asset, from_lovelace}
 use asteria/test_mock as mock
 use asteria/test_utils
 use asteria/types.{AssetClass, GatherFuel, PelletDatum, ShipDatum, Speed}
@@ -31,6 +31,7 @@ type GatherTestOptions {
   includes_ship_output: Bool,
   respects_latest_time: Bool,
   excludes_extra_script_input: Bool,
+  mints_no_tokens: Bool,
 }
 
 fn default_gather_options() {
@@ -47,6 +48,7 @@ fn default_gather_options() {
     includes_ship_output: True,
     respects_latest_time: True,
     excludes_extra_script_input: True,
+    mints_no_tokens: True,
   }
 }
 
@@ -228,7 +230,11 @@ fn gather(options: GatherTestOptions) -> Bool {
         []
       },
       fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(value.zero()),
+      mint: if options.mints_no_tokens {
+        value.to_minted_value(value.zero())
+      } else {
+        value.to_minted_value(from_asset(mock.fuel_policy, "FUEL", 20))
+      },
       certificates: [],
       withdrawals: dict.new(),
       validity_range: Interval {
@@ -370,5 +376,11 @@ test no_ship_token_output() fail {
       ..default_gather_options(),
       output_ship_token_amount: 0,
     },
+  )
+}
+
+test mint_tokens() fail {
+  gather(
+    GatherTestOptions { ..default_gather_options(), mints_no_tokens: False },
   )
 }
