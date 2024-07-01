@@ -1,5 +1,7 @@
 pub const shipyard_policy = #"0000"
 
+pub const fuel_policy = #"ffff"
+
 pub const admin_policy = #"c111"
 
 pub const admin_token_name = "admin"

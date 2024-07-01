@@ -1,6 +1,8 @@
 import {
   Assets,
+  Constr,
   Data,
+  fromText,
   Script,
   toUnit,
   TxHash,
@@ -26,6 +28,7 @@ async function createPellets(
   const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
   const pelletValidator = pelletRef.scriptRef as Script;
   const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
+  const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
 
   const spacetimeRefTxHash: { txHash: string } = JSON.parse(
     await Deno.readTextFile("./script-refs/spacetime-ref.json")
@@ -37,12 +40,13 @@ async function createPellets(
   const spacetimeValidator = spacetimeRef.scriptRef as Script;
   const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
 
+  const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
   const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+  const mintFuelRedeemer = Data.to(new Constr(0, []));
   let tx = await lucid.newTx();
 
   for (const pellet of params) {
     const pelletInfo = {
-      fuel: pellet.fuel,
       pos_x: pellet.pos_x,
       pos_y: pellet.pos_y,
       shipyard_policy: shipyardPolicyId,
@@ -52,14 +56,23 @@ async function createPellets(
       PelletDatum as unknown as PelletDatumT
     );
 
-    tx = tx.payToContract(
-      pelletAddressBech32,
-      { inline: pelletDatum },
-      {
-        [adminTokenUnit]: BigInt(1),
-        ...prize_tokens,
-      }
-    );
+    tx = tx
+      .readFrom([pelletRef])
+      .mintAssets(
+        {
+          [fuelTokenUnit]: pellet.fuel,
+        },
+        mintFuelRedeemer
+      )
+      .payToContract(
+        pelletAddressBech32,
+        { inline: pelletDatum },
+        {
+          [fuelTokenUnit]: pellet.fuel,
+          [adminTokenUnit]: BigInt(1),
+          ...prize_tokens,
+        }
+      );
   }
   const completeTx = await tx.complete();
   const signedTx = await completeTx.sign().complete();

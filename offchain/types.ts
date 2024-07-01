@@ -19,7 +19,6 @@ const AsteriaDatum = Data.Object({
 type AsteriaDatumT = Data.Static<typeof AsteriaDatum>;
 
 const PelletDatum = Data.Object({
-  fuel: Data.Integer(),
   pos_x: Data.Integer(),
   pos_y: Data.Integer(),
   shipyard_policy: Data.Bytes({ maxLength: 28 }),
@@ -27,7 +26,6 @@ const PelletDatum = Data.Object({
 type PelletDatumT = Data.Static<typeof PelletDatum>;
 
 const ShipDatum = Data.Object({
-  fuel: Data.Integer(),
   pos_x: Data.Integer(),
   pos_y: Data.Integer(),
   ship_token_name: Data.Bytes(),

@@ -11,8 +11,12 @@ pub type AssetClass {
   name: AssetName,
 }
 
+pub type Speed {
+  distance: Int,
+  time: Int,
+}
+
 pub type ShipDatum {
-  fuel: Int,
   pos_x: Int,
   pos_y: Int,
   ship_token_name: AssetName,
@@ -28,7 +32,6 @@ pub type ShipRedeemer {
 }
 
 pub type PelletDatum {
-  fuel: Int,
   pos_x: Int,
   pos_y: Int,
   shipyard_policy: PolicyId,
@@ -55,7 +58,7 @@ pub type ShipyardRedeemer {
   BurnShip
 }
 
-pub type Speed {
-  distance: Int,
-  time: Int,
+pub type FuelRedeemer {
+  MintFuel
+  BurnFuel
 }

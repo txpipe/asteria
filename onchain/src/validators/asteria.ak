@@ -39,7 +39,7 @@ validator(
 
         let must_hold_admin_token =
           value.quantity_of(
-            asteria_input.output.value,
+            asteria_output.value,
             admin_token.policy,
             admin_token.name,
           ) > 0
@@ -71,15 +71,17 @@ validator(
         expect asteria_output_datum: AsteriaDatum = asteria_output_datum
 
         // check if ship_token is present in some input
-        expect Some(_) =
-          list.find(
-            inputs,
-            fn(input) {
-              list.any(
-                dict.keys(value.tokens(input.output.value, shipyard_policy)),
-                fn(name) { utils.has_prefix("SHIP", name) },
-              )
-            },
+        let must_input_ship_token =
+          option.is_some(
+            list.find(
+              inputs,
+              fn(input) {
+                list.any(
+                  dict.keys(value.tokens(input.output.value, shipyard_policy)),
+                  fn(name) { utils.has_prefix("SHIP", name) },
+                )
+              },
+            ),
           )
         expect Some(percentage) = rational.new(max_asteria_mining, 100)
         let input_rewards = value.lovelace_of(asteria_input.output.value)
@@ -95,6 +97,7 @@ validator(
           )
         let must_preserve_datum = datum == asteria_output_datum
         and {
+          must_input_ship_token?,
           must_respect_max_mining?,
           must_preserve_datum?,
         }
