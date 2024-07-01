@@ -72,8 +72,8 @@ async function gatherFuel(
       },
     ])
   )[0];
-  if (!ship.datum) {
-    throw Error("Ship datum not found");
+  if (!pellet.datum) {
+    throw Error("Pellet datum not found");
   }
   const pelletAda = pellet.assets.lovelace;
 
