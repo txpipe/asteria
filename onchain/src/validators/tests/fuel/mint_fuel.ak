@@ -1,19 +1,15 @@
 use aiken/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
 use aiken/transaction.{
-  InlineDatum, Input, Mint, NoDatum, Output, OutputReference, ScriptContext,
-  Transaction, TransactionId,
+  Input, Mint, NoDatum, Output, OutputReference, ScriptContext, Transaction,
+  TransactionId,
 }
-use aiken/transaction/credential.{
-  Address, ScriptCredential, VerificationKeyCredential,
-}
-use aiken/transaction/value.{AssetName, add, from_lovelace}
+use aiken/transaction/credential.{Address, VerificationKeyCredential}
+use aiken/transaction/value.{add, from_lovelace}
 use asteria/test_mock as mock
 use asteria/test_utils
-use asteria/types.{
-  AssetClass, AsteriaDatum, MintFuel, MintShip, ShipDatum, Speed,
-}
-use spacetime
+use asteria/types.{AssetClass, MintFuel}
+use pellet
 
 // ==============================================================================================
 // MintFuel Tests
@@ -28,7 +24,7 @@ fn get_default_mint_options() {
   MintTestOptions { fuel_tokens_minted: 20, includes_admin_input: True }
 }
 
-fn ship_mint(options: MintTestOptions) -> Bool {
+fn mint_fuel(options: MintTestOptions) -> Bool {
   let redeemer = MintFuel
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
@@ -99,50 +95,20 @@ fn ship_mint(options: MintTestOptions) -> Bool {
 }
 
 test mint_ok() {
-  ship_mint(get_default_mint_options())
+  mint_fuel(get_default_mint_options())
 }
 
-test no_asteria_input() fail {
-  ship_mint(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      includes_asteria_input: False,
-    },
+test no_fuel_tokens_minted() fail {
+  mint_fuel(
+    MintTestOptions { ..get_default_mint_options(), fuel_tokens_minted: 0 },
   )
 }
 
-test ship_token_not_minted() fail {
-  ship_mint(
+test no_admin_input() fail {
+  mint_fuel(
     MintTestOptions {
       ..get_default_mint_options(),
-      ship_token_minted_amount: 0,
-    },
-  )
-}
-
-test ship_token_wrong_amount() fail {
-  ship_mint(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      ship_token_minted_amount: 2,
-    },
-  )
-}
-
-test pilot_token_not_minted() fail {
-  ship_mint(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      pilot_token_minted_amount: 0,
-    },
-  )
-}
-
-test pilot_token_wrong_amount() fail {
-  ship_mint(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      pilot_token_minted_amount: 2,
+      includes_admin_input: False,
     },
   )
 }
