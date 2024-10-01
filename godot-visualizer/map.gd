@@ -15,7 +15,8 @@ func _ready() -> void:
 	const center = Vector2(0, 0)
 	const min_range = -grid_size / 2
 	const max_range = +grid_size / 2
-		
+	
+	# TODO: Remove all this test data
 	for i in range(10):
 		var fuel = fuel_scene.instantiate()
 		fuel.position.x = randi_range(min_range, max_range) * cell_size
@@ -43,6 +44,7 @@ func _ready() -> void:
 	add_child(token)
 
 
+# TODO: This is only to show the reference grid, it should be removed in the future
 func _draw() -> void:
 	if draw_grid:
 		const size = Vector2(cell_size, cell_size)
@@ -50,6 +52,7 @@ func _draw() -> void:
 			draw_rect(Rect2(cell-size/2, size), Color(255,0,0), false, 1, true)
 
 
+# TODO: This is only to show the reference grid, it should be removed in the future
 func _process(delta: float) -> void:
 	if Input.is_action_just_released("ui_down"):
 		draw_grid = !draw_grid
