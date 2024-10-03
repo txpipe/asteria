@@ -1,9 +1,6 @@
 use async_graphql::http::GraphiQLSource;
 use dotenv::dotenv;
-use num_traits::cast::ToPrimitive;
-use num_traits::Zero;
 use rocket::response::content::RawHtml;
-use sqlx::types::BigDecimal;
 use std::env;
 use std::ops::Deref;
 use std::vec;
@@ -14,6 +11,75 @@ use async_graphql_rocket::GraphQLResponse as Response;
 use rocket::State;
 
 struct QueryRoot;
+
+#[derive(Clone)]
+pub struct Data {
+    pub ships: Vec<Ship>,
+    pub fuels: Vec<Fuel>,
+    pub asteria: Asteria,
+}
+
+impl Data {
+    pub fn new(amount_of_ships: usize, amount_of_fuels: usize) -> Self {
+        let mut ships = Vec::new();
+        for _ in 0..amount_of_ships {
+            ships.push(Ship::random())
+        }
+        let mut fuels = Vec::new();
+        for _ in 0..amount_of_fuels {
+            fuels.push(Fuel::random())
+        }
+
+        Data {
+            ships,
+            fuels,
+            asteria: Asteria {
+                id: ID::from(uuid::Uuid::new_v4().to_string()),
+                position: Position {
+                    x: (rand::random::<f32>() * 100.0).floor() as i32,
+                    y: (rand::random::<f32>() * 100.0).floor() as i32,
+                },
+                total_rewards: 1235431230,
+                class: "Asteria".to_string(),
+            },
+        }
+    }
+    pub fn ship(self, name: &str) -> Option<Ship> {
+        self.ships
+            .into_iter()
+            .find(|ship| ship.ship_token_name.name == name)
+            .clone()
+    }
+
+    pub fn ships(self, limit: usize, offset: usize) -> Vec<Ship> {
+        self.ships.clone()[offset..offset + limit].to_vec()
+    }
+
+    pub fn fuel_pellets(self, limit: usize, offset: usize) -> Vec<Fuel> {
+        self.fuels.clone()[offset..offset + limit].to_vec()
+    }
+
+    pub fn objects_in_radius(self, center: Position, radius: i32) -> Vec<MapObject> {
+        let mut retval = Vec::new();
+        let _ = self
+            .ships
+            .clone()
+            .into_iter()
+            .filter(|ship| (ship.position.x - center.x) + (ship.position.y - center.y) < radius)
+            .map(|ship| retval.push(MapObject::Ship(ship.clone())));
+        let _ = self
+            .fuels
+            .clone()
+            .into_iter()
+            .filter(|fuel| (fuel.position.x - center.x) + (fuel.position.y - center.y) < radius)
+            .map(|fuel| retval.push(MapObject::Fuel(fuel.clone())));
+
+        if (self.asteria.position.x - center.x) + (self.asteria.position.y - center.y) < radius {
+            retval.push(MapObject::Asteria(self.asteria.clone()))
+        }
+        retval
+    }
+}
 
 #[derive(Clone, SimpleObject)]
 pub struct Ship {
@@ -26,6 +92,29 @@ pub struct Ship {
     class: String,
 }
 
+impl Ship {
+    pub fn random() -> Self {
+        Self {
+            id: ID::from(uuid::Uuid::new_v4().to_string()),
+            fuel: (rand::random::<f32>() * 100.0).floor() as i32,
+            position: Position {
+                x: (rand::random::<f32>() * 100.0).floor() as i32,
+                y: (rand::random::<f32>() * 100.0).floor() as i32,
+            },
+            shipyard_policy: PolicyId {
+                id: ID::from(uuid::Uuid::new_v4().to_string()),
+            },
+            ship_token_name: AssetName {
+                name: uuid::Uuid::new_v4().to_string(),
+            },
+            pilot_token_name: AssetName {
+                name: uuid::Uuid::new_v4().to_string(),
+            },
+            class: "Ship".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, SimpleObject)]
 pub struct Fuel {
     id: ID,
@@ -33,6 +122,23 @@ pub struct Fuel {
     position: Position,
     shipyard_policy: PolicyId,
     class: String,
+}
+
+impl Fuel {
+    pub fn random() -> Self {
+        Self {
+            id: ID::from(uuid::Uuid::new_v4().to_string()),
+            fuel: (rand::random::<f32>() * 100.0).floor() as i32,
+            position: Position {
+                x: (rand::random::<f32>() * 100.0).floor() as i32,
+                y: (rand::random::<f32>() * 100.0).floor() as i32,
+            },
+            shipyard_policy: PolicyId {
+                id: ID::from(uuid::Uuid::new_v4().to_string()),
+            },
+            class: "Fuel".to_string(),
+        }
+    }
 }
 
 #[derive(Clone, SimpleObject)]
@@ -111,65 +217,15 @@ pub enum PositionalInterface {
     Asteria(Asteria),
 }
 
-#[derive(Debug)]
-struct MapObjectRecord {
-    id: Option<String>,
-    fuel: Option<i32>,
-    position_x: Option<i32>,
-    position_y: Option<i32>,
-    policy_id: Option<String>,
-    token_name: Option<String>,
-    pilot_name: Option<String>,
-    class: Option<String>,
-    total_rewards: Option<BigDecimal>,
-}
-
 #[Object]
 impl QueryRoot {
-    async fn ship(&self, ctx: &Context<'_>, ship_token_name: AssetNameInput) -> Result<Ship> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let shipyard_policy_id = ctx
-            .data::<PolicyId>()
-            .map_err(|e| Error::new(e.message))?;
-
-        // Query to select a ship by token name
-        let fetched_ship = sqlx::query_as!(MapObjectRecord,
-            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM mapobjects
-             WHERE shipTokenName = $1 AND shipyardPolicy = $2",
-            ship_token_name.name, shipyard_policy_id.id.to_string()
-        );
-
-        let record = fetched_ship
-            .fetch_one(pool)
-            .await
-            .map_err(|e| Error::new(e.to_string()))?;
-
-        match record.class.as_deref() {
-            Some("Ship") => Ok(Ship {
-                id: ID::from(record.id.unwrap_or_default()),
-                fuel: record.fuel.unwrap_or(0),
-                position: Position {
-                    x: record.position_x.unwrap_or(0),
-                    y: record.position_y.unwrap_or(0),
-                },
-                shipyard_policy: PolicyId {
-                    id: ID::from(record.policy_id.unwrap_or_default()),
-                },
-                ship_token_name: AssetName {
-                    name: record.token_name.unwrap_or_default(),
-                },
-                pilot_token_name: AssetName {
-                    name: record.pilot_name.unwrap_or_default(),
-                },
-                class: record.class.unwrap_or_default(),
-            }),
-            _ => panic!("Unknown class type or class not provided"),
-        }
+    async fn ship(
+        &self,
+        ctx: &Context<'_>,
+        ship_token_name: AssetNameInput,
+    ) -> Result<Option<Ship>> {
+        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
+        Ok(data.clone().ship(&ship_token_name.name))
     }
 
     async fn ships(
@@ -178,56 +234,11 @@ impl QueryRoot {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> Result<Vec<Ship>> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let shipyard_policy_id = ctx
-            .data::<PolicyId>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let mut ships = Vec::new();
-
-        let num_ships = limit.unwrap_or(10) as i64;
-
-        let start = offset.unwrap_or(0) as i64;
-
-        // Query to select ships
-        let fetched_ships = sqlx::query_as!(MapObjectRecord,
-            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM mapobjects
-             WHERE class = 'Ship' AND shipyardPolicy = $1
-             LIMIT $2 OFFSET $3",
-            shipyard_policy_id.id.to_string(), num_ships, start
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
-
-        for record in fetched_ships {
-            ships.push(Ship {
-                id: ID::from(record.id.unwrap_or_default()),
-                fuel: record.fuel.unwrap_or(0),
-                position: Position {
-                    x: record.position_x.unwrap_or(0),
-                    y: record.position_y.unwrap_or(0),
-                },
-                shipyard_policy: PolicyId {
-                    id: ID::from(record.policy_id.unwrap_or_default()),
-                },
-                ship_token_name: AssetName {
-                    name: record.token_name.unwrap_or_default(),
-                },
-                pilot_token_name: AssetName {
-                    name: record.pilot_name.unwrap_or_default(),
-                },
-                class: record.class.unwrap_or_default(),
-            });
-        }
-
-        Ok(ships)
-
+        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
+        Ok(data.clone().ships(
+            limit.unwrap_or(10).try_into().unwrap(),
+            offset.unwrap_or(0).try_into().unwrap(),
+        ))
     }
 
     async fn fuel_pellets(
@@ -236,82 +247,21 @@ impl QueryRoot {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> Result<Vec<Fuel>> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let shipyard_policy_id = ctx
-            .data::<PolicyId>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let mut fuels = Vec::new();
-
-        let num_fuels = limit.unwrap_or(10) as i64;
-
-        let start = offset.unwrap_or(0) as i64;
-
-        // Query to select fuel pellets
-        let fetched_fuels = sqlx::query_as!(MapObjectRecord,
-            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM mapobjects
-             WHERE class = 'Fuel' AND shipyardPolicy = $1
-             LIMIT $2 OFFSET $3",
-            shipyard_policy_id.id.to_string(), num_fuels, start
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
-        
-        for record in fetched_fuels {
-            fuels.push(Fuel {
-                id: ID::from(record.id.unwrap_or_default()),
-                fuel: record.fuel.unwrap_or(0),
-                position: Position {
-                    x: record.position_x.unwrap_or(0),
-                    y: record.position_y.unwrap_or(0),
-                },
-                shipyard_policy: PolicyId {
-                    id: ID::from(record.policy_id.unwrap_or_default()),
-                },
-                class: record.class.unwrap_or_default(),
-            });
-        }
-
-        Ok(fuels)
+        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
+        Ok(data.clone().fuel_pellets(
+            limit.unwrap_or(10).try_into().unwrap(),
+            offset.unwrap_or(0).try_into().unwrap(),
+        ))
     }
 
     async fn asteria(&self, ctx: &Context<'_>) -> Result<AsteriaState> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let shipyard_policy_id = ctx
-            .data::<PolicyId>()
-            .map_err(|e| Error::new(e.message))?;
-
-        // Query to select the number of ships and the shipyard policy
-        let fetched_asteria_state = sqlx::query_as!(MapObjectRecord,
-            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM mapobjects
-             WHERE class = 'Asteria' AND shipyardPolicy = $1",
-            shipyard_policy_id.id.to_string()
-        )
-        .fetch_one(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
-
+        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
         Ok(AsteriaState {
-            ship_counter: fetched_asteria_state.fuel.unwrap_or(0),
+            ship_counter: data.ships.len() as i32,
             shipyard_policy: PolicyId {
-                id: ID::from(fetched_asteria_state.policy_id.unwrap_or_default()),
+                id: ID::from(uuid::Uuid::new_v4().to_string()),
             },
-            reward: fetched_asteria_state
-                .total_rewards
-                .unwrap_or(BigDecimal::zero())
-                .to_i64()
-                .unwrap(),
+            reward: 15000000,
         })
     }
 
@@ -321,79 +271,14 @@ impl QueryRoot {
         center: PositionInput,
         radius: i32,
     ) -> Result<Vec<MapObject>, Error> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let shipyard_policy_id = ctx
-            .data::<PolicyId>()
-            .map_err(|e| Error::new(e.message))?;
-
-        // Query to select map objects within a radius using Manhattan distance
-        let fetched_objects = sqlx::query_as!(MapObjectRecord,
-            "SELECT id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id, shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
-             FROM mapobjects
-             WHERE positionX BETWEEN ($1::int - $3::int) AND ($1::int + $3::int)
-               AND positionY BETWEEN ($2::int - $3::int) AND ($2::int + $3::int)
-               AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int
-               AND shipyardPolicy = $4::text",
-            center.x, center.y, radius, shipyard_policy_id.id.to_string()
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
-        let map_objects: Vec<MapObject> = fetched_objects
-            .into_iter()
-            .map(|record| match record.class.as_deref() {
-                Some("Ship") => MapObject::Ship(Ship {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    fuel: record.fuel.unwrap_or(0),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    shipyard_policy: PolicyId {
-                        id: ID::from(record.policy_id.unwrap_or_default()),
-                    },
-                    ship_token_name: AssetName {
-                        name: record.token_name.unwrap_or_default(),
-                    },
-                    pilot_token_name: AssetName {
-                        name: record.pilot_name.unwrap_or_default(),
-                    },
-                    class: record.class.unwrap_or_default(),
-                }),
-                Some("Fuel") => MapObject::Fuel(Fuel {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    fuel: record.fuel.unwrap_or(0),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    shipyard_policy: PolicyId {
-                        id: ID::from(record.policy_id.unwrap_or_default()),
-                    },
-                    class: record.class.unwrap_or_default(),
-                }),
-                Some("Asteria") => MapObject::Asteria(Asteria {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    total_rewards: record
-                        .total_rewards
-                        .unwrap_or(BigDecimal::zero())
-                        .to_i64()
-                        .unwrap(),
-                    class: record.class.unwrap_or_default(),
-                }),
-                _ => panic!("Unknown class type or class not provided"),
-            })
-            .collect();
-
-        Ok(map_objects)
+        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
+        Ok(data.clone().objects_in_radius(
+            Position {
+                x: center.x,
+                y: center.y,
+            },
+            radius,
+        ))
     }
 
     async fn all_ship_actions(
@@ -480,9 +365,6 @@ async fn graphiql() -> RawHtml<String> {
 async fn rocket() -> _ {
     dotenv().ok();
 
-    let database_url =
-        env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
-
     let shipyard_policy_id =
         env::var("SHIPYARD_POLICY_ID").expect("SHIPYARD_POLICY_ID must be set in the environment");
 
@@ -490,16 +372,10 @@ async fn rocket() -> _ {
         id: ID::from(shipyard_policy_id),
     };
 
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(5)
-        .connect(database_url.as_str())
-        .await
-        .expect("Failed to create pool");
-
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
-        .data(pool.clone())
         .data(shipyard_policy_id)
+        .data(Data::new(20, 50))
         .finish();
 
     rocket::build()
