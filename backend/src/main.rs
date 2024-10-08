@@ -35,10 +35,7 @@ impl Data {
             fuels,
             asteria: Asteria {
                 id: ID::from(uuid::Uuid::new_v4().to_string()),
-                position: Position {
-                    x: (rand::random::<f32>() * 100.0).floor() as i32,
-                    y: (rand::random::<f32>() * 100.0).floor() as i32,
-                },
+                position: Position { x: 0, y: 0 },
                 total_rewards: 1235431230,
                 class: "Asteria".to_string(),
             },
@@ -61,19 +58,17 @@ impl Data {
 
     pub fn objects_in_radius(self, center: Position, radius: i32) -> Vec<MapObject> {
         let mut retval = Vec::new();
-        let _ = self
-            .ships
-            .clone()
-            .into_iter()
-            .filter(|ship| (ship.position.x - center.x) + (ship.position.y - center.y) < radius)
-            .map(|ship| retval.push(MapObject::Ship(ship.clone())));
-        let _ = self
-            .fuels
-            .clone()
-            .into_iter()
-            .filter(|fuel| (fuel.position.x - center.x) + (fuel.position.y - center.y) < radius)
-            .map(|fuel| retval.push(MapObject::Fuel(fuel.clone())));
 
+        for ship in self.ships {
+            if (ship.position.x - center.x) + (ship.position.y - center.y) < radius {
+                retval.push(MapObject::Ship(ship.clone()));
+            }
+        }
+        for fuel in self.fuels {
+            if (fuel.position.x - center.x) + (fuel.position.y - center.y) < radius {
+                retval.push(MapObject::Fuel(fuel.clone()));
+            }
+        }
         if (self.asteria.position.x - center.x) + (self.asteria.position.y - center.y) < radius {
             retval.push(MapObject::Asteria(self.asteria.clone()))
         }
@@ -97,10 +92,7 @@ impl Ship {
         Self {
             id: ID::from(uuid::Uuid::new_v4().to_string()),
             fuel: (rand::random::<f32>() * 100.0).floor() as i32,
-            position: Position {
-                x: (rand::random::<f32>() * 100.0).floor() as i32,
-                y: (rand::random::<f32>() * 100.0).floor() as i32,
-            },
+            position: Position::random(),
             shipyard_policy: PolicyId {
                 id: ID::from(uuid::Uuid::new_v4().to_string()),
             },
@@ -129,10 +121,7 @@ impl Fuel {
         Self {
             id: ID::from(uuid::Uuid::new_v4().to_string()),
             fuel: (rand::random::<f32>() * 100.0).floor() as i32,
-            position: Position {
-                x: (rand::random::<f32>() * 100.0).floor() as i32,
-                y: (rand::random::<f32>() * 100.0).floor() as i32,
-            },
+            position: Position::random(),
             shipyard_policy: PolicyId {
                 id: ID::from(uuid::Uuid::new_v4().to_string()),
             },
@@ -160,6 +149,14 @@ pub struct AsteriaState {
 pub struct Position {
     x: i32,
     y: i32,
+}
+impl Position {
+    pub fn random() -> Self {
+        Self {
+            x: (rand::random::<f32>() * 200.0 - 100.0).floor() as i32,
+            y: (rand::random::<f32>() * 200.0 - 100.0).floor() as i32,
+        }
+    }
 }
 
 #[derive(Clone, SimpleObject)]
@@ -375,7 +372,7 @@ async fn rocket() -> _ {
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
         .data(shipyard_policy_id)
-        .data(Data::new(20, 50))
+        .data(Data::new(200, 100))
         .finish();
 
     rocket::build()
