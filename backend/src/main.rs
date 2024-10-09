@@ -60,16 +60,18 @@ impl Data {
         let mut retval = Vec::new();
 
         for ship in self.ships {
-            if (ship.position.x - center.x) + (ship.position.y - center.y) < radius {
+            if (ship.position.x - center.x).abs() + (ship.position.y - center.y).abs() < radius {
                 retval.push(MapObject::Ship(ship.clone()));
             }
         }
         for fuel in self.fuels {
-            if (fuel.position.x - center.x) + (fuel.position.y - center.y) < radius {
+            if (fuel.position.x - center.x).abs() + (fuel.position.y - center.y).abs() < radius {
                 retval.push(MapObject::Fuel(fuel.clone()));
             }
         }
-        if (self.asteria.position.x - center.x) + (self.asteria.position.y - center.y) < radius {
+        if (self.asteria.position.x - center.x).abs() + (self.asteria.position.y - center.y).abs()
+            < radius
+        {
             retval.push(MapObject::Asteria(self.asteria.clone()))
         }
         retval
