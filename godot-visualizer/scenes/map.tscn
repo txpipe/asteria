@@ -1,0 +1,155 @@
+[gd_scene load_steps=17 format=3 uid="uid://ch6xqejnd1rqf"]
+
+[ext_resource type="PackedScene" uid="uid://w6xfts7trly" path="res://scenes/ship.tscn" id="1_7owwp"]
+[ext_resource type="Script" path="res://scripts/map.gd" id="1_n1of1"]
+[ext_resource type="PackedScene" uid="uid://q0rcij55u7bg" path="res://scenes/fuel.tscn" id="3_ox4nu"]
+[ext_resource type="PackedScene" uid="uid://5y7v35p7p3lu" path="res://scenes/token.tscn" id="4_77b38"]
+[ext_resource type="PackedScene" uid="uid://dtec1i7ha2aui" path="res://scenes/asteria.tscn" id="5_66lng"]
+[ext_resource type="Script" path="res://scripts/camera.gd" id="6_1ih2g"]
+[ext_resource type="Texture2D" uid="uid://cb1air8qyw14i" path="res://resources/starfield_front.png" id="6_cyois"]
+[ext_resource type="Texture2D" uid="uid://be8jdo2wq8ogi" path="res://resources/starfield_back.png" id="7_rre6e"]
+[ext_resource type="Script" path="res://scripts/orbits.gd" id="8_uc43w"]
+[ext_resource type="Texture2D" uid="uid://c5m2uchbr3ryj" path="res://resources/cell_empty.png" id="10_x72s0"]
+[ext_resource type="Texture2D" uid="uid://cgamwuuobmt2w" path="res://resources/cell_filled.png" id="11_hooak"]
+[ext_resource type="StyleBox" uid="uid://cuqtwls2gtt0v" path="res://resources/textures/tooltip.tres" id="12_nmxok"]
+[ext_resource type="FontFile" uid="uid://2ctrem352y4" path="res://resources/fonts/JetBrainsMono.ttf" id="13_8n7ak"]
+[ext_resource type="FontFile" uid="uid://b7vayqoopjyv" path="res://resources/fonts/DMSans.ttf" id="14_pk7pu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_73s6b"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("10_x72s0")
+}],
+"loop": true,
+"name": &"empty",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("11_hooak")
+}],
+"loop": true,
+"name": &"filled",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ftxwg"]
+bg_color = Color(1, 1, 1, 1)
+
+[node name="Map" type="Node2D"]
+script = ExtResource("1_n1of1")
+ship_scene = ExtResource("1_7owwp")
+fuel_scene = ExtResource("3_ox4nu")
+token_scene = ExtResource("4_77b38")
+asteria_scene = ExtResource("5_66lng")
+
+[node name="Camera" type="Camera2D" parent="."]
+script = ExtResource("6_1ih2g")
+
+[node name="Parallax2D" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.17, 0.17)
+repeat_size = Vector2(3840, 2160)
+repeat_times = 4
+
+[node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]
+texture = ExtResource("6_cyois")
+
+[node name="Parallax2D2" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.1, 0.1)
+repeat_size = Vector2(3840, 2160)
+repeat_times = 4
+
+[node name="Sprite2D" type="Sprite2D" parent="Parallax2D2"]
+texture = ExtResource("7_rre6e")
+
+[node name="Orbits" type="Sprite2D" parent="."]
+script = ExtResource("8_uc43w")
+
+[node name="Entities" type="Sprite2D" parent="."]
+
+[node name="Cell" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_73s6b")
+animation = &"filled"
+
+[node name="Tooltip" type="Panel" parent="Cell"]
+custom_minimum_size = Vector2(560, 392)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -536.0
+offset_top = -776.0
+offset_right = 24.0
+offset_bottom = -384.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = ExtResource("12_nmxok")
+
+[node name="MarginContainer" type="MarginContainer" parent="Cell/Tooltip"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Cell/Tooltip/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("13_8n7ak")
+theme_override_font_sizes/font_size = 36
+text = "SHIP"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+uppercase = true
+
+[node name="Panel" type="Panel" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ftxwg")
+
+[node name="Position" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("14_pk7pu")
+theme_override_font_sizes/font_size = 32
+text = "Position | 0, 0"
+text_overrun_behavior = 3
+
+[node name="Address" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("14_pk7pu")
+theme_override_font_sizes/font_size = 32
+text = "Address | ***1234"
+text_overrun_behavior = 3
+
+[node name="Fuel" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("14_pk7pu")
+theme_override_font_sizes/font_size = 32
+text = "Fuel | 0/0"
+text_overrun_behavior = 3
+
+[node name="Coins" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("14_pk7pu")
+theme_override_font_sizes/font_size = 32
+text = "Coins | 0/0"
+text_overrun_behavior = 3
+
+[connection signal="minimap_position_changed" from="." to="Camera" method="_on_map_minimap_position_changed"]
+[connection signal="mouse_hover_gui" from="." to="Camera" method="_on_map_mouse_hover_gui"]
+[connection signal="position_changed" from="Camera" to="." method="_on_camera_position_changed"]

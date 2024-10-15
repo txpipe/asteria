@@ -12,3 +12,4 @@ target
 **/.env
 
 .mono
+**/.DS_Store

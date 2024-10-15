@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://q0rcij55u7bg"]
-
-[ext_resource type="Texture2D" uid="uid://c8va8sqjmb80f" path="res://fuel.svg" id="1_tg1ui"]
-
-[node name="Fuel" type="Node2D"]
-
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("1_tg1ui")
