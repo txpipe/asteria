@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: 'Monocraft-Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Monocraft-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'DMSans-Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/DMSans-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'DMSans-Bold';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/DMSans-Bold.ttf') format('truetype');
+  }
+
+  body {
+    background-color: #171717 !important;
+  }
+}

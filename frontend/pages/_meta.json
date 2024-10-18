@@ -1,0 +1,34 @@
+{
+  "index": {
+    "display": "hidden",
+    "type": "page",
+    "theme": {
+      "layout": "raw",
+      "footer": false
+    }
+  },
+  "how-to-play": {
+    "title": "How to play",
+    "type": "page",
+    "theme": {
+      "layout": "raw",
+      "footer": false
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "type": "page",
+    "theme": {
+      "layout": "raw",
+      "footer": false
+    }
+  },
+  "map": {
+    "title": "View map",
+    "type": "page",
+    "theme": {
+      "layout": "raw",
+      "footer": false
+    }
+  }
+}
