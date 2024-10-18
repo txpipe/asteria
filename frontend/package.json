@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build-godot": "godot --path ../godot-visualizer --headless --export-release \"Web\" ../frontend/public/visualizer/index.html",
+    "build-godot": "mkdir public/visualizer; godot --path ../godot-visualizer --headless --export-release \"Web\" ../frontend/public/visualizer/index.html",
     "dev": "npm run build-godot; next dev",
     "build": "next build",
     "start": "next start"
