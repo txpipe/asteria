@@ -1,0 +1,7 @@
+FROM node:20-alpine
+WORKDIR /usr/app
+COPY ./frontend/package*.json ./
+RUN npm install
+COPY ./frontend ./
+RUN npm run build
+CMD ["npm", "start"]
