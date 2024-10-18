@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build-godot": "godot --path ../godot-visualizer --headless --export-release \"Web\" ../frontend/public/visualizer/index.html",
-    "dev": "npm run build-godot; next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
