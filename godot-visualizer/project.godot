@@ -13,7 +13,8 @@ config_version=5
 config/name="visualizer"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-config/icon="res://resources/icon.svg"
+boot_splash/bg_color=Color(0.0392157, 0.0392157, 0.0392157, 1)
+config/icon="res://resources/asteria.svg"
 
 [autoload]
 
@@ -28,4 +29,4 @@ window/size/viewport_height=2160
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0, 0, 0, 1)
+environment/defaults/default_clear_color=Color(0.0392157, 0.0392157, 0.0392157, 1)
