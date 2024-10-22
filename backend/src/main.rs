@@ -101,7 +101,7 @@ impl Data {
     }
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(sqlx::FromRow, Clone, SimpleObject)]
 pub struct Ship {
     id: ID,
     fuel: i32,
@@ -369,7 +369,7 @@ impl QueryRoot {
                 data
              WHERE
                 ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int
-                AND shipyardPolicy = $4::text
+                AND shipyard_policy = $4::text
             ",
             center.x,
             center.y,
