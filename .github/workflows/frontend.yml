@@ -1,0 +1,34 @@
+name: Frontend
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/frontend.yml"
+      - "frontend/*"
+      - "godot-visualizer/*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.frontend
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/txpipe/asteria-frontend:${{ github.sha }}
