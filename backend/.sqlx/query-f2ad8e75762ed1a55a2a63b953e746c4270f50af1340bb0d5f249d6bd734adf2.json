@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH data AS (\n                SELECT \n                    id,\n                    'Ship' as class,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,\n                    $4::varchar AS shipyard_policy,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS ship_token_name,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilot_token_name,\n                    0 AS total_rewards\n                FROM \n                    utxos\n                WHERE \n                    utxo_address(era, cbor) = from_bech32($5::varchar)\n                    AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))\n                \n                UNION ALL\n                \n                SELECT \n                    id,\n                    'Fuel' as class,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,\n                    NULL AS ship_token_name,\n                    NULL AS pilot_token_name,\n                    0 AS total_rewards\n                FROM \n                    utxos\n                WHERE \n                    utxo_address(era, cbor) = from_bech32($6::varchar)\n                \n                UNION ALL\n                \n                SELECT \n                    id,\n                    'Asteria' as class,\n                    0 AS fuel,\n                    0 AS position_x,\n                    0 AS position_y,\n                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,\n                    NULL AS ship_token_name,\n                    NULL AS pilot_token_name,\n                    utxo_lovelace(era, cbor) as total_rewards\n                FROM \n                    utxos\n                WHERE \n                    utxo_address(era, cbor) = from_bech32($7::varchar)\n            )\n            SELECT\n                id,\n                fuel,\n                position_x,\n                position_y,\n                shipyard_policy,\n                ship_token_name,\n                pilot_token_name,\n                class,\n                total_rewards\n             FROM\n                data\n             WHERE\n                ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int\n                -- AND shipyardPolicy = $4::text\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "fuel",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "position_x",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "position_y",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "shipyard_policy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "ship_token_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "pilot_token_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "class",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "total_rewards",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Int4",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "f2ad8e75762ed1a55a2a63b953e746c4270f50af1340bb0d5f249d6bd734adf2"
+}

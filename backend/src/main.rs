@@ -1,6 +1,8 @@
 use async_graphql::http::GraphiQLSource;
 use dotenv::dotenv;
+use num_traits::{cast::ToPrimitive, Zero};
 use rocket::response::content::RawHtml;
+use sqlx::types::BigDecimal;
 use std::env;
 use std::ops::Deref;
 use std::vec;
@@ -11,6 +13,27 @@ use async_graphql_rocket::GraphQLResponse as Response;
 use rocket::State;
 
 struct QueryRoot;
+
+pub struct ChainParameters {
+    shipyard_policy_id: String,
+    ship_address: String,
+    fuel_address: String,
+    asteria_address: String,
+}
+impl ChainParameters {
+    pub fn from_env() -> Self {
+        Self {
+            shipyard_policy_id: env::var("SHIPYARD_POLICY_ID")
+                .expect("SHIPYARD_POLICY_ID must be set in the environment"),
+            ship_address: env::var("SHIP_ADDRESS")
+                .expect("SHIP_ADDRESS must be set in the environment"),
+            fuel_address: env::var("FUEL_ADDRESS")
+                .expect("FUEL_ADDRESS must be set in the environment"),
+            asteria_address: env::var("ASTERIA_ADDRESS")
+                .expect("ASTERIA_ADDRESS must be set in the environment"),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Data {
@@ -56,23 +79,23 @@ impl Data {
         self.fuels.clone()[offset..offset + limit].to_vec()
     }
 
-    pub fn objects_in_radius(self, center: Position, radius: i32) -> Vec<MapObject> {
+    pub fn objects_in_radius(self, center: Position, radius: i32) -> Vec<PositionalInterface> {
         let mut retval = Vec::new();
 
         for ship in self.ships {
             if (ship.position.x - center.x).abs() + (ship.position.y - center.y).abs() < radius {
-                retval.push(MapObject::Ship(ship.clone()));
+                retval.push(PositionalInterface::Ship(ship.clone()));
             }
         }
         for fuel in self.fuels {
             if (fuel.position.x - center.x).abs() + (fuel.position.y - center.y).abs() < radius {
-                retval.push(MapObject::Fuel(fuel.clone()));
+                retval.push(PositionalInterface::Fuel(fuel.clone()));
             }
         }
         if (self.asteria.position.x - center.x).abs() + (self.asteria.position.y - center.y).abs()
             < radius
         {
-            retval.push(MapObject::Asteria(self.asteria.clone()))
+            retval.push(PositionalInterface::Asteria(self.asteria.clone()))
         }
         retval
     }
@@ -209,7 +232,6 @@ pub enum MapObject {
     field(name = "position", ty = "&Position"),
     field(name = "class", ty = "String")
 )]
-
 pub enum PositionalInterface {
     Ship(Ship),
     Fuel(Fuel),
@@ -269,15 +291,149 @@ impl QueryRoot {
         ctx: &Context<'_>,
         center: PositionInput,
         radius: i32,
-    ) -> Result<Vec<MapObject>, Error> {
-        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
-        Ok(data.clone().objects_in_radius(
-            Position {
-                x: center.x,
-                y: center.y,
-            },
+    ) -> Result<Vec<PositionalInterface>, Error> {
+        // Access the connection pool from the GraphQL context
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let chain_parameters = ctx
+            .data::<ChainParameters>()
+            .map_err(|e| Error::new(e.message))?;
+
+        // Query to select map objects within a radius using Manhattan distance
+        let fetched_objects = sqlx::query!(
+            "
+            WITH data AS (
+                SELECT 
+                    id,
+                    'Ship' as class,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,
+                    $4::varchar AS shipyard_policy,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS ship_token_name,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilot_token_name,
+                    0 AS total_rewards
+                FROM 
+                    utxos
+                WHERE 
+                    utxo_address(era, cbor) = from_bech32($5::varchar)
+                    AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))
+                
+                UNION ALL
+                
+                SELECT 
+                    id,
+                    'Fuel' as class,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                    NULL AS ship_token_name,
+                    NULL AS pilot_token_name,
+                    0 AS total_rewards
+                FROM 
+                    utxos
+                WHERE 
+                    utxo_address(era, cbor) = from_bech32($6::varchar)
+                
+                UNION ALL
+                
+                SELECT 
+                    id,
+                    'Asteria' as class,
+                    0 AS fuel,
+                    0 AS position_x,
+                    0 AS position_y,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                    NULL AS ship_token_name,
+                    NULL AS pilot_token_name,
+                    utxo_lovelace(era, cbor) as total_rewards
+                FROM 
+                    utxos
+                WHERE 
+                    utxo_address(era, cbor) = from_bech32($7::varchar)
+            )
+            SELECT
+                id,
+                fuel,
+                position_x,
+                position_y,
+                shipyard_policy,
+                ship_token_name,
+                pilot_token_name,
+                class,
+                total_rewards
+             FROM
+                data
+             WHERE
+                ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int
+                -- AND shipyardPolicy = $4::text
+            ",
+            center.x,
+            center.y,
             radius,
-        ))
+            chain_parameters.shipyard_policy_id,
+            chain_parameters.ship_address,
+            chain_parameters.fuel_address,
+            chain_parameters.asteria_address,
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        let map_objects: Vec<PositionalInterface> = fetched_objects
+            .into_iter()
+            .map(|record| match record.class.as_deref() {
+                Some("Ship") => PositionalInterface::Ship(Ship {
+                    id: ID::from(record.id.unwrap_or_default()),
+                    fuel: record.fuel.unwrap_or(0),
+                    position: Position {
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
+                    },
+                    shipyard_policy: PolicyId {
+                        id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                    },
+                    ship_token_name: AssetName {
+                        name: record.ship_token_name.unwrap_or_default(),
+                    },
+                    pilot_token_name: AssetName {
+                        name: record.pilot_token_name.unwrap_or_default(),
+                    },
+                    class: record.class.unwrap_or_default(),
+                }),
+                Some("Fuel") => PositionalInterface::Fuel(Fuel {
+                    id: ID::from(record.id.unwrap_or_default()),
+                    fuel: record.fuel.unwrap_or(0),
+                    position: Position {
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
+                    },
+                    shipyard_policy: PolicyId {
+                        id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                    },
+                    class: record.class.unwrap_or_default(),
+                }),
+                Some("Asteria") => PositionalInterface::Asteria(Asteria {
+                    id: ID::from(record.id.unwrap_or_default()),
+                    position: Position {
+                        x: record.position_x.unwrap_or(0),
+                        y: record.position_y.unwrap_or(0),
+                    },
+                    total_rewards: record
+                        .total_rewards
+                        .unwrap_or(BigDecimal::zero())
+                        .to_i64()
+                        .unwrap_or(0),
+                    class: record.class.unwrap_or_default(),
+                }),
+                _ => panic!("Unknown class type or class not provided"),
+            })
+            .collect();
+
+        Ok(map_objects)
     }
 
     async fn all_ship_actions(
@@ -364,16 +520,21 @@ async fn graphiql() -> RawHtml<String> {
 async fn rocket() -> _ {
     dotenv().ok();
 
-    let shipyard_policy_id =
-        env::var("SHIPYARD_POLICY_ID").expect("SHIPYARD_POLICY_ID must be set in the environment");
+    let database_url =
+        env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
 
-    let shipyard_policy_id = PolicyId {
-        id: ID::from(shipyard_policy_id),
-    };
+    let chain_parameters = ChainParameters::from_env();
+
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(5)
+        .connect(database_url.as_str())
+        .await
+        .expect("Failed to create pool");
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
-        .data(shipyard_policy_id)
+        .data(chain_parameters)
+        .data(pool)
         .data(Data::new(200, 100))
         .finish();
 
