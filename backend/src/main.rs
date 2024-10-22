@@ -369,7 +369,7 @@ impl QueryRoot {
                 data
              WHERE
                 ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int
-                -- AND shipyardPolicy = $4::text
+                AND shipyardPolicy = $4::text
             ",
             center.x,
             center.y,
