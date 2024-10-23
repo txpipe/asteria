@@ -21,11 +21,11 @@ func _draw():
 	
 	if minimap_mode == "ship":
 		for ship in Global.get_ships():
-			draw_circle(ship.position*map_scale+map_position, 2, Color("#2EBA00"), true, 0, true)
+			draw_circle(ship.position*map_scale+map_position, 2, Color("#2EBA00"), true, -1 , true)
 	
 	if minimap_mode == "fuel":
 		for fuel in Global.get_fuels():
-			draw_circle(fuel.position*map_scale+map_position, 2, Color("#7982FD"), true, 0, true)
+			draw_circle(fuel.position*map_scale+map_position, 2, Color("#7982FD"), true, -1, true)
 	
 	draw_rect(Rect2(camera_position_scale+map_position-viewport_scale/2, viewport_scale), Color("#FE1562", .3), true, -1, true)
 

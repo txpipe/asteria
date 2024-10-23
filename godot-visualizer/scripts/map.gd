@@ -39,10 +39,10 @@ func _on_main_dataset_updated() -> void:
 func _process(delta: float) -> void:
 	var cell_size = Global.get_cell_size()
 	var mouse_position = get_viewport().get_mouse_position()
-	var viewport_rect = Rect2(Vector2(0,0), get_viewport().size)
+	var viewport_rect = Rect2(Vector2(0,0), get_viewport_rect().size)
 	
 	if viewport_rect.has_point(mouse_position) && !is_mouse_hover_gui():
-		var cell_position = round((mouse_position - Vector2(get_viewport().size) / 2 + $Camera.position) / cell_size)
+		var cell_position = round((mouse_position - Vector2(get_viewport_rect().size) / 2 + $Camera.position) / cell_size)
 		$Cell.position = cell_position * cell_size
 		
 		var ships = Global.get_ships().filter(func(ship): return ship.position == cell_position)
