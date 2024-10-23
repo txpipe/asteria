@@ -24,6 +24,8 @@ Global="*res://scripts/global.gd"
 
 window/size/viewport_width=3840
 window/size/viewport_height=2160
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [rendering]
 

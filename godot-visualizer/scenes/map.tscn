@@ -50,7 +50,7 @@ script = ExtResource("6_1ih2g")
 [node name="Parallax2D" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.17, 0.17)
 repeat_size = Vector2(3840, 2160)
-repeat_times = 4
+repeat_times = 6
 
 [node name="Sprite2D" type="Sprite2D" parent="Parallax2D"]
 texture = ExtResource("6_cyois")
@@ -58,7 +58,7 @@ texture = ExtResource("6_cyois")
 [node name="Parallax2D2" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0.1, 0.1)
 repeat_size = Vector2(3840, 2160)
-repeat_times = 4
+repeat_times = 6
 
 [node name="Sprite2D" type="Sprite2D" parent="Parallax2D2"]
 texture = ExtResource("7_rre6e")
