@@ -320,6 +320,7 @@ impl QueryRoot {
                 WHERE 
                     utxo_address(era, cbor) = from_bech32($5::varchar)
                     AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))
+                    AND spent_slot IS NULL
                 
                 UNION ALL
                 
@@ -337,7 +338,8 @@ impl QueryRoot {
                     utxos
                 WHERE 
                     utxo_address(era, cbor) = from_bech32($6::varchar)
-                
+                    AND spent_slot IS NULL
+
                 UNION ALL
                 
                 SELECT 
@@ -354,6 +356,7 @@ impl QueryRoot {
                     utxos
                 WHERE 
                     utxo_address(era, cbor) = from_bech32($7::varchar)
+                    AND spent_slot IS NULL
             )
             SELECT
                 id,
