@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://ch6xqejnd1rqf"]
+[gd_scene load_steps=13 format=3 uid="uid://ch6xqejnd1rqf"]
 
 [ext_resource type="PackedScene" uid="uid://w6xfts7trly" path="res://scenes/ship.tscn" id="1_7owwp"]
 [ext_resource type="Script" path="res://scripts/map.gd" id="1_n1of1"]
@@ -11,9 +11,6 @@
 [ext_resource type="Script" path="res://scripts/orbits.gd" id="8_uc43w"]
 [ext_resource type="Texture2D" uid="uid://c5m2uchbr3ryj" path="res://resources/cell_empty.png" id="10_x72s0"]
 [ext_resource type="Texture2D" uid="uid://cgamwuuobmt2w" path="res://resources/cell_filled.png" id="11_hooak"]
-[ext_resource type="StyleBox" uid="uid://cuqtwls2gtt0v" path="res://resources/textures/tooltip.tres" id="12_nmxok"]
-[ext_resource type="FontFile" uid="uid://2ctrem352y4" path="res://resources/fonts/JetBrainsMono.ttf" id="13_8n7ak"]
-[ext_resource type="FontFile" uid="uid://b7vayqoopjyv" path="res://resources/fonts/DMSans.ttf" id="14_pk7pu"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_73s6b"]
 animations = [{
@@ -33,9 +30,6 @@ animations = [{
 "name": &"filled",
 "speed": 5.0
 }]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ftxwg"]
-bg_color = Color(1, 1, 1, 1)
 
 [node name="Map" type="Node2D"]
 script = ExtResource("1_n1of1")
@@ -71,84 +65,6 @@ script = ExtResource("8_uc43w")
 [node name="Cell" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_73s6b")
 animation = &"filled"
-
-[node name="Tooltip" type="Panel" parent="Cell"]
-custom_minimum_size = Vector2(560, 392)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -536.0
-offset_top = -776.0
-offset_right = 24.0
-offset_bottom = -384.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = ExtResource("12_nmxok")
-
-[node name="MarginContainer" type="MarginContainer" parent="Cell/Tooltip"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 40
-
-[node name="VBoxContainer" type="VBoxContainer" parent="Cell/Tooltip/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="Title" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("13_8n7ak")
-theme_override_font_sizes/font_size = 36
-text = "SHIP"
-horizontal_alignment = 1
-text_overrun_behavior = 3
-uppercase = true
-
-[node name="Panel" type="Panel" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 1)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_ftxwg")
-
-[node name="Position" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("14_pk7pu")
-theme_override_font_sizes/font_size = 32
-text = "Position | 0, 0"
-text_overrun_behavior = 3
-
-[node name="Address" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("14_pk7pu")
-theme_override_font_sizes/font_size = 32
-text = "Address | ***1234"
-text_overrun_behavior = 3
-
-[node name="Fuel" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("14_pk7pu")
-theme_override_font_sizes/font_size = 32
-text = "Fuel | 0/0"
-text_overrun_behavior = 3
-
-[node name="Coins" type="Label" parent="Cell/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("14_pk7pu")
-theme_override_font_sizes/font_size = 32
-text = "Coins | 0/0"
-text_overrun_behavior = 3
 
 [connection signal="minimap_position_changed" from="." to="Camera" method="_on_map_minimap_position_changed"]
 [connection signal="mouse_hover_gui" from="." to="Camera" method="_on_map_mouse_hover_gui"]

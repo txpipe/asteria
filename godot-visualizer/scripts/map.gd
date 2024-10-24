@@ -9,6 +9,9 @@ signal camera_position_changed(position: Vector2)
 signal camera_zoom_changed(zoom: Vector2)
 signal minimap_position_changed(position: Vector2)
 signal mouse_hover_gui(is_hover: bool)
+signal hide_tooltip()
+signal show_ship_tooltip(position: Vector2, address: String)
+signal show_fuel_tooltip(position: Vector2)
 
 var mouse_entered_sidebar = false
 var mouse_entered_minimap = false
@@ -38,37 +41,27 @@ func _on_main_dataset_updated() -> void:
 
 func _process(delta: float) -> void:
 	var cell_size = Global.get_cell_size()
-	var mouse_position = get_viewport().get_mouse_position()
-	var viewport_rect = Rect2(Vector2(0,0), get_viewport_rect().size)
+	var mouse_position = get_viewport().get_mouse_position() / $Camera.zoom
+	var viewport_rect = Rect2(Vector2(0,0), get_viewport_rect().size / $Camera.zoom)
 	
 	if viewport_rect.has_point(mouse_position) && !is_mouse_hover_gui():
-		var cell_position = round((mouse_position - Vector2(get_viewport_rect().size) / 2 + $Camera.position) / cell_size)
+		var cell_position = round((mouse_position - Vector2(get_viewport_rect().size / $Camera.zoom) / 2 + $Camera.position) / cell_size)
 		$Cell.position = cell_position * cell_size
 		
 		var ships = Global.get_ships().filter(func(ship): return ship.position == cell_position)
 		var fuels = Global.get_fuels().filter(func(fuel): return fuel.position == cell_position)
 		
-		if ships.size() > 0 or fuels.size() > 0:
+		if ships.size() > 0:
 			$Cell.animation = "filled"
-			$Cell/Tooltip.visible = true
-			if ships.size() > 0:
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Title.text = "SHIP"
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Position.text = "Position | %d, %d" % [ships[0].position.x, ships[0].position.y]
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Address.text = "Address | %s" % ships[0].id
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Address.visible = true
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Coins.visible = true
-			else:
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Title.text = "FUEL PELLET"
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Position.text = "Position | %d, %d" % [fuels[0].position.x, fuels[0].position.y]
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Address.visible = false
-				$Cell/Tooltip/MarginContainer/VBoxContainer/Coins.visible = false
+			show_ship_tooltip.emit(ships[0].position, ships[0].id)
+		elif fuels.size() > 0:
+			$Cell.animation = "filled"
+			show_fuel_tooltip.emit(fuels[0].position)
 		else:
 			$Cell.animation = "empty"
-			$Cell/Tooltip.visible = false
-		
-		$Cell.visible = true
+			hide_tooltip.emit()
 	else:
-		$Cell.visible = false
+		hide_tooltip.emit()
 
 
 func is_mouse_hover_gui() -> bool:
@@ -128,3 +121,15 @@ func _on_minimap_control_panel_mouse_entered() -> void:
 func _on_minimap_control_panel_mouse_exited() -> void:
 	mouse_entered_modal = false
 	emit_mouse_hover_gui()
+
+
+func _on_zoom_less_button_pressed() -> void:
+	if $Camera.zoom > Vector2(0.5, 0.5):
+		$Camera.zoom -= Vector2(.25, .25)
+		camera_zoom_changed.emit($Camera.zoom)
+
+
+func _on_zoom_plus_button_pressed() -> void:
+	if $Camera.zoom < Vector2(1.5, 1.5):
+		$Camera.zoom += Vector2(.25, .25)
+		camera_zoom_changed.emit($Camera.zoom)
