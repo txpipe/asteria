@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 128 128">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #5d3896;
+      }
+
+      .cls-2 {
+        fill: #92d4ce;
+      }
+
+      .cls-3 {
+        fill: #ea4325;
+      }
+
+      .cls-4 {
+        fill: #2e498f;
+      }
+
+      .cls-5 {
+        fill: #b22980;
+      }
+
+      .cls-6 {
+        fill: #3c3485;
+      }
+
+      .cls-7 {
+        isolation: isolate;
+      }
+
+      .cls-8 {
+        mix-blend-mode: multiply;
+      }
+
+      .cls-9 {
+        fill: #fff;
+      }
+
+      .cls-10 {
+        fill: #db6a96;
+      }
+
+      .cls-11 {
+        fill: #d8217e;
+      }
+
+      .cls-12 {
+        fill: #f04c5a;
+      }
+
+      .cls-13 {
+        fill: #505ca9;
+      }
+
+      .cls-14 {
+        fill: #ffe500;
+      }
+
+      .cls-15 {
+        fill: #0a0a0a;
+      }
+
+      .cls-16 {
+        fill: #fff8ac;
+      }
+
+      .cls-17 {
+        fill: #332a74;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.1, SVG Export Plug-In . SVG Version: 1.2.0 Build 142)  -->
+  <g class="cls-7">
+    <g id="Capa_1">
+      <g>
+        <path class="cls-17" d="M46.7,105.5h-10.1v-2.6h-3.7v-3h-3.3v-5.7h17.1v11.4Z"/>
+        <path class="cls-17" d="M81.3,105.5h10.1v-2.6h3.7v-3h3.3v-5.7h-17.1v11.4Z"/>
+        <path class="cls-5" d="M43,82.6h-12.3v3.1h-4.5v3.7h-4v6.9h20.7v-13.8Z"/>
+        <path class="cls-1" d="M43.3,91.6H15.8v4.8h27.5v-4.8Z"/>
+        <path class="cls-5" d="M84.9,82.6h12.3v3.1h4.5v3.7h4v6.9h-20.7v-13.8Z"/>
+        <path class="cls-1" d="M112.2,91.6h-27.5v4.8h27.5v-4.8Z"/>
+        <path class="cls-3" d="M82.4,98h-38.3v5.1h2.8v3.8h3.1v4.2h1.8v8.1h4.1v5.4h3.4v3.3h8v-3.3h4.4v-5.4h3.1v-8.1h1.8v-4.2h3.1v-3.8h2.8v-5.1Z"/>
+        <path class="cls-14" d="M74,98h-21.5v5.1h1.6v3.8h1.7v4.2h1v8.1h2.3v5.4h1.9v3.3h4.5v-3.3h2.4v-5.4h1.7v-8.1h1v-4.2h1.7v-3.8h1.6v-5.1Z"/>
+        <path class="cls-16" d="M67.4,98h-8.3v5.1h.6v3.8h.7v4.2h.4v8.1h.9v5.4h.7v3.3h1.7v-3.3h.9v-5.4h.7v-8.1h.4v-4.2h.7v-3.8h.6v-5.1Z"/>
+        <path class="cls-3" d="M49,109.3h-3.4v2.9h3.4v-2.9Z"/>
+        <path class="cls-3" d="M53.5,123.4h-1.7v1.5h1.7v-1.5Z"/>
+        <path class="cls-14" d="M49.9,114.5h-1.8v1.6h1.8v-1.6Z"/>
+        <path class="cls-3" d="M77.5,112.3h3.4v-2.9h-3.4v2.9Z"/>
+        <path class="cls-3" d="M73,124.8h1.7v-1.5h-1.7v1.5Z"/>
+        <path class="cls-14" d="M76.6,116.1h1.8v-1.6h-1.8v1.6Z"/>
+        <path class="cls-13" d="M47.9,93.6v6.4s32.1.2,32.1.2v-6.4s-32.1-.2-32.1-.2Z"/>
+        <path class="cls-5" d="M38.8,86.4v10c0,0,50.4.3,50.4.3v-10c0,0-50.4-.3-50.4-.3Z"/>
+        <path class="cls-12" d="M21.6,90.1v-18.8h-7v18.8h7Z"/>
+        <path class="cls-17" d="M21.6,90.1v-12.6h-7v12.6h7Z"/>
+        <path class="cls-4" d="M23.7,94.5v-5.1h-11.3v5.1h11.3Z"/>
+        <path class="cls-6" d="M27,100.2v-8H9.2v8h17.7Z"/>
+        <path class="cls-12" d="M113.4,90.1v-18.8h-7v18.8h7Z"/>
+        <path class="cls-17" d="M113.4,90.1v-12.6h-7v12.6h7Z"/>
+        <path class="cls-4" d="M115.5,94.5v-5.1h-11.3v5.1h11.3Z"/>
+        <path class="cls-6" d="M118.8,100.2v-8h-17.7v8h17.7Z"/>
+        <path class="cls-5" d="M88.3,21.5h-48.7v64.6h48.7V21.5Z"/>
+        <g class="cls-8">
+          <path class="cls-5" d="M88.3,21.5h-25.2v64.6h25.2V21.5Z"/>
+        </g>
+        <path class="cls-11" d="M79.7,9.9h-31.5v70.9h31.5V9.9Z"/>
+        <path class="cls-10" d="M72,0h-16.1v78.6h16.1V0Z"/>
+        <path class="cls-15" d="M76.8,25.9h-3.5v-4.8h-17.5v4.8h-4.5v9.4h4.5v4.8h17.5v-4.8h3.5v-9.4Z"/>
+        <path class="cls-15" d="M59.5,43h8.9v-12.3h-8.9v12.3Z"/>
+        <path class="cls-15" d="M59.5,30.5h8.9v-12.3h-8.9v12.3Z"/>
+        <path class="cls-9" d="M68.7,25.3h-1.6v-2.3h-8.3v2.3h-2.2v4.5h2.2v2.3h8.3v-2.3h1.6v-4.5Z"/>
+        <path class="cls-2" d="M90.4,93.7l-53.1-.3v-8.6c0,0,53.2.3,53.2.3v8.6Z"/>
+        <g class="cls-8">
+          <path class="cls-2" d="M63.5,84.9v8.6c0,0,26.8.2,26.8.2v-8.6c0,0-26.8-.2-26.8-.2Z"/>
+        </g>
+        <path class="cls-2" d="M90.4,80.5l-53.1-.3v-8.6c0,0,53.2.3,53.2.3v8.6Z"/>
+        <g class="cls-8">
+          <path class="cls-2" d="M63.6,71.7v8.6c0,0,26.8.2,26.8.2v-8.6c0,0-26.8-.2-26.8-.2Z"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
