@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://b5ypw8og4vdle"]
+[gd_scene load_steps=37 format=3 uid="uid://b5ypw8og4vdle"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_4dsde"]
 [ext_resource type="PackedScene" uid="uid://ch6xqejnd1rqf" path="res://scenes/map.tscn" id="1_quhpi"]
@@ -27,6 +27,7 @@
 [ext_resource type="StyleBox" uid="uid://cuqtwls2gtt0v" path="res://resources/textures/tooltip.tres" id="25_q05r4"]
 [ext_resource type="FontFile" uid="uid://2ctrem352y4" path="res://resources/fonts/JetBrainsMono.ttf" id="26_btrf2"]
 [ext_resource type="FontFile" uid="uid://b7vayqoopjyv" path="res://resources/fonts/DMSans.ttf" id="27_u6i6b"]
+[ext_resource type="Texture2D" uid="uid://dqpu7ll4k1fs1" path="res://resources/loader.png" id="28_wxhmh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gt7hn"]
 bg_color = Color(1, 1, 1, 1)
@@ -64,7 +65,6 @@ follow_viewport_enabled = true
 layer = 2
 
 [node name="Tooltip" type="Panel" parent="GUICanvasLayer"]
-visible = false
 custom_minimum_size = Vector2(560, 392)
 offset_right = 560.0
 offset_bottom = 392.0
@@ -91,7 +91,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("26_btrf2")
 theme_override_font_sizes/font_size = 36
-text = "SHIP"
+text = "TITLE"
 horizontal_alignment = 1
 text_overrun_behavior = 3
 uppercase = true
@@ -101,36 +101,36 @@ custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gt7hn")
 
-[node name="Position" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+[node name="Label1" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
 theme_override_fonts/font = ExtResource("27_u6i6b")
 theme_override_font_sizes/font_size = 32
-text = "Position | 0, 0"
+text = "LABEL1"
 text_overrun_behavior = 3
 
-[node name="Address" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+[node name="Label2" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
 theme_override_fonts/font = ExtResource("27_u6i6b")
 theme_override_font_sizes/font_size = 32
-text = "Address | ***1234"
+text = "LABEL2"
 text_overrun_behavior = 3
 
-[node name="Fuel" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+[node name="Label3" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
 theme_override_fonts/font = ExtResource("27_u6i6b")
 theme_override_font_sizes/font_size = 32
-text = "Fuel | 0/0"
+text = "LABEL3"
 text_overrun_behavior = 3
 
-[node name="Coins" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+[node name="Label4" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
 theme_override_fonts/font = ExtResource("27_u6i6b")
 theme_override_font_sizes/font_size = 32
-text = "Coins | 0/0"
+text = "LABEL4"
 text_overrun_behavior = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer"]
@@ -467,11 +467,27 @@ theme_override_styles/focus = SubResource("StyleBoxEmpty_iitb5")
 text = "-"
 flat = true
 
+[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Loader" type="TextureRect" parent="GUICanvasLayer/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("28_wxhmh")
+expand_mode = 1
+stretch_mode = 3
+
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
 [connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
 [connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
 [connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
 [connection signal="hide_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_hide_tooltip"]
+[connection signal="show_asteria_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_asteria_tooltip"]
 [connection signal="show_fuel_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_fuel_tooltip"]
 [connection signal="show_ship_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_ship_tooltip"]
 [connection signal="minimap_position_changed" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_minimap_position_changed"]

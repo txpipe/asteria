@@ -1,6 +1,5 @@
 extends Node2D
 
-@export var ship_scene: PackedScene
 @export var fuel_scene: PackedScene
 @export var token_scene: PackedScene
 @export var asteria_scene: PackedScene
@@ -10,8 +9,9 @@ signal camera_zoom_changed(zoom: Vector2)
 signal minimap_position_changed(position: Vector2)
 signal mouse_hover_gui(is_hover: bool)
 signal hide_tooltip()
-signal show_ship_tooltip(position: Vector2, address: String)
-signal show_fuel_tooltip(position: Vector2)
+signal show_ship_tooltip(ship: Global.ShipData)
+signal show_fuel_tooltip(fuel: Global.FuelData)
+signal show_asteria_tooltip(asteria: Global.AsteriaData)
 
 var mouse_entered_sidebar = false
 var mouse_entered_minimap = false
@@ -23,8 +23,11 @@ func _on_main_dataset_updated() -> void:
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
 	
+	for child in $Entities.get_children():
+		child.free()
+	
 	for ship_data in Global.get_ships():
-		var ship = ship_scene.instantiate()
+		var ship = Ship.new_ship(ship_data)
 		ship.position = ship_data.position * cell_size
 		ship.rotation = ship.position.angle_to_point(center) + PI/2
 		$Entities.add_child(ship)
@@ -48,15 +51,19 @@ func _process(delta: float) -> void:
 		var cell_position = round((mouse_position - Vector2(get_viewport_rect().size / $Camera.zoom) / 2 + $Camera.position) / cell_size)
 		$Cell.position = cell_position * cell_size
 		
+		var asteria = Global.get_asteria()
 		var ships = Global.get_ships().filter(func(ship): return ship.position == cell_position)
 		var fuels = Global.get_fuels().filter(func(fuel): return fuel.position == cell_position)
 		
-		if ships.size() > 0:
+		if asteria and asteria.position == cell_position:
 			$Cell.animation = "filled"
-			show_ship_tooltip.emit(ships[0].position, ships[0].id)
+			show_asteria_tooltip.emit(asteria)
+		elif ships.size() > 0:
+			$Cell.animation = "filled"
+			show_ship_tooltip.emit(ships[0])
 		elif fuels.size() > 0:
 			$Cell.animation = "filled"
-			show_fuel_tooltip.emit(fuels[0].position)
+			show_fuel_tooltip.emit(fuels[0])
 		else:
 			$Cell.animation = "empty"
 			hide_tooltip.emit()
