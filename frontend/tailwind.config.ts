@@ -14,12 +14,14 @@ const config: Config = {
       },
       backgroundImage: {
         'starfield': 'url(\'/starfield.svg\')',
-        'rocket': 'url(\'/rocket.svg\')',
+        'challenge': 'url(\'/challenge.png\')',
       },
       fontFamily: {
+        'inter-regular': 'Inter-Regular',
         'monocraft-regular': 'Monocraft-Regular',
         'dmsans-regular': 'DMSans-Regular',
         'dmsans-bold': 'DMSans-Bold',
+        'dmsans-semibold': 'DMSans-SemiBold',
       },
     },
   },
