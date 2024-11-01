@@ -4,6 +4,13 @@
 
 @layer base {
   @font-face {
+    font-family: 'Inter-Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/Inter-Regular.ttf') format('truetype');
+  }
+  @font-face {
     font-family: 'Monocraft-Regular';
     font-style: normal;
     font-weight: 400;
@@ -23,6 +30,13 @@
     font-weight: 700;
     font-display: swap;
     src: url('/fonts/DMSans-Bold.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'DMSans-SemiBold';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/fonts/DMSans-SemiBold.ttf') format('truetype');
   }
 }
 
@@ -45,7 +59,47 @@ body {
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .landing-challenge {
+    box-shadow: 0 0 4px 0 rgb(255 255 255 / 0.05), 0 0 4px 2px rgb(255 255 255 / 0.04);
+  }
+  .floating-grid {
+    position: absolute;
+    right: 0;
+    width: 30vw;
+    height: auto;
+    margin-top: -8rem;
+    pointer-events: none;
+  }
+  .floating-ship-1 {
+    position: absolute;
+    left: -4.5vw;
+    bottom: -4.5vw;
+    width: 10vw;
+    height: auto;
+    pointer-events: none;
+  }
+  .floating-ship-2 {
+    position: absolute;
+    right: -3.5vw;
+    top: -3.5vw;
+    width: 8vw;
+    height: auto;
+    pointer-events: none;
+  }
+  .floating-fuel-1 {
+    position: absolute;
+    left: -2.5vw;
+    bottom: -2.5vw;
+    width: 5vw;
+    height: auto;
+    pointer-events: none;
+  }
+  .floating-fuel-2 {
+    position: absolute;
+    right: -1.5vw;
+    top: -3vw;
+    width: 4vw;
+    height: auto;
+    pointer-events: none;
   }
 }
