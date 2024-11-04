@@ -11,6 +11,31 @@ use async_graphql::*;
 use async_graphql_rocket::GraphQLRequest as Request;
 use async_graphql_rocket::GraphQLResponse as Response;
 use rocket::State;
+use rand::{distributions::Alphanumeric, Rng};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::{Header, Method, Status};
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response,
+        }
+    }
+
+    async fn on_response<'r>(&self, request: &'r rocket::Request<'_>, response: &mut rocket::Response<'r>) {
+        if request.method() == Method::Options {
+            response.set_status(Status::NoContent);
+            response.set_header(Header::new("Access-Control-Allow-Methods", "POST, PATCH, GET, DELETE"));
+            response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        }
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
 
 struct QueryRoot;
 
@@ -218,6 +243,17 @@ pub struct ShipAction {
 pub enum ShipActionType {
     Move,
     GatherFuel,
+}
+
+#[derive(SimpleObject, Clone)]
+pub struct LeaderboardRecord {
+    ranking: i32,
+    address: String,
+    ship_name: String,
+    pilot_name: String,
+    fuel: i32,
+    movements: i32,
+    distance: i32,
 }
 
 #[derive(Union)]
@@ -497,6 +533,47 @@ impl QueryRoot {
 
         actions
     }
+
+    async fn leaderboard(
+        &self,
+        _ctx: &Context<'_>,
+    ) -> Vec<LeaderboardRecord> {
+        let mut results = Vec::new();
+
+        for i in 0..100 {
+            let address: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(64)
+                .map(char::from)
+                .collect();
+
+            let ship_name: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(6)
+                .map(char::from)
+                .collect();
+
+            let pilot_name: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(6)
+                .map(char::from)
+                .collect();
+
+            results.push(
+                LeaderboardRecord {
+                    ranking: i + 1,
+                    address: address,
+                    ship_name: ship_name.to_uppercase(),
+                    pilot_name: pilot_name.to_uppercase(),
+                    fuel: rand::thread_rng().gen_range(0..100),
+                    movements: i * 10,
+                    distance: i * 10
+                }
+            );
+        }
+
+        results
+    }
 }
 
 type AsteriaSchema = Schema<QueryRoot, EmptyMutation, EmptySubscription>;
@@ -544,4 +621,5 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(schema)
         .mount("/", routes![index, graphql_request, graphiql])
+        .attach(CORS)
 }
