@@ -42,6 +42,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+ENV API_URL=https://8000-skillful-employee-kb9ou6.us1.demeter.run
+
 COPY --from=build /visualizer/build ./public/visualizer
 
 COPY ./frontend/package*.json ./

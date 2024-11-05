@@ -1,5 +1,122 @@
+import { useQuery, gql } from '@apollo/client';
+import { useState } from 'react';
+
+const PAGE_SIZE = 10;
+
+const GET_LEADERBOARD_RECORDS = gql`
+{
+  leaderboard {
+    ranking,
+    address,
+    shipName,
+    pilotName,
+    fuel,
+    movements,
+    distance
+  }
+}
+`;
+
+interface LeaderboardQueryResult {
+  leaderboard: LeaderboardRecord[];
+}
+
+interface LeaderboardRecord {
+  ranking: number;
+  address: string;
+  shipName: string;
+  pilotName: string;
+  fuel: number;
+  movements: number;
+  distance: number;
+}
+
+interface RecordProps {
+  record: LeaderboardRecord;
+}
+
+const getShipByAddress = (address: string): string => {
+  const encoder = new TextEncoder();
+  const charCode = encoder.encode(address.charAt(address.length-1))[0];
+  return `/ships/ship_${Math.round(charCode%7)}.svg`;
+}
+
+const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
+  <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-gradient-to-r from-[#46434312] to-[#FFFFFF12]">
+    <h1 className="flex-initial pb-1 mr-6 font-monocraft-regular text-5xl text-[#07F3E6]">
+      {props.record.ranking}
+    </h1>
+    <div className="flex-initial mr-6 p-4 rounded-full bg-[#FFFFFF08] border-b-[#333] border-b-solid border-b">
+      <img className="w-8 h-8" src={getShipByAddress(props.record.address)} />
+    </div>
+    <p className="flex-initial mr-6 font-dmsans-regular text-white">
+      <span className="font-dmsans-bold">Pilot: </span> {props.record.pilotName}<br/>
+      <span className="font-dmsans-bold">Ship: </span> {props.record.shipName}
+    </p>
+    <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
+      {`${props.record.distance}km`}
+    </div>
+  </div>
+);
+
+const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
+  <tr>
+    <td className="p-4 font-dmsans-regular text-[#07F3E6] text-left border border-[#333333]">
+      {props.record.ranking}
+    </td>
+    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
+      <img className="inline mr-4 w-8 h-8" src={getShipByAddress(props.record.address)} />
+      <span>{props.record.address}</span>
+    </td>
+    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
+      {props.record.pilotName}
+    </td>
+    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
+     {props.record.shipName}
+    </td>
+    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
+      {props.record.fuel}
+    </td>
+    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
+      {props.record.movements}
+    </td>
+    <td className="p-4 text-left border border-[#333333]">
+      <span className="py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
+        {`${props.record.distance}km`}
+      </span>
+    </td>
+  </tr>
+);
 
 export default function Leaderboard() {
+  const { loading, error, data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS);
+  const [ offset, setOffset ] = useState<number>(0);
+
+  const hasNextPage = () => {
+    return data && data.leaderboard && offset + PAGE_SIZE < data.leaderboard.slice(3).length;
+  }
+
+  const nextPage = () => {
+    if (hasNextPage()) {
+      setOffset(offset + PAGE_SIZE);
+    }
+  }
+
+  const hasPrevPage = () => {
+    return offset - PAGE_SIZE >= 0;
+  }
+
+  const prevPage = () => {
+    if (hasPrevPage()) {
+      setOffset(offset - PAGE_SIZE);
+    }
+  }
+
+  const getPageData = () => {
+    if (!data || !data.leaderboard) return [];
+    return data.leaderboard.slice(3).slice(offset, offset+PAGE_SIZE);
+  }
+
   return (
     <div className="container 2xl mx-auto p-8 min-h-[calc(100vh-64px)]">
       
@@ -18,22 +135,8 @@ export default function Leaderboard() {
       </div>
 
       <div className="flex flex-row justify-center items-center mb-12">
-        {[1,2,3].map(index =>
-          <div key={index} className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-gradient-to-r from-[#46434312] to-[#FFFFFF12]">
-            <h1 className="flex-initial pb-1 mr-6 font-monocraft-regular text-5xl text-[#07F3E6]">
-              {index}
-            </h1>
-            <div className="flex-initial mr-6 p-4 rounded-full bg-[#FFFFFF08] border-b-[#333] border-b-solid border-b">
-              <img className="w-8 h-8" src={`/ships/ship_${Math.round(Math.random()*6)}.svg`} />
-            </div>
-            <p className="flex-initial mr-6 font-dmsans-regular text-white">
-              <span className="font-dmsans-bold">Pilot: </span> ABC123<br/>
-              <span className="font-dmsans-bold">Ship: </span> ABC12
-            </p>
-            <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
-              {`${index*10}km`}
-            </div>
-          </div>
+        {data && data.leaderboard && data.leaderboard.slice(0, 3).map(record =>
+          <LeaderboardChip key={record.address} record={record} />
         )}
       </div>
 
@@ -41,50 +144,31 @@ export default function Leaderboard() {
         <thead>
           <tr>
             {['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel', 'Movements', 'Distance'].map(header =>
-              <th className="p-4 font-dmsans-regular text-[#FAFAFA] text-left border border-[#333333]">{header}</th>
+              <th key={header} className="p-4 font-dmsans-regular text-[#FAFAFA] text-left border border-[#333333]">{header}</th>
             )}
           </tr>
         </thead>
         <tbody>
-          {[1,2,3,4,5,6,7,8,9,10].map(index =>
-            <tr key={index}>
-              <td className="p-4 font-dmsans-regular text-[#07F3E6] text-left border border-[#333333]">
-                {index}
-              </td>
-              <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-                <img className="inline mr-4 w-8 h-8" src={`/ships/ship_${Math.round(Math.random()*6)}.svg`} />
-                <span>0x32Be343B94f860124dC4fEe278FDCBD38C102D88</span>
-              </td>
-              <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-                ABC123
-              </td>
-              <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-                ABC123
-              </td>
-              <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-                3000
-              </td>
-              <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-                10
-              </td>
-              <td className="p-4 text-left border border-[#333333]">
-                <span className="py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
-                  {`${index*10}km`}
-                </span>
-              </td>
-            </tr>
+          {getPageData().map(record =>
+            <LeaderboardRow key={record.address} record={record} />
           )}
         </tbody>
       </table>
 
       <div className="flex flex-row justify-center items-center mb-12">
         <p className="flex-initial font-dmsans-regular text-[#848484] mr-8">
-          Displaying 1-10 of 100
+          {`Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboard ? data.leaderboard.length-3 : 0}`}
         </p>
-        <button className="flex-initial w-12 h-12 font-monocraft-regular text-black bg-[#AFAFAF] p-3 rounded-xl text-md mr-4">
+        <button
+          className={`flex-initial w-12 h-12 font-monocraft-regular text-black p-3 rounded-xl text-md mr-4 ${hasPrevPage() ? 'bg-[#07F3E6]' : 'bg-[#AFAFAF]'}`}
+          onClick={prevPage}
+        >
           {`<`}
         </button>
-        <button className="flex-initial w-12 h-12 font-monocraft-regular text-black bg-[#07F3E6] p-3 rounded-xl text-md">
+        <button
+          className={`flex-initial w-12 h-12 font-monocraft-regular text-black p-3 rounded-xl text-md ${hasNextPage() ? 'bg-[#07F3E6]' : 'bg-[#AFAFAF]'}`}
+          onClick={nextPage}
+        >
           {`>`}
         </button>
       </div>
