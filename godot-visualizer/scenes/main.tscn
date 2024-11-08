@@ -248,7 +248,6 @@ size_flags_horizontal = 10
 alignment = 2
 
 [node name="MarginContainerTop" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd"]
-visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 40
