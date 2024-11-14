@@ -18,7 +18,8 @@
     "next": "14.2.15",
     "next-mdx-remote": "^5.0.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.9",
