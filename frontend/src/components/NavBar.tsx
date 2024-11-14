@@ -54,7 +54,7 @@ const NavBar: React.FunctionComponent = () => {
           >
             <img src="/challenge-icon.svg" className="w-6 h-6 mr-3 pointer-events-none" />
             <select
-              value={selected}
+              value={selected || undefined}
               onChange={handleSelect}
               className="font-inter-regular text-[#F1E9D9] bg-transparent focus:outline-none appearance-none text-md text-left min-w-36"
             >
