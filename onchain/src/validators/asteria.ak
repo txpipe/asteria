@@ -1,31 +1,32 @@
-use aiken/dict
-use aiken/list
+use aiken/collection/dict
+use aiken/collection/list
+use aiken/interval
 use aiken/math/rational.{compare_with, from_int}
 use aiken/option
-use aiken/transaction.{
-  InlineDatum, ScriptContext, Spend, Transaction, find_input,
-}
-use aiken/transaction/value.{ada_asset_name, ada_policy_id}
 use asteria/types.{
   AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
 }
 use asteria/utils
+use cardano/assets.{
+  ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
+}
+use cardano/transaction.{InlineDatum, OutputReference, Transaction, find_input}
 
-validator(
+validator asteria(
   admin_token: AssetClass,
   ship_mint_lovelace_fee: Int,
   max_asteria_mining: Int,
 ) {
-  pub fn spend(
-    datum: AsteriaDatum,
+  spend(
+    datum: Option<AsteriaDatum>,
     redeemer: AsteriaRedeemer,
-    ctx: ScriptContext,
-  ) -> Bool {
-    let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, .. } = transaction
+    utxo: OutputReference,
+    self: Transaction,
+  ) {
+    let Transaction { inputs, outputs, .. } = self
+    expect Some(datum) = datum
     let AsteriaDatum { ship_counter, shipyard_policy } = datum
-    expect Spend(asteria_ref) = purpose
-    expect Some(asteria_input) = find_input(inputs, asteria_ref)
+    expect Some(asteria_input) = find_input(inputs, utxo)
 
     when redeemer is {
       AddNewShip -> {
@@ -38,7 +39,7 @@ validator(
         expect asteria_output_datum: AsteriaDatum = asteria_output_datum
 
         let must_hold_admin_token =
-          value.quantity_of(
+          quantity_of(
             asteria_output.value,
             admin_token.policy,
             admin_token.name,
@@ -46,7 +47,7 @@ validator(
         let must_add_fee =
           asteria_output.value == (
             asteria_input.output.value
-              |> value.add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
+              |> add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
           )
         let must_increment_counter =
           asteria_output_datum.ship_counter == ship_counter + 1
@@ -77,15 +78,15 @@ validator(
               inputs,
               fn(input) {
                 list.any(
-                  dict.keys(value.tokens(input.output.value, shipyard_policy)),
+                  dict.keys(tokens(input.output.value, shipyard_policy)),
                   fn(name) { utils.has_prefix("SHIP", name) },
                 )
               },
             ),
           )
         expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let input_rewards = value.lovelace_of(asteria_input.output.value)
-        let output_rewards = value.lovelace_of(asteria_output.value)
+        let input_rewards = lovelace_of(asteria_input.output.value)
+        let output_rewards = lovelace_of(asteria_output.value)
         let must_respect_max_mining =
           compare_with(
             from_int(output_rewards),
@@ -109,7 +110,7 @@ validator(
           list.find(
             inputs,
             fn(input) {
-              not(utils.is_script_address(input.output.address)) && value.quantity_of(
+              not(utils.is_script_address(input.output.address)) && quantity_of(
                 input.output.value,
                 admin_token.policy,
                 admin_token.name,
@@ -119,5 +120,9 @@ validator(
         option.is_some(admin_token_input)?
       }
     }
+  }
+
+  else(_) {
+    fail
   }
 }

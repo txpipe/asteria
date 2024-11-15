@@ -1,7 +1,9 @@
-use aiken/hash.{Blake2b_224, Hash}
-use aiken/time.{PosixTime}
-use aiken/transaction/credential.{Script}
-use aiken/transaction/value.{AssetName, PolicyId}
+use aiken/crypto.{Blake2b_224, Hash, Script}
+// use aiken/time.{PosixTime}
+use cardano/assets.{AssetName, PolicyId}
+
+pub type PosixTime =
+  Int
 
 pub type ScriptAddress =
   Hash<Blake2b_224, Script>

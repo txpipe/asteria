@@ -1,25 +1,23 @@
-use aiken/bytearray
-use aiken/dict
+use aiken/collection/dict
+use aiken/collection/list
 use aiken/interval.{Finite}
-use aiken/list
 use aiken/math/rational
 use aiken/option
-use aiken/string
-use aiken/transaction.{
-  InlineDatum, Mint, ScriptContext, Spend, Transaction, find_input,
-}
-use aiken/transaction/credential.{
-  Address, ScriptCredential, VerificationKeyCredential,
-}
-use aiken/transaction/value.{from_minted_value, quantity_of}
+use aiken/primitive/bytearray
+use aiken/primitive/string
 use asteria/types.{
   AssetClass, AsteriaDatum, BurnShip, GatherFuel, MineAsteria, MintShip,
   MoveShip, PelletDatum, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
   ShipyardRedeemer, Speed,
 }
 use asteria/utils
+use cardano/address.{Address, Script, VerificationKey}
+use cardano/assets.{
+  PolicyId, add, flatten, from_asset, quantity_of, tokens, zero,
+}
+use cardano/transaction.{InlineDatum, OutputReference, Transaction, find_input}
 
-validator(
+validator spacetime(
   pellet_validator_address: ScriptAddress,
   asteria_validator_address: ScriptAddress,
   admin_token: AssetClass,
@@ -30,9 +28,14 @@ validator(
   min_asteria_distance: Int,
 ) {
   // SPACETIME VALIDATOR:
-  pub fn spend(datum: ShipDatum, redeemer: ShipRedeemer, ctx: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, mint, validity_range, .. } = transaction
+  spend(
+    datum: Option<ShipDatum>,
+    redeemer: ShipRedeemer,
+    utxo: OutputReference,
+    self: Transaction,
+  ) {
+    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    expect Some(datum) = datum
     let ShipDatum {
       pos_x,
       pos_y,
@@ -43,9 +46,8 @@ validator(
 
     expect Some(max_speed_rational) =
       rational.new(max_speed.distance, max_speed.time)
-    expect Spend(ship_ref) = purpose
-    expect Some(ship_input) = find_input(inputs, ship_ref)
-    expect ScriptCredential(shipyard_policy) =
+    expect Some(ship_input) = find_input(inputs, utxo)
+    expect Script(shipyard_policy) =
       ship_input.output.address.payment_credential
 
     // check if pilot_token is present in some input
@@ -55,7 +57,7 @@ validator(
           inputs,
           fn(input) {
             list.any(
-              dict.keys(value.tokens(input.output.value, shipyard_policy)),
+              dict.keys(tokens(input.output.value, shipyard_policy)),
               fn(name) { name == pilot_token_name },
             )
           },
@@ -89,7 +91,7 @@ validator(
         let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
         let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
         let must_burn_spent_fuel =
-          quantity_of(from_minted_value(mint), fuel_policy, "FUEL") == -required_fuel
+          quantity_of(mint, fuel_policy, "FUEL") == -required_fuel
         let must_update_upper_bound =
           ship_output_datum.last_move_latest_time == tx_latest_time
         let must_respect_max_speed =
@@ -100,8 +102,7 @@ validator(
           quantity_of(ship_output.value, shipyard_policy, ship_token_name) == 1
         let must_subtract_fuel_tokens =
           output_fuel == input_fuel - required_fuel
-        let must_hold_3_assets =
-          list.length(ship_output.value |> value.flatten) == 3
+        let must_hold_3_assets = list.length(ship_output.value |> flatten) == 3
         let must_spend_one_script_input =
           list.length(
             list.filter(
@@ -140,14 +141,13 @@ validator(
             inputs,
             fn(input) {
               when input.output.address.payment_credential is {
-                VerificationKeyCredential(_) -> False
-                ScriptCredential(addr_payment) ->
-                  addr_payment == pellet_validator_address
+                VerificationKey(_) -> False
+                Script(addr_payment) -> addr_payment == pellet_validator_address
               }
             },
           )
         let must_be_valid_pellet =
-          value.quantity_of(
+          quantity_of(
             pellet_input.output.value,
             admin_token.policy,
             admin_token.name,
@@ -170,8 +170,7 @@ validator(
         let must_hold_ship_token =
           quantity_of(ship_output.value, shipyard_policy, ship_token_name) == 1
         let must_add_fuel_tokens = output_fuel == input_fuel + amount
-        let must_hold_3_assets =
-          list.length(ship_output.value |> value.flatten) == 3
+        let must_hold_3_assets = list.length(ship_output.value |> flatten) == 3
         let must_spend_two_script_inputs =
           list.length(
             list.filter(
@@ -179,7 +178,7 @@ validator(
               fn(input) { utils.is_script_address(input.output.address) },
             ),
           ) == 2
-        let must_not_mint_tokens = from_minted_value(mint) == value.zero()
+        let must_not_mint_tokens = mint == zero
 
         and {
           must_spend_two_script_inputs?,
@@ -202,14 +201,14 @@ validator(
             inputs,
             fn(input) {
               when input.output.address.payment_credential is {
-                VerificationKeyCredential(_) -> False
-                ScriptCredential(addr_payment) ->
+                VerificationKey(_) -> False
+                Script(addr_payment) ->
                   addr_payment == asteria_validator_address
               }
             },
           )
         let must_be_valid_asteria =
-          value.quantity_of(
+          quantity_of(
             asteria_input.output.value,
             admin_token.policy,
             admin_token.name,
@@ -219,7 +218,7 @@ validator(
 
         let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
         let must_burn_ship_token =
-          quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
+          quantity_of(mint, shipyard_policy, ship_token_name) < 0
         let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
         let must_spend_two_script_inputs =
           list.length(
@@ -229,7 +228,7 @@ validator(
             ),
           ) == 2
         let must_burn_fuel_tokens =
-          quantity_of(from_minted_value(mint), fuel_policy, "FUEL") == -quantity_of(
+          quantity_of(mint, fuel_policy, "FUEL") == -quantity_of(
             ship_input.output.value,
             fuel_policy,
             "FUEL",
@@ -247,9 +246,9 @@ validator(
       }
       Quit -> {
         let must_burn_ship_token =
-          quantity_of(from_minted_value(mint), shipyard_policy, ship_token_name) < 0
+          quantity_of(mint, shipyard_policy, ship_token_name) < 0
         let must_burn_fuel_tokens =
-          quantity_of(from_minted_value(mint), fuel_policy, "FUEL") == -quantity_of(
+          quantity_of(mint, fuel_policy, "FUEL") == -quantity_of(
             ship_input.output.value,
             fuel_policy,
             "FUEL",
@@ -272,13 +271,10 @@ validator(
   }
 
   // SHIPYARD POLICY:
-  pub fn mint(redeemer: ShipyardRedeemer, ctx: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, mint, validity_range, .. } = transaction
-    expect Mint(shipyard_policy) = purpose
-    let minted_value =
-      mint
-        |> value.from_minted_value
+  mint(redeemer: ShipyardRedeemer, shipyard_policy: PolicyId, self: Transaction) {
+    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let minted_value = mint
+
     let fuel_policy = pellet_validator_address
 
     when redeemer is {
@@ -288,14 +284,14 @@ validator(
             inputs,
             fn(input) {
               when input.output.address.payment_credential is {
-                VerificationKeyCredential(_) -> False
-                ScriptCredential(addr_payment) ->
+                VerificationKey(_) -> False
+                Script(addr_payment) ->
                   addr_payment == asteria_validator_address
               }
             },
           )
         let must_be_valid_asteria =
-          value.quantity_of(
+          quantity_of(
             asteria_input.output.value,
             admin_token.policy,
             admin_token.name,
@@ -320,9 +316,9 @@ validator(
             bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
           )
         let expected_minted_value =
-          value.from_asset(shipyard_policy, ship_token_name, 1)
-            |> value.add(shipyard_policy, pilot_token_name, 1)
-            |> value.add(fuel_policy, "FUEL", initial_fuel)
+          from_asset(shipyard_policy, ship_token_name, 1)
+            |> add(shipyard_policy, pilot_token_name, 1)
+            |> add(fuel_policy, "FUEL", initial_fuel)
 
         let must_mint_expected_value = minted_value == expected_minted_value
         let must_respect_min_distance =
@@ -336,8 +332,7 @@ validator(
           quantity_of(ship_state.value, shipyard_policy, ship_token_name) == 1
         let must_hold_initial_fuel =
           quantity_of(ship_state.value, fuel_policy, "FUEL") == initial_fuel
-        let must_hold_3_assets =
-          list.length(ship_state.value |> value.flatten) == 3
+        let must_hold_3_assets = list.length(ship_state.value |> flatten) == 3
 
         and {
           must_be_valid_asteria?,
@@ -355,12 +350,16 @@ validator(
       BurnShip -> {
         let minted_tokens =
           minted_value
-            |> value.tokens(shipyard_policy)
-            |> dict.to_list()
+            |> tokens(shipyard_policy)
+            |> dict.to_pairs()
         // check that only one token with this policy is burnt
-        expect [(_, -1)] = minted_tokens
+        expect [Pair(_, -1)] = minted_tokens
         True
       }
     }
+  }
+
+  else(_) {
+    fail
   }
 }

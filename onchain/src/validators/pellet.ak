@@ -1,38 +1,36 @@
-use aiken/dict
-use aiken/list.{filter}
+use aiken/collection/dict
+use aiken/collection/list.{filter}
 use aiken/option
-use aiken/transaction.{
-  InlineDatum, Mint, Output, ScriptContext, Spend, Transaction, find_input,
-}
-use aiken/transaction/credential.{ScriptCredential}
-use aiken/transaction/value.{quantity_of}
 use asteria/types.{
   AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, MintFuel, PelletDatum,
   PelletRedeemer, Provide,
 }
 use asteria/utils
+use cardano/address.{Script}
+use cardano/assets.{PolicyId, quantity_of, tokens}
+use cardano/transaction.{
+  InlineDatum, Output, OutputReference, Transaction, find_input,
+}
 
-validator(admin_token: AssetClass) {
-  pub fn spend(
-    datum: PelletDatum,
+validator pellet(admin_token: AssetClass) {
+  spend(
+    datum: Option<PelletDatum>,
     redeemer: PelletRedeemer,
-    ctx: ScriptContext,
-  ) -> Bool {
-    let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, outputs, .. } = transaction
+    utxo: OutputReference,
+    self: Transaction,
+  ) {
+    let Transaction { inputs, outputs, .. } = self
 
-    expect Spend(pellet_ref) = purpose
-    expect Some(pellet_input) = find_input(inputs, pellet_ref)
-    expect ScriptCredential(fuel_policy) =
-      pellet_input.output.address.payment_credential
+    expect Some(pellet_input) = find_input(inputs, utxo)
+    expect Script(fuel_policy) = pellet_input.output.address.payment_credential
 
     let remaining_fuel =
       quantity_of(pellet_input.output.value, fuel_policy, "FUEL")
 
     when redeemer is {
       Provide(provided_amount) -> {
+        expect Some(datum) = datum
         let PelletDatum { shipyard_policy, .. } = datum
-
         expect [pellet_output] =
           filter(
             outputs,
@@ -48,7 +46,7 @@ validator(admin_token: AssetClass) {
               inputs,
               fn(input) {
                 list.any(
-                  dict.keys(value.tokens(input.output.value, shipyard_policy)),
+                  dict.keys(tokens(input.output.value, shipyard_policy)),
                   fn(name) { utils.has_prefix("SHIP", name) },
                 )
               },
@@ -77,7 +75,7 @@ validator(admin_token: AssetClass) {
           list.find(
             inputs,
             fn(input) {
-              not(utils.is_script_address(input.output.address)) && value.quantity_of(
+              not(utils.is_script_address(input.output.address)) && quantity_of(
                 input.output.value,
                 admin_token.policy,
                 admin_token.name,
@@ -90,13 +88,9 @@ validator(admin_token: AssetClass) {
     }
   }
 
-  pub fn mint(redeemer: FuelRedeemer, ctx: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = ctx
-    let Transaction { inputs, mint, .. } = transaction
-    expect Mint(fuel_policy) = purpose
-    let minted_value =
-      mint
-        |> value.from_minted_value
+  mint(redeemer: FuelRedeemer, fuel_policy: PolicyId, self: Transaction) {
+    let Transaction { inputs, mint, .. } = self
+    let minted_value = mint
 
     when redeemer is {
       MintFuel -> {
@@ -105,7 +99,7 @@ validator(admin_token: AssetClass) {
           list.find(
             inputs,
             fn(input) {
-              value.quantity_of(
+              quantity_of(
                 input.output.value,
                 admin_token.policy,
                 admin_token.name,
@@ -125,5 +119,9 @@ validator(admin_token: AssetClass) {
         must_burn_fuel_tokens?
       }
     }
+  }
+
+  else(_) {
+    fail
   }
 }
