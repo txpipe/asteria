@@ -1,6 +1,5 @@
 use aiken/collection/dict
 use aiken/collection/list
-use aiken/interval
 use aiken/math/rational.{compare_with, from_int}
 use aiken/option
 use asteria/types.{

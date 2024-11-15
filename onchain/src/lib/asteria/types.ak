@@ -1,5 +1,4 @@
 use aiken/crypto.{Blake2b_224, Hash, Script}
-// use aiken/time.{PosixTime}
 use cardano/assets.{AssetName, PolicyId}
 
 pub type PosixTime =
