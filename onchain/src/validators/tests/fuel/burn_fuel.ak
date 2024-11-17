@@ -1,10 +1,9 @@
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{Mint, ScriptContext, Transaction, TransactionId}
-use aiken/transaction/value
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, BurnFuel}
+use cardano/assets.{from_asset}
+use cardano/transaction.{Mint, Transaction}
 use pellet
 
 // ==============================================================================================
@@ -28,12 +27,10 @@ fn burn_fuel(options: BurnTestOptions) -> Bool {
       inputs: [],
       reference_inputs: [],
       outputs: [],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(
-        value.from_asset(mock.fuel_policy, "FUEL", -options.fuel_tokens_burnt),
-      ),
+      fee: 5_000,
+      mint: from_asset(mock.fuel_policy, "FUEL", -options.fuel_tokens_burnt),
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -42,21 +39,23 @@ fn burn_fuel(options: BurnTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Mint(mock.fuel_policy),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
-            },
-            compare: test_utils.script_purpose_compare,
-          ),
-      datums: dict.new(),
-      id: TransactionId { hash: mock.transaction_id_2 },
+      redeemers: [
+        Pair(
+          Mint(mock.fuel_policy),
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty,
+      id: mock.transaction_id_2,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
-  let mint_ctx =
-    ScriptContext { transaction: tx, purpose: Mint(mock.fuel_policy) }
-  let result = pellet.mint(admin_token, redeemer, ctx: mint_ctx)
+  let result = pellet.pellet.mint(admin_token, redeemer, mock.fuel_policy, tx)
   result
 }
 

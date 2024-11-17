@@ -1,18 +1,13 @@
-use aiken/bytearray
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext, Spend,
-  Transaction, TransactionId,
-}
-use aiken/transaction/credential.{
-  Address, ScriptCredential, VerificationKeyCredential,
-}
-use aiken/transaction/value
 use asteria
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, AsteriaDatum, ConsumeAsteria}
+use cardano/address.{Address, Script, VerificationKey}
+use cardano/assets.{add, from_lovelace, zero}
+use cardano/transaction.{
+  InlineDatum, Input, NoDatum, Output, OutputReference, Spend, Transaction,
+}
 
 // ==============================================================================================
 // Consume Tests
@@ -38,17 +33,17 @@ fn consume(options: ConsumeTestOptions) -> Bool {
   let admin_address =
     Address {
       payment_credential: if options.is_wallet_address {
-        VerificationKeyCredential(mock.admin_credential)
+        VerificationKey(mock.admin_credential)
       } else {
-        ScriptCredential(mock.admin_credential)
+        Script(mock.admin_credential)
       },
       stake_credential: None,
     }
   let admin_in = {
     let output = {
       let value =
-        value.from_lovelace(2_000_000)
-          |> value.add(admin_token.policy, admin_token.name, 1)
+        from_lovelace(2_000_000)
+          |> add(admin_token.policy, admin_token.name, 1)
       Output {
         address: admin_address,
         value,
@@ -57,16 +52,13 @@ fn consume(options: ConsumeTestOptions) -> Bool {
       }
     }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_2 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: mock.transaction_id_2, output_index: 0 }
     Input { output_reference, output }
   }
 
   let asteria_address =
     Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
+      payment_credential: Script(mock.asteria_credential),
       stake_credential: None,
     }
   let asteria_datum =
@@ -75,16 +67,13 @@ fn consume(options: ConsumeTestOptions) -> Bool {
     let output =
       Output {
         address: asteria_address,
-        value: value.from_lovelace(12_000_000)
-          |> value.add(mock.admin_policy, mock.admin_token_name, 1),
+        value: from_lovelace(12_000_000)
+          |> add(mock.admin_policy, mock.admin_token_name, 1),
         datum: InlineDatum(asteria_datum),
         reference_script: None,
       }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_1 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 }
     Input { output_reference, output }
   }
 
@@ -97,10 +86,10 @@ fn consume(options: ConsumeTestOptions) -> Bool {
       },
       reference_inputs: [],
       outputs: [],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(value.zero()),
+      fee: 5_000,
+      mint: zero,
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -109,49 +98,43 @@ fn consume(options: ConsumeTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Spend(
-              OutputReference {
-                transaction_id: TransactionId { hash: mock.transaction_id_1 },
-                output_index: 0,
-              },
-            ),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
+      redeemers: [
+        Pair(
+          Spend(
+            OutputReference {
+              transaction_id: mock.transaction_id_1,
+              output_index: 0,
             },
-            compare: test_utils.script_purpose_compare,
           ),
-      datums: dict.new()
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty
         |> dict.insert(
             mock.transaction_id_1,
             {
               let datum_data: Data = InlineDatum(asteria_datum)
               datum_data
             },
-            compare: bytearray.compare,
           ),
-      id: TransactionId { hash: mock.transaction_id_3 },
-    }
-  let spend_ctx =
-    ScriptContext {
-      transaction: tx,
-      purpose: Spend(
-        OutputReference {
-          transaction_id: TransactionId { hash: mock.transaction_id_1 },
-          output_index: 0,
-        },
-      ),
+      id: mock.transaction_id_3,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
   let result =
-    asteria.spend(
+    asteria.asteria.spend(
       admin_token,
       ship_mint_lovelace_fee,
       max_asteria_mining,
-      asteria_datum,
+      Some(asteria_datum),
       redeemer,
-      spend_ctx,
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 },
+      tx,
     )
   result
 }
