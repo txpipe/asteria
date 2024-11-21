@@ -4,11 +4,14 @@ signal dataset_updated
 
 const radius = 1000
 
-const url = "https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
+# Fallback api_url and shipyard_policy_id
+var api_url = "https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
+var shipyard_policy_id = "ecb96725c35e957f96be46bc1873cc8ae5b134f1b00f457675700511"
+
 const headers = ["Content-Type: application/json"]
 const query = """
 {
-	objectsInRadius(center: { x: 0, y: 0 }, radius: %s) {
+	objectsInRadius(center: { x: 0, y: 0 }, radius: %s, shipyardPolicyId: "%s") {
 		__typename,
 		position {
 			x,
@@ -32,7 +35,7 @@ const query = """
 		}
 	}
 }
-""" % radius
+"""
 
 
 func _process(delta: float) -> void:
@@ -40,8 +43,16 @@ func _process(delta: float) -> void:
 
 
 func _ready():
+	if OS.is_userfs_persistent():
+		var stored_api_url = FileAccess.open("user://api_url", FileAccess.READ).get_as_text()
+		if stored_api_url.length() > 0:
+			api_url = stored_api_url
+		var stored_shipyard_policy_id = FileAccess.open("user://shipyard_policy_id", FileAccess.READ).get_as_text()
+		if stored_shipyard_policy_id.length() > 0:
+			shipyard_policy_id = stored_shipyard_policy_id
+	
 	$HTTPRequest.request_completed.connect(_on_request_completed)
-	$HTTPRequest.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query }))
+	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query % [radius, shipyard_policy_id] }))
 	
 	var request_timer = Timer.new()
 	request_timer.wait_time = 20
@@ -59,7 +70,7 @@ func _on_request_completed(result, response_code, headers, body):
 
 
 func _on_request_timer_timeout():
-	$HTTPRequest.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query }))
+	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query % [radius, shipyard_policy_id] }))
 
 
 func update_tooltip_position(position: Vector2) -> void:

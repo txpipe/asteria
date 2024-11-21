@@ -8,7 +8,7 @@ var animation: String = "0"
 
 static func new_ship(data: Global.ShipData) -> Ship:
 	var ship: Ship = scene.instantiate()
-	ship.animation = str(int(data.shipTokenName) % 7)
+	ship.animation = str(data.id.unicode_at(data.id.length()-3) % 7)
 	return ship
 
 
