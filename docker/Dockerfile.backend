@@ -1,16 +1,15 @@
-FROM rust:1.77-slim-buster as build
+FROM rust:1.82 AS build
 
 WORKDIR /app
 
 RUN apt update 
-RUN apt install -y build-essential pkg-config libssl-dev cmake libasound2-dev libudev-dev
+RUN apt install -y build-essential pkg-config libssl-dev cmake 
 
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./backend ./backend
-COPY ./visualizer ./visualizer
 
 RUN cargo build --release
 
-FROM rust:1.77-slim-buster 
+FROM rust:1.82-slim 
 COPY --from=build /app/target/release/asteria-backend .
 CMD ["./asteria-backend"]
