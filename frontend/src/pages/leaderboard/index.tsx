@@ -1,20 +1,20 @@
-import { useQuery, gql } from '@apollo/client';
 import { useState } from 'react';
+import { useQuery, gql } from '@apollo/client';
+import { useChallengeStore } from '@/stores/challenge';
 
 const PAGE_SIZE = 10;
 
 const GET_LEADERBOARD_RECORDS = gql`
-{
-  leaderboard {
-    ranking,
-    address,
-    shipName,
-    pilotName,
-    fuel,
-    movements,
-    distance
+  query Leaderboard($shipyardPolicyId: String) {
+    leaderboard(shipyardPolicyId: $shipyardPolicyId) {
+      ranking,
+      address,
+      shipName,
+      pilotName,
+      fuel,
+      distance
+    }
   }
-}
 `;
 
 interface LeaderboardQueryResult {
@@ -27,7 +27,6 @@ interface LeaderboardRecord {
   shipName: string;
   pilotName: string;
   fuel: number;
-  movements: number;
   distance: number;
 }
 
@@ -37,7 +36,7 @@ interface RecordProps {
 
 const getShipByAddress = (address: string): string => {
   const encoder = new TextEncoder();
-  const charCode = encoder.encode(address.charAt(address.length-1))[0];
+  const charCode = encoder.encode(address.charAt(address.length-3))[0];
   return `/ships/ship_${Math.round(charCode%7)}.svg`;
 }
 
@@ -50,8 +49,8 @@ const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProp
       <img className="w-8 h-8" src={getShipByAddress(props.record.address)} />
     </div>
     <p className="flex-initial mr-6 font-dmsans-regular text-white">
-      <span className="font-dmsans-bold">Pilot: </span> {props.record.pilotName}<br/>
-      <span className="font-dmsans-bold">Ship: </span> {props.record.shipName}
+      <span className="font-dmsans-bold">Pilot: </span> {props.record.pilotName.toUpperCase().slice(-6)}<br/>
+      <span className="font-dmsans-bold">Ship: </span> {props.record.shipName.toUpperCase().slice(-6)}
     </p>
     <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
       {`${props.record.distance}km`}
@@ -66,19 +65,16 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
       <img className="inline mr-4 w-8 h-8" src={getShipByAddress(props.record.address)} />
-      <span>{props.record.address}</span>
+      <span>{props.record.address.replace('#0', '')}</span>
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-      {props.record.pilotName}
+      {props.record.pilotName.toUpperCase().slice(-6)}
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-     {props.record.shipName}
+     {props.record.shipName.toUpperCase().slice(-6)}
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
       {props.record.fuel}
-    </td>
-    <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-      {props.record.movements}
     </td>
     <td className="p-4 text-left border border-[#333333]">
       <span className="py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
@@ -89,7 +85,8 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
 );
 
 export default function Leaderboard() {
-  const { loading, error, data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS);
+  const { current } = useChallengeStore();
+  const { loading, error, data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS, { variables: { shipyardPolicyId: current().policyId } });
   const [ offset, setOffset ] = useState<number>(0);
 
   const hasNextPage = () => {
@@ -127,7 +124,7 @@ export default function Leaderboard() {
         <input
           type="text"
           placeholder="Type your ADDRESS / SHIP NAME"
-          className="flex-initial basis-2/5 mr-6 px-6 py-4 rounded-3xl bg-[#242424] border-transparent focus:border-[#919090] text-[#919090] focus:ring-0"
+          className="form-input flex-initial basis-2/5 mr-6 px-6 py-4 rounded-3xl bg-[#242424] border-transparent focus:border-[#919090] text-[#919090] focus:ring-0"
         />
         <button className="flex-initial font-monocraft-regular text-black bg-[#07F3E6] py-4 px-8 rounded-full text-md">
           Find me
@@ -143,7 +140,7 @@ export default function Leaderboard() {
       <table className="w-full mb-12 border-collapse border border-[#333333]">
         <thead>
           <tr>
-            {['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel', 'Movements', 'Distance'].map(header =>
+            {['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel', 'Distance'].map(header =>
               <th key={header} className="p-4 font-dmsans-regular text-[#FAFAFA] text-left border border-[#333333]">{header}</th>
             )}
           </tr>

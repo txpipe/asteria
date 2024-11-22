@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { useChallengeStore } from '@/stores/challenge';
 
 export default function Landing() {
+  const { challenges, selected, select } = useChallengeStore();
+
   return (
     <div className="w-full bg-starfield bg-cover bg-center relative">
       <div className="min-h-[calc(100vh-64px)] relative">
@@ -75,28 +78,32 @@ export default function Landing() {
         </div>
 
       </div>
-      {/* <div className="container mx-auto sm flex flex-col pt-16 pb-32 px-32">
+      <div className="container mx-auto sm flex flex-col pt-16 pb-32 px-32">
         <h3 className="flex flex-row items-center justify-center mb-20">
           <img src="/challenge-icon.svg" className="h-12 w-12 inline mr-5" />
           <span className="font-monocraft-regular text-[#07F3E6] text-4xl">Available Challenges</span>
         </h3>
 
-        <div className="flex flex-row mx-[-1rem]">
-          {[0,1,2].map(index =>
-            <div key={index} className="mx-4 flex-auto rounded-2xl backdrop-blur-sm bg-[#14141470] overflow-hidden landing-challenge">
+        <div className="flex flex-row justify-center mx-[-1rem]">
+          {challenges.slice(0, 3).map((challenge, index) =>
+            <div key={index} className="mx-4 flex-initial basis-1/3 rounded-2xl backdrop-blur-sm bg-[#14141470] overflow-hidden landing-challenge">
               <div className="w-full h-[240px] bg-challenge bg-center bg-cover" />
               <div className="p-8">
-                <p className="mb-1 font-dmsans-regular text-[#6F6F6F] text-md">
-                  Network | <span className="text-[#F1E9D9]">Preview</span>
+                <p className="mb-1 font-dmsans-regular text-[#6F6F6F] text-md truncate">
+                  Network | <span className="text-[#F1E9D9] capitalize">{ challenge.network }</span>
                 </p>
-                <p className="mb-2 font-dmsans-regular text-[#6F6F6F] text-md">
-                  Shipyard Policy | <span className="text-[#F1E9D9]">00000</span>
+                <p className="mb-2 font-dmsans-regular text-[#6F6F6F] text-md truncate">
+                  Shipyard Policy | <span className="text-[#F1E9D9]">{ challenge.policyId }</span>
                 </p>
-                <p className="mb-4 font-dmsans-semibold text-white text-2xl">
-                  Builder fest workshop
+                <p className="mb-4 font-dmsans-semibold text-white text-2xl truncate">
+                  { challenge.label }
                 </p>
                 <div className="mb-4 flex flex-row items-center justify-between">
-                  <button className="font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] bg-transparent py-4 px-6 rounded-full text-lg flex-initial">
+                  <button
+                    onClick={() => select(index)}
+                    disabled={selected === index}
+                    className="font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] bg-transparent py-4 px-6 rounded-full text-lg flex-initial disabled:opacity-50"
+                  >
                     Play
                   </button>
                   <button className="border border-[#F1E9D9] bg-transparent p-4 rounded-full flex-initial">
@@ -107,7 +114,7 @@ export default function Landing() {
             </div>
           )}
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

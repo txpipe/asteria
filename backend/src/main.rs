@@ -11,7 +11,6 @@ use async_graphql::*;
 use async_graphql_rocket::GraphQLRequest as Request;
 use async_graphql_rocket::GraphQLResponse as Response;
 use rocket::State;
-use rand::{distributions::Alphanumeric, Rng};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Method, Status};
 
@@ -40,7 +39,6 @@ impl Fairing for CORS {
 struct QueryRoot;
 
 pub struct ChainParameters {
-    shipyard_policy_id: String,
     ship_address: String,
     fuel_address: String,
     asteria_address: String,
@@ -48,8 +46,6 @@ pub struct ChainParameters {
 impl ChainParameters {
     pub fn from_env() -> Self {
         Self {
-            shipyard_policy_id: env::var("SHIPYARD_POLICY_ID")
-                .expect("SHIPYARD_POLICY_ID must be set in the environment"),
             ship_address: env::var("SHIP_ADDRESS")
                 .expect("SHIP_ADDRESS must be set in the environment"),
             fuel_address: env::var("FUEL_ADDRESS")
@@ -104,7 +100,7 @@ impl Data {
         self.fuels.clone()[offset..offset + limit].to_vec()
     }
 
-    pub fn objects_in_radius(self, center: Position, radius: i32) -> Vec<PositionalInterface> {
+    pub fn objects_in_radius(self, center: Position, radius: i32, _shipyard_policy_id: String) -> Vec<PositionalInterface> {
         let mut retval = Vec::new();
 
         for ship in self.ships {
@@ -252,7 +248,6 @@ pub struct LeaderboardRecord {
     ship_name: String,
     pilot_name: String,
     fuel: i32,
-    movements: i32,
     distance: i32,
 }
 
@@ -327,6 +322,7 @@ impl QueryRoot {
         ctx: &Context<'_>,
         center: PositionInput,
         radius: i32,
+        shipyard_policy_id: String,
     ) -> Result<Vec<PositionalInterface>, Error> {
         // Access the connection pool from the GraphQL context
         let pool = ctx
@@ -413,7 +409,7 @@ impl QueryRoot {
             center.x,
             center.y,
             radius,
-            chain_parameters.shipyard_policy_id,
+            shipyard_policy_id,
             chain_parameters.ship_address,
             chain_parameters.fuel_address,
             chain_parameters.asteria_address,
@@ -536,43 +532,54 @@ impl QueryRoot {
 
     async fn leaderboard(
         &self,
-        _ctx: &Context<'_>,
-    ) -> Vec<LeaderboardRecord> {
-        let mut results = Vec::new();
+        ctx: &Context<'_>,
+        shipyard_policy_id: String,
+    ) -> Result<Vec<LeaderboardRecord>, Error> {
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
 
-        for i in 0..100 {
-            let address: String = rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(64)
-                .map(char::from)
-                .collect();
+        let chain_parameters = ctx
+            .data::<ChainParameters>()
+            .map_err(|e| Error::new(e.message))?;
 
-            let ship_name: String = rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(6)
-                .map(char::from)
-                .collect();
+        let fetched_objects = sqlx::query!(
+            "
+            SELECT 
+                id,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS ship_token_name,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilot_token_name,
+                ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER)) AS distance
+            FROM 
+                utxos
+            WHERE 
+                utxo_address(era, cbor) = from_bech32($2::varchar)
+                AND utxo_has_policy_id(era, cbor, decode($1::varchar, 'hex'))
+                AND spent_slot IS NULL
+            ORDER BY distance ASC
+            ",
+            shipyard_policy_id,
+            chain_parameters.ship_address,
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
 
-            let pilot_name: String = rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(6)
-                .map(char::from)
-                .collect();
+        let map_objects: Vec<LeaderboardRecord> = fetched_objects
+            .into_iter()
+            .enumerate()
+            .map(|(i, record)| LeaderboardRecord {
+                ranking: i as i32 + 1,
+                address: record.id,
+                ship_name: record.ship_token_name.unwrap_or_default(),
+                pilot_name: record.pilot_token_name.unwrap_or_default(),
+                fuel: record.fuel.unwrap_or(0),
+                distance: record.distance.unwrap_or(0)
+            })
+            .collect();
 
-            results.push(
-                LeaderboardRecord {
-                    ranking: i + 1,
-                    address: address,
-                    ship_name: ship_name.to_uppercase(),
-                    pilot_name: pilot_name.to_uppercase(),
-                    fuel: rand::thread_rng().gen_range(0..100),
-                    movements: i * 10,
-                    distance: i * 10
-                }
-            );
-        }
-
-        results
+        Ok(map_objects)
     }
 }
 
