@@ -1,15 +1,12 @@
-use aiken/bytearray
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext, Spend,
-  Transaction, TransactionId,
-}
-use aiken/transaction/credential.{Address, ScriptCredential}
-use aiken/transaction/value.{PolicyId, Value, add, from_lovelace, zero}
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, PelletDatum, Provide}
+use cardano/address.{Address, Script}
+use cardano/assets.{PolicyId, Value, add, from_lovelace, zero}
+use cardano/transaction.{
+  InlineDatum, Input, NoDatum, Output, OutputReference, Spend, Transaction,
+}
 use pellet
 
 // ==============================================================================================
@@ -69,7 +66,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
     let output = {
       let address =
         Address {
-          payment_credential: ScriptCredential(mock.pellet_credential),
+          payment_credential: Script(mock.pellet_credential),
           stake_credential: None,
         }
       let value = options.pellet_input_value
@@ -82,7 +79,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
     }
     Input {
       output_reference: OutputReference {
-        transaction_id: TransactionId { hash: transaction_id_1 },
+        transaction_id: transaction_id_1,
         output_index: 0,
       },
       output,
@@ -92,7 +89,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
     let output = {
       let address =
         Address {
-          payment_credential: ScriptCredential(mock.ship_credential),
+          payment_credential: Script(mock.ship_credential),
           stake_credential: None,
         }
       let value =
@@ -105,16 +102,13 @@ fn provide(options: ProvideTestOptions) -> Bool {
       Output { address, value, datum: NoDatum, reference_script: None }
     }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: transaction_id_2 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: transaction_id_2, output_index: 0 }
     Input { output_reference, output }
   }
   let pellet_out = {
     let address =
       Address {
-        payment_credential: ScriptCredential(mock.pellet_credential),
+        payment_credential: Script(mock.pellet_credential),
         stake_credential: None,
       }
     let value = options.pellet_output_value
@@ -128,7 +122,7 @@ fn provide(options: ProvideTestOptions) -> Bool {
   let ship_out = {
     let address =
       Address {
-        payment_credential: ScriptCredential(mock.ship_credential),
+        payment_credential: Script(mock.ship_credential),
         stake_credential: None,
       }
     let value =
@@ -141,10 +135,10 @@ fn provide(options: ProvideTestOptions) -> Bool {
       inputs: [ship_in, pellet_in],
       reference_inputs: [],
       outputs: [ship_out, pellet_out],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(zero()),
+      fee: 5_000,
+      mint: zero,
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -153,42 +147,45 @@ fn provide(options: ProvideTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Spend(
-              OutputReference {
-                transaction_id: TransactionId { hash: transaction_id_1 },
-                output_index: 0,
-              },
-            ),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
+      redeemers: [
+        Pair(
+          Spend(
+            OutputReference {
+              transaction_id: transaction_id_1,
+              output_index: 0,
             },
-            compare: test_utils.script_purpose_compare,
           ),
-      datums: dict.new()
-        |> dict.insert(
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.from_pairs(
+        [
+          Pair(
             transaction_id_1,
             {
               let datum_data: Data = InlineDatum(datum_in)
               datum_data
             },
-            compare: bytearray.compare,
           ),
-      id: TransactionId { hash: transaction_id_1 },
-    }
-  let spend_ctx =
-    ScriptContext {
-      transaction: tx,
-      purpose: Spend(
-        OutputReference {
-          transaction_id: TransactionId { hash: transaction_id_1 },
-          output_index: 0,
-        },
+        ],
       ),
+      id: mock.transaction_id_1,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
-  let result = pellet.spend(admin_asset, datum_in, redeemer, spend_ctx)
+  let result =
+    pellet.pellet.spend(
+      admin_asset,
+      Some(datum_in),
+      redeemer,
+      OutputReference { transaction_id: transaction_id_1, output_index: 0 },
+      tx,
+    )
   result
 }
 

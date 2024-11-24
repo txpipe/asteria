@@ -1,5 +1,5 @@
-use aiken/bytearray
-use aiken/transaction.{Mint, ScriptPurpose, Spend}
+use aiken/primitive/bytearray
+use cardano/transaction.{Mint, ScriptPurpose, Spend}
 
 /// Converts a given ScriptPurpose into a ByteArray representation.
 ///
@@ -14,7 +14,7 @@ use aiken/transaction.{Mint, ScriptPurpose, Spend}
 /// A `ByteArray` representation of the provided `ScriptPurpose`.
 fn script_purpose_to_byte_array(sp: ScriptPurpose) -> ByteArray {
   when sp is {
-    Spend(ref) -> ref.transaction_id.hash
+    Spend(ref) -> ref.transaction_id
     Mint(policy_id) -> policy_id
 
     // Default case to handle any other unexpected variants.

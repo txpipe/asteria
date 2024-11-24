@@ -1,14 +1,12 @@
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Transaction,
-  TransactionId,
-}
-use aiken/transaction/credential.{Address, ScriptCredential}
-use aiken/transaction/value.{Value, add, from_lovelace}
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, BurnShip, ShipDatum, Speed}
+use cardano/address.{Address, Script}
+use cardano/assets.{Value, add, from_asset, from_lovelace}
+use cardano/transaction.{
+  InlineDatum, Input, Mint, Output, OutputReference, Transaction,
+}
 use spacetime
 
 // ==============================================================================================
@@ -26,11 +24,10 @@ type BurnTestOptions {
 fn get_default_burn_options() -> BurnTestOptions {
   let ship_addr =
     Address {
-      payment_credential: ScriptCredential(mock.ship_credential),
+      payment_credential: Script(mock.ship_credential),
       stake_credential: None,
     }
-  let burnt_value =
-    value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
+  let burnt_value = from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
   BurnTestOptions {
     pos_x: 5,
     pos_y: -12,
@@ -74,10 +71,7 @@ fn burn_ship(options: BurnTestOptions) -> Bool {
       }
     }
     Input {
-      output_reference: OutputReference {
-        transaction_id: TransactionId { hash: transaction_id },
-        output_index: 0,
-      },
+      output_reference: OutputReference { transaction_id, output_index: 0 },
       output,
     }
   }
@@ -90,10 +84,10 @@ fn burn_ship(options: BurnTestOptions) -> Bool {
       },
       reference_inputs: [],
       outputs: [],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(options.burnt_value),
+      fee: 5_000,
+      mint: options.burnt_value,
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -102,22 +96,24 @@ fn burn_ship(options: BurnTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Mint(shipyard_policy),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
-            },
-            compare: test_utils.script_purpose_compare,
-          ),
-      datums: dict.new(),
-      id: TransactionId { hash: transaction_id },
+      redeemers: [
+        Pair(
+          Mint(shipyard_policy),
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty,
+      id: transaction_id,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
-  let mint_ctx =
-    ScriptContext { transaction: tx, purpose: Mint(shipyard_policy) }
   let result =
-    spacetime.mint(
+    spacetime.spacetime.mint(
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
@@ -127,7 +123,8 @@ fn burn_ship(options: BurnTestOptions) -> Bool {
       initial_fuel,
       min_distance,
       redeemer,
-      ctx: mint_ctx,
+      shipyard_policy,
+      tx,
     )
   result
 }
@@ -139,8 +136,8 @@ test burn_ok() {
 test burn_more_than_one() fail {
   let def_options = get_default_burn_options()
   let burnt_value =
-    value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
-      |> value.add(mock.shipyard_policy, mock.pilot_token_name, -1)
+    from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
+      |> add(mock.shipyard_policy, mock.pilot_token_name, -1)
   let options = BurnTestOptions { ..def_options, burnt_value: burnt_value }
   burn_ship(options)
 }

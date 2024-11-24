@@ -1,17 +1,12 @@
-use aiken/bytearray
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext, Spend,
-  Transaction, TransactionId,
-}
-use aiken/transaction/credential.{
-  Address, ScriptCredential, VerificationKeyCredential,
-}
-use aiken/transaction/value.{add, from_lovelace}
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, MineAsteria, ShipDatum, Speed}
+use cardano/address.{Address, Script, VerificationKey}
+use cardano/assets.{add, from_asset, from_lovelace, zero}
+use cardano/transaction.{
+  InlineDatum, Input, NoDatum, Output, OutputReference, Spend, Transaction,
+}
 use spacetime
 
 // ==============================================================================================
@@ -67,33 +62,30 @@ fn mine(options: MineTestOptions) -> Bool {
   let redeemer = MineAsteria
   let pilot_address =
     Address {
-      payment_credential: VerificationKeyCredential(mock.pilot_credential),
+      payment_credential: VerificationKey(mock.pilot_credential),
       stake_credential: None,
     }
   let asteria_address =
     Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
+      payment_credential: Script(mock.asteria_credential),
       stake_credential: None,
     }
   let asteria_input = {
     let output =
       Output {
         address: asteria_address,
-        value: value.from_lovelace(7_000_000)
-          |> value.add(mock.admin_policy, mock.admin_token_name, 1),
+        value: from_lovelace(7_000_000)
+          |> add(mock.admin_policy, mock.admin_token_name, 1),
         datum: NoDatum,
         reference_script: None,
       }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_2 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: mock.transaction_id_2, output_index: 0 }
     Input { output_reference, output }
   }
   let ship_address =
     Address {
-      payment_credential: ScriptCredential(mock.ship_credential),
+      payment_credential: Script(mock.ship_credential),
       stake_credential: None,
     }
   let ship_input_value =
@@ -117,10 +109,7 @@ fn mine(options: MineTestOptions) -> Bool {
         reference_script: None,
       }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_1 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 }
     Input { output_reference, output }
   }
   let pilot_input = {
@@ -140,28 +129,22 @@ fn mine(options: MineTestOptions) -> Bool {
       }
     }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_1 },
-        output_index: 1,
-      }
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 1 }
     Input { output_reference, output }
   }
   let extra_script_input = {
     let output =
       Output {
         address: Address {
-          payment_credential: ScriptCredential("7777"),
+          payment_credential: Script("7777"),
           stake_credential: None,
         },
-        value: value.zero(),
+        value: zero,
         datum: NoDatum,
         reference_script: None,
       }
     let output_reference =
-      OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_1 },
-        output_index: 0,
-      }
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 }
     Input { output_reference, output }
   }
   let tx =
@@ -177,21 +160,19 @@ fn mine(options: MineTestOptions) -> Bool {
       },
       reference_inputs: [],
       outputs: [],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(
-        if options.burns_ship_token {
-          if options.burns_fuel_tokens {
-            value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
-              |> add(mock.pellet_credential, "FUEL", -ship_fuel)
-          } else {
-            value.from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
-          }
+      fee: 5_000,
+      mint: if options.burns_ship_token {
+        if options.burns_fuel_tokens {
+          from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
+            |> add(mock.pellet_credential, "FUEL", -ship_fuel)
         } else {
-          value.zero()
-        },
-      ),
+          from_asset(mock.shipyard_policy, mock.ship_token_name, -1)
+        }
+      } else {
+        zero
+      },
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound {
           bound_type: Finite(earliest_time),
@@ -203,43 +184,36 @@ fn mine(options: MineTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Spend(
-              OutputReference {
-                transaction_id: TransactionId { hash: mock.transaction_id_1 },
-                output_index: 0,
-              },
-            ),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
+      redeemers: [
+        Pair(
+          Spend(
+            OutputReference {
+              transaction_id: mock.transaction_id_1,
+              output_index: 0,
             },
-            compare: test_utils.script_purpose_compare,
           ),
-      datums: dict.new()
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty
         |> dict.insert(
             mock.transaction_id_1,
             {
               let datum_data: Data = InlineDatum(ship_input_datum)
               datum_data
             },
-            compare: bytearray.compare,
           ),
-      id: TransactionId { hash: mock.transaction_id_3 },
-    }
-  let spend_ctx =
-    ScriptContext {
-      transaction: tx,
-      purpose: Spend(
-        OutputReference {
-          transaction_id: TransactionId { hash: mock.transaction_id_1 },
-          output_index: 0,
-        },
-      ),
+      id: mock.transaction_id_3,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
   let result =
-    spacetime.spend(
+    spacetime.spacetime.spend(
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
@@ -248,9 +222,10 @@ fn mine(options: MineTestOptions) -> Bool {
       fuel_per_step,
       initial_fuel,
       min_distance,
-      ship_input_datum,
+      Some(ship_input_datum),
       redeemer,
-      spend_ctx,
+      OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 },
+      tx,
     )
   result
 }

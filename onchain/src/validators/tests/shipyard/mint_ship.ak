@@ -1,14 +1,12 @@
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Transaction,
-  TransactionId,
-}
-use aiken/transaction/credential.{Address, ScriptCredential}
-use aiken/transaction/value.{AssetName, add, from_lovelace}
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, AsteriaDatum, MintShip, ShipDatum, Speed}
+use cardano/address.{Address, Script}
+use cardano/assets.{AssetName, add, from_asset, from_lovelace}
+use cardano/transaction.{
+  InlineDatum, Input, Mint, Output, OutputReference, Transaction,
+}
 use spacetime
 
 // ==============================================================================================
@@ -69,7 +67,7 @@ fn mint_ship(options: MintTestOptions) -> Bool {
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let ship_address =
     Address {
-      payment_credential: ScriptCredential(shipyard_policy),
+      payment_credential: Script(shipyard_policy),
       stake_credential: None,
     }
   let ship_datum =
@@ -91,7 +89,7 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       |> add("aaaa", "tokenA", options.extra_token_amount)
   let asteria_address =
     Address {
-      payment_credential: ScriptCredential(mock.asteria_credential),
+      payment_credential: Script(mock.asteria_credential),
       stake_credential: None,
     }
   let admin_policy = mock.admin_policy
@@ -113,10 +111,7 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       }
     }
     Input {
-      output_reference: OutputReference {
-        transaction_id: TransactionId { hash: transaction_id },
-        output_index: 0,
-      },
+      output_reference: OutputReference { transaction_id, output_index: 0 },
       output,
     }
   }
@@ -140,22 +135,20 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       } else {
         []
       },
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(
-        value.from_asset(
-          shipyard_policy,
-          options.ship_token_name,
-          options.ship_token_minted_amount,
-        )
-          |> value.add(
-              shipyard_policy,
-              options.pilot_token_name,
-              options.pilot_token_minted_amount,
-            )
-          |> value.add(mock.pellet_credential, "FUEL", options.fuel_minted_amount),
-      ),
+      fee: 5_000,
+      mint: from_asset(
+        shipyard_policy,
+        options.ship_token_name,
+        options.ship_token_minted_amount,
+      )
+        |> add(
+            shipyard_policy,
+            options.pilot_token_name,
+            options.pilot_token_minted_amount,
+          )
+        |> add(mock.pellet_credential, "FUEL", options.fuel_minted_amount),
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -164,22 +157,24 @@ fn mint_ship(options: MintTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Mint(shipyard_policy),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
-            },
-            compare: test_utils.script_purpose_compare,
-          ),
-      datums: dict.new(),
-      id: TransactionId { hash: transaction_id },
+      redeemers: [
+        Pair(
+          Mint(shipyard_policy),
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty,
+      id: transaction_id,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
-  let mint_ctx =
-    ScriptContext { transaction: tx, purpose: Mint(shipyard_policy) }
   let result =
-    spacetime.mint(
+    spacetime.spacetime.mint(
       mock.pellet_credential,
       mock.asteria_credential,
       admin_token,
@@ -189,7 +184,8 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       options.initial_fuel,
       min_distance,
       redeemer,
-      ctx: mint_ctx,
+      shipyard_policy,
+      tx,
     )
   result
 }

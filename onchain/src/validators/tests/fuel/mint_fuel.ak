@@ -1,14 +1,12 @@
-use aiken/dict
+use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
-use aiken/transaction.{
-  Input, Mint, NoDatum, Output, OutputReference, ScriptContext, Transaction,
-  TransactionId,
-}
-use aiken/transaction/credential.{Address, VerificationKeyCredential}
-use aiken/transaction/value.{add, from_lovelace}
 use asteria/test_mock as mock
-use asteria/test_utils
 use asteria/types.{AssetClass, MintFuel}
+use cardano/address.{Address, VerificationKey}
+use cardano/assets.{add, from_asset, from_lovelace}
+use cardano/transaction.{
+  Input, Mint, NoDatum, Output, OutputReference, Transaction,
+}
 use pellet
 
 // ==============================================================================================
@@ -30,7 +28,7 @@ fn mint_fuel(options: MintTestOptions) -> Bool {
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let admin_address =
     Address {
-      payment_credential: VerificationKeyCredential(mock.admin_credential),
+      payment_credential: VerificationKey(mock.admin_credential),
       stake_credential: None,
     }
   let admin_input = {
@@ -47,7 +45,7 @@ fn mint_fuel(options: MintTestOptions) -> Bool {
     }
     Input {
       output_reference: OutputReference {
-        transaction_id: TransactionId { hash: mock.transaction_id_1 },
+        transaction_id: mock.transaction_id_1,
         output_index: 0,
       },
       output,
@@ -62,12 +60,10 @@ fn mint_fuel(options: MintTestOptions) -> Bool {
       },
       reference_inputs: [],
       outputs: [],
-      fee: value.from_lovelace(5_000),
-      mint: value.to_minted_value(
-        value.from_asset(mock.fuel_policy, "FUEL", options.fuel_tokens_minted),
-      ),
+      fee: 5_000,
+      mint: from_asset(mock.fuel_policy, "FUEL", options.fuel_tokens_minted),
       certificates: [],
-      withdrawals: dict.new(),
+      withdrawals: [],
       validity_range: Interval {
         lower_bound: IntervalBound { bound_type: Finite(1), is_inclusive: True },
         upper_bound: IntervalBound {
@@ -76,21 +72,23 @@ fn mint_fuel(options: MintTestOptions) -> Bool {
         },
       },
       extra_signatories: [],
-      redeemers: dict.new()
-        |> dict.insert(
-            key: Mint(mock.fuel_policy),
-            value: {
-              let redeemer_data: Data = redeemer
-              redeemer_data
-            },
-            compare: test_utils.script_purpose_compare,
-          ),
-      datums: dict.new(),
-      id: TransactionId { hash: mock.transaction_id_2 },
+      redeemers: [
+        Pair(
+          Mint(mock.fuel_policy),
+          {
+            let redeemer_data: Data = redeemer
+            redeemer_data
+          },
+        ),
+      ],
+      datums: dict.empty,
+      id: mock.transaction_id_2,
+      votes: [],
+      proposal_procedures: [],
+      current_treasury_amount: None,
+      treasury_donation: None,
     }
-  let mint_ctx =
-    ScriptContext { transaction: tx, purpose: Mint(mock.fuel_policy) }
-  let result = pellet.mint(admin_token, redeemer, ctx: mint_ctx)
+  let result = pellet.pellet.mint(admin_token, redeemer, mock.fuel_policy, tx)
   result
 }
 
