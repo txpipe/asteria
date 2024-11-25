@@ -39,19 +39,23 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   }
 
   useEffect(() => {
-    const request = window.indexedDB.open('/userfs');
-    request.onupgradeneeded = (event) => {
-      const db = request.result;
-      db.createObjectStore('FILE_DATA');
-      const tx = (event.target as any).transaction;
-      tx.oncomplete = () => storeApiUrl(db);
-      tx.onerror = () => select(0);
-    };
-    request.onsuccess = () => {
-      const db = request.result;
-      storeApiUrl(db);
+    try {
+      const request = window.indexedDB.open('/userfs');
+      request.onupgradeneeded = (event) => {
+        const db = request.result;
+        db.createObjectStore('FILE_DATA');
+        const tx = (event.target as any).transaction;
+        tx.oncomplete = () => storeApiUrl(db);
+        tx.onerror = () => select(0);
+      };
+      request.onsuccess = () => {
+        const db = request.result;
+        storeApiUrl(db);
+      }
+      request.onerror = () => select(0);
+    } catch (error) {
+      select(0);
     }
-    request.onerror = () => select(0);
   }, []);
 
   return (
