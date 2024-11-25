@@ -26,14 +26,16 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const { select, selected } = useChallengeStore();
 
   const storeApiUrl = (db: IDBDatabase) => {
-    db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
+    const tx = db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
       {
         contents: new TextEncoder().encode(process.env.API_URL),
         timestamp: new Date(),
         mode: 33206,
       },
       '/userfs/godot/app_userdata/visualizer/api_url'
-    ).onsuccess = () => select(0);
+    );
+    tx.onsuccess = () => select(0);
+    tx.onerror = () => select(0);
   }
 
   useEffect(() => {
@@ -41,14 +43,15 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     request.onupgradeneeded = (event) => {
       const db = request.result;
       db.createObjectStore('FILE_DATA');
-      (event.target as any).transaction.oncomplete = () => {
-        storeApiUrl(db);
-      };
+      const tx = (event.target as any).transaction;
+      tx.oncomplete = () => storeApiUrl(db);
+      tx.onerror = () => select(0);
     };
     request.onsuccess = () => {
       const db = request.result;
       storeApiUrl(db);
     }
+    request.onerror = () => select(0);
   }, []);
 
   return (
