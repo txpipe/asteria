@@ -25,19 +25,30 @@ const client = new ApolloClient({
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const { select, selected } = useChallengeStore();
 
+  const storeApiUrl = (db: IDBDatabase) => {
+    db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
+      {
+        contents: new TextEncoder().encode(process.env.API_URL),
+        timestamp: new Date(),
+        mode: 33206,
+      },
+      '/userfs/godot/app_userdata/visualizer/api_url'
+    ).onsuccess = () => select(0);
+  }
+
   useEffect(() => {
     const request = window.indexedDB.open('/userfs');
+    request.onupgradeneeded = (event) => {
+      const db = request.result;
+      db.createObjectStore('FILE_DATA');
+      (event.target as any).transaction.oncomplete = () => {
+        storeApiUrl(db);
+      };
+    };
     request.onsuccess = () => {
       const db = request.result;
-      db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
-        {
-          contents: new TextEncoder().encode(process.env.API_URL),
-          timestamp: new Date(),
-          mode: 33206,
-        },
-        '/userfs/godot/app_userdata/visualizer/api_url'
-      ).onsuccess = () => select(0);
-    };
+      storeApiUrl(db);
+    }
   }, []);
 
   return (
