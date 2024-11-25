@@ -22,20 +22,31 @@ export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
   }],
   current: () => get().challenges[get().selected!],
   select: (index: number) => {
-    set(() => ({ selected: null }));
-    const request = window.indexedDB.open('/userfs');
-    request.onsuccess = () => {
-      const db = request.result;
-      db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
+    const storePolicyId = (db: IDBDatabase) => {
+      const tx = db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
         {
           contents: new TextEncoder().encode(get().challenges[index].policyId),
           timestamp: new Date(),
           mode: 33206,
         },
-        '/userfs/godot/app_userdata/visualizer/shipyard_policy_id'
-      ).onsuccess = () => {
-        set(() => ({ selected: index }));
-      };
+        '/userfs/godot/app_userdata/visualizer/api_url'
+      );
+      tx.onsuccess = () => set(() => ({ selected: index }));
+      tx.onerror = () => set(() => ({ selected: index }));
+    }
+
+    set(() => ({ selected: null }));
+    const request = window.indexedDB.open('/userfs');
+    request.onupgradeneeded = (event) => {
+      const db = request.result;
+      db.createObjectStore('FILE_DATA');
+      const tx = (event.target as any).transaction;
+      tx.oncomplete = () => storePolicyId(db);
+      tx.onerror = () => set(() => ({ selected: index }));
+    };
+    request.onsuccess = () => {
+      const db = request.result;
+      storePolicyId(db);
     };
   },
 }));
