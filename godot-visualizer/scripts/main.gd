@@ -43,13 +43,13 @@ func _process(delta: float) -> void:
 
 
 func _ready():
-	if OS.is_userfs_persistent():
-		var stored_api_url = FileAccess.open("user://api_url", FileAccess.READ).get_as_text()
-		if stored_api_url.length() > 0:
-			api_url = stored_api_url + "/graphql"
-		var stored_shipyard_policy_id = FileAccess.open("user://shipyard_policy_id", FileAccess.READ).get_as_text()
-		if stored_shipyard_policy_id.length() > 0:
-			shipyard_policy_id = stored_shipyard_policy_id
+	#if OS.is_userfs_persistent():
+		#var stored_api_url = FileAccess.open("user://api_url", FileAccess.READ).get_as_text()
+		#if stored_api_url.length() > 0:
+			#api_url = stored_api_url + "/graphql"
+		#var stored_shipyard_policy_id = FileAccess.open("user://shipyard_policy_id", FileAccess.READ).get_as_text()
+		#if stored_shipyard_policy_id.length() > 0:
+			#shipyard_policy_id = stored_shipyard_policy_id
 	
 	$HTTPRequest.request_completed.connect(_on_request_completed)
 	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query % [radius, shipyard_policy_id] }))

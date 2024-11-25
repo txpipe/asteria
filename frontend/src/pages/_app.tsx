@@ -25,38 +25,7 @@ const client = new ApolloClient({
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const { select, selected } = useChallengeStore();
 
-  const storeApiUrl = (db: IDBDatabase) => {
-    const tx = db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
-      {
-        contents: new TextEncoder().encode(process.env.API_URL),
-        timestamp: new Date(),
-        mode: 33206,
-      },
-      '/userfs/godot/app_userdata/visualizer/api_url'
-    );
-    tx.onsuccess = () => select(0);
-    tx.onerror = () => select(0);
-  }
-
-  useEffect(() => {
-    try {
-      const request = window.indexedDB.open('/userfs');
-      request.onupgradeneeded = (event) => {
-        const db = request.result;
-        db.createObjectStore('FILE_DATA');
-        const tx = (event.target as any).transaction;
-        tx.oncomplete = () => storeApiUrl(db);
-        tx.onerror = () => select(0);
-      };
-      request.onsuccess = () => {
-        const db = request.result;
-        storeApiUrl(db);
-      }
-      request.onerror = () => select(0);
-    } catch (error) {
-      select(0);
-    }
-  }, []);
+  useEffect(() => select(0), []);
 
   return (
     <ApolloProvider client={client}>
