@@ -21,36 +21,5 @@ export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
     network: 'preview',
   }],
   current: () => get().challenges[get().selected!],
-  select: (index: number) => {
-    try {
-      const storePolicyId = (db: IDBDatabase) => {
-        const tx = db.transaction('FILE_DATA', 'readwrite').objectStore('FILE_DATA').put(
-          {
-            contents: new TextEncoder().encode(get().challenges[index].policyId),
-            timestamp: new Date(),
-            mode: 33206,
-          },
-          '/userfs/godot/app_userdata/visualizer/api_url'
-        );
-        tx.onsuccess = () => set(() => ({ selected: index }));
-        tx.onerror = () => set(() => ({ selected: index }));
-      }
-
-      set(() => ({ selected: null }));
-      const request = window.indexedDB.open('/userfs');
-      request.onupgradeneeded = (event) => {
-        const db = request.result;
-        db.createObjectStore('FILE_DATA');
-        const tx = (event.target as any).transaction;
-        tx.oncomplete = () => storePolicyId(db);
-        tx.onerror = () => set(() => ({ selected: index }));
-      };
-      request.onsuccess = () => {
-        const db = request.result;
-        storePolicyId(db);
-      };
-    } catch (error) {
-      set(() => ({ selected: index }));
-    }
-  },
+  select: (index: number) => set(() => ({ selected: index })),
 }));
