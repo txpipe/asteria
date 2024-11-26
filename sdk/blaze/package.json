@@ -1,0 +1,21 @@
+{
+  "name": "asteria-blaze-sdk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@blaze-cardano/core": "^0.5.2",
+    "@blaze-cardano/ogmios": "^0.0.7",
+    "@blaze-cardano/sdk": "^0.2.11",
+    "dotenv": "^16.4.5",
+    "rxjs": "^7.8.1"
+  }
+}
