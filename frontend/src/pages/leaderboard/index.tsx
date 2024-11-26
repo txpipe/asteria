@@ -5,8 +5,8 @@ import { useChallengeStore } from '@/stores/challenge';
 const PAGE_SIZE = 10;
 
 const GET_LEADERBOARD_RECORDS = gql`
-  query Leaderboard($shipyardPolicyId: String) {
-    leaderboard(shipyardPolicyId: $shipyardPolicyId) {
+  query Leaderboard($shipyardPolicyId: String, $shipAddress: String) {
+    leaderboard(shipyardPolicyId: $shipyardPolicyId, shipAddress: $shipAddress) {
       ranking,
       address,
       shipName,
@@ -86,7 +86,12 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
 
 export default function Leaderboard() {
   const { current } = useChallengeStore();
-  const { loading, error, data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS, { variables: { shipyardPolicyId: current().policyId } });
+  const { data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS, {
+    variables: {
+      shipyardPolicyId: current().shipyardPolicyId,
+      shipAddress: current().shipAddress,
+    },
+  });
   const [ offset, setOffset ] = useState<number>(0);
 
   const hasNextPage = () => {

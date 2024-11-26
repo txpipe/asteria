@@ -38,24 +38,6 @@ impl Fairing for CORS {
 
 struct QueryRoot;
 
-pub struct ChainParameters {
-    ship_address: String,
-    fuel_address: String,
-    asteria_address: String,
-}
-impl ChainParameters {
-    pub fn from_env() -> Self {
-        Self {
-            ship_address: env::var("SHIP_ADDRESS")
-                .expect("SHIP_ADDRESS must be set in the environment"),
-            fuel_address: env::var("FUEL_ADDRESS")
-                .expect("FUEL_ADDRESS must be set in the environment"),
-            asteria_address: env::var("ASTERIA_ADDRESS")
-                .expect("ASTERIA_ADDRESS must be set in the environment"),
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct Data {
     pub ships: Vec<Ship>,
@@ -323,14 +305,13 @@ impl QueryRoot {
         center: PositionInput,
         radius: i32,
         shipyard_policy_id: String,
+        ship_address: String,
+        fuel_address: String,
+        asteria_address: String,
     ) -> Result<Vec<PositionalInterface>, Error> {
         // Access the connection pool from the GraphQL context
         let pool = ctx
             .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let chain_parameters = ctx
-            .data::<ChainParameters>()
             .map_err(|e| Error::new(e.message))?;
 
         // Query to select map objects within a radius using Manhattan distance
@@ -410,9 +391,9 @@ impl QueryRoot {
             center.y,
             radius,
             shipyard_policy_id,
-            chain_parameters.ship_address,
-            chain_parameters.fuel_address,
-            chain_parameters.asteria_address,
+            ship_address,
+            fuel_address,
+            asteria_address,
         )
         .fetch_all(pool)
         .await
@@ -534,13 +515,10 @@ impl QueryRoot {
         &self,
         ctx: &Context<'_>,
         shipyard_policy_id: String,
+        ship_address: String,
     ) -> Result<Vec<LeaderboardRecord>, Error> {
         let pool = ctx
             .data::<sqlx::PgPool>()
-            .map_err(|e| Error::new(e.message))?;
-
-        let chain_parameters = ctx
-            .data::<ChainParameters>()
             .map_err(|e| Error::new(e.message))?;
 
         let fetched_objects = sqlx::query!(
@@ -560,7 +538,7 @@ impl QueryRoot {
             ORDER BY distance ASC
             ",
             shipyard_policy_id,
-            chain_parameters.ship_address,
+            ship_address,
         )
         .fetch_all(pool)
         .await
@@ -610,8 +588,6 @@ async fn rocket() -> _ {
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
 
-    let chain_parameters = ChainParameters::from_env();
-
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
         .connect(database_url.as_str())
@@ -620,7 +596,6 @@ async fn rocket() -> _ {
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
-        .data(chain_parameters)
         .data(pool)
         .data(Data::new(200, 100))
         .finish();

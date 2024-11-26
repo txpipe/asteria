@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 
 import NavBar from "@/components/NavBar";
-import { useChallengeStore } from '@/stores/challenge';
 
 import "./globals.css";
  
@@ -23,18 +21,10 @@ const client = new ApolloClient({
 });
  
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
-  const { select, selected } = useChallengeStore();
-
-  useEffect(() => select(0), []);
-
   return (
     <ApolloProvider client={client}>
-      { selected !== null && (
-        <>
-          <NavBar />
-          <Component {...pageProps} />
-        </>
-      )}
+      <NavBar />
+      <Component {...pageProps} />
     </ApolloProvider>
   );
 }
