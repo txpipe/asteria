@@ -1,13 +1,19 @@
-import { createShip } from "../src";
+import { max } from "rxjs";
 import { GameIdentifier, OutRef } from "../src/types";
+import { gatherFuel } from "../src";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
- 
-    const asteria_utxo: OutRef = {
+    
+    const ship_utxo: OutRef = {
         tx_hash:
-            "a8c77645426fc3031f1daedb657dd1e9af03e2883576d694bcd188b653e91a28",
+            "3e04a7a3e4a1015705c44822feaf5f2da1e9609eebd68310c87b7eba7923739a",
+        tx_index: 0n,
+    };
+    const pellet_utxo: OutRef = {
+        tx_hash:
+            "22af0198b4e6e9c8306392c7ac0ea97b8a2f659a6312708b22b7717805554b97",
         tx_index: 0n,
     };
 
@@ -23,27 +29,17 @@ async function main() {
         tx_index: 0n,
     };
 
-    const asteria_script_reference: OutRef = {
-        tx_hash:
-            "39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277",
-        tx_index: 0n,
-    };
 
-    const pos_x = 20n;
-    const pos_y = 20n;
-
-    const gameIdentifier: GameIdentifier = {
-        asteria_utxo,
+    const gather_fuel_identifier: GameIdentifier = {
+        ship_utxo,
+        pellet_utxo,
         spacetime_script_reference,
         pellet_script_reference,
-        asteria_script_reference,
     };
 
-    const tx = await createShip(
+    const tx = await gatherFuel(
         address,
-        gameIdentifier,
-        pos_x,
-        pos_y,
+        gather_fuel_identifier,
     );
 
     return tx;
