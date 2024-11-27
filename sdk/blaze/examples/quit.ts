@@ -1,13 +1,13 @@
-import { createShip } from "../src";
-import { GameIdentifier, OutRef } from "../src/types";
+import { createShip, moveShip, quit } from "../src";
+import { OutRef, GameIdentifier } from "../src/types";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
- 
-    const asteria_utxo: OutRef = {
+
+    const ship_utxo: OutRef = {
         tx_hash:
-            "a8c77645426fc3031f1daedb657dd1e9af03e2883576d694bcd188b653e91a28",
+            "870b37da4cc82a16eb47db293713d81fe9abfe183055341174405e94768264c5",
         tx_index: 0n,
     };
 
@@ -23,27 +23,17 @@ async function main() {
         tx_index: 0n,
     };
 
-    const asteria_script_reference: OutRef = {
-        tx_hash:
-            "39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277",
-        tx_index: 0n,
-    };
+   
 
-    const pos_x = 20n;
-    const pos_y = 20n;
-
-    const gameIdentifier: GameIdentifier = {
-        asteria_utxo,
+    const quit_game_identifier: GameIdentifier = {
+        ship_utxo,
         spacetime_script_reference,
         pellet_script_reference,
-        asteria_script_reference,
     };
 
-    const tx = await createShip(
+    const tx = await quit(
         address,
-        gameIdentifier,
-        pos_x,
-        pos_y,
+        quit_game_identifier,
     );
 
     return tx;
