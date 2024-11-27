@@ -1,13 +1,3 @@
-
-# Creating a Ship
-
-Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
-
-![createShip diagram](/txs/createShip.png)
-
-## Lucid Example
-
-```ts
 import { createShip } from "../src";
 import { GameIdentifier, OutRef } from "../src/types";
 
@@ -62,4 +52,3 @@ async function main() {
 main().then((tx) => {
     console.log(tx.toCbor());
 });
-```

@@ -1,19 +1,13 @@
-import { max } from "rxjs";
-import { GameIdentifier, OutRef } from "../src/types";
-import { gatherFuel } from "../src";
+import { createShip, moveShip, quit } from "../src";
+import { OutRef, GameIdentifier } from "../src/types";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
-    
+
     const ship_utxo: OutRef = {
         tx_hash:
-            "3e04a7a3e4a1015705c44822feaf5f2da1e9609eebd68310c87b7eba7923739a",
-        tx_index: 0n,
-    };
-    const pellet_utxo: OutRef = {
-        tx_hash:
-            "22af0198b4e6e9c8306392c7ac0ea97b8a2f659a6312708b22b7717805554b97",
+            "870b37da4cc82a16eb47db293713d81fe9abfe183055341174405e94768264c5",
         tx_index: 0n,
     };
 
@@ -29,17 +23,17 @@ async function main() {
         tx_index: 0n,
     };
 
+   
 
-    const gather_fuel_identifier: GameIdentifier = {
+    const quit_game_identifier: GameIdentifier = {
         ship_utxo,
-        pellet_utxo,
         spacetime_script_reference,
         pellet_script_reference,
     };
 
-    const tx = await gatherFuel(
+    const tx = await quit(
         address,
-        gather_fuel_identifier,
+        quit_game_identifier,
     );
 
     return tx;

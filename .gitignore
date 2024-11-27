@@ -13,3 +13,5 @@ target
 
 .mono
 **/.DS_Store
+
+node_modules/
