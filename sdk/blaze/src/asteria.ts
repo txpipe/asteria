@@ -234,9 +234,9 @@ async function moveShip(
             (value: bigint, asset: AssetId, map: Map<AssetId, bigint>) => {
                 if (
                     AssetId.getPolicyId(asset).toLowerCase() ==
-                        shipyard_policy.toLowerCase() &&
+                    shipyard_policy.toLowerCase() &&
                     AssetId.getAssetName(asset).toLowerCase() ==
-                        old_ship_datum.pilot_token_name.toLowerCase()
+                    old_ship_datum.pilot_token_name.toLowerCase()
                 ) {
                     pilot_utxo = utxo;
                 }
@@ -387,9 +387,9 @@ async function gatherFuel(
             (value: bigint, asset: AssetId) => {
                 if (
                     AssetId.getPolicyId(asset).toLowerCase() ==
-                        shipyard_policy &&
+                    shipyard_policy &&
                     AssetId.getAssetName(asset).toLowerCase() ==
-                        old_ship_datum.pilot_token_name
+                    old_ship_datum.pilot_token_name
                 ) {
                     pilot_utxo = utxo;
                 }
@@ -450,7 +450,16 @@ async function gatherFuel(
     );
 
     const pellet_change = pellet_fuel - amount_to_gather;
-
+    let value_to_lock = makeValue(0n, [
+        admin_token,
+        1n,
+    ])
+    if(pellet_change > 0) {
+        value_to_lock =  makeValue(0n, [fuel_token, pellet_change], [
+            admin_token,
+            1n,
+        ]);
+    }
     const tx = blaze
         .newTransaction()
         .setValidFrom(Slot(lower_bound_slot))
@@ -469,10 +478,7 @@ async function gatherFuel(
         )
         .lockAssets(
             pellet_validator_address,
-            makeValue(0n, [fuel_token, pellet_fuel - amount_to_gather], [
-                admin_token,
-                1n,
-            ]),
+            value_to_lock,
             new_pellet_datum,
         )
         .payAssets(blaze.wallet.address, makeValue(0n, [pilot_token, 1n]))
@@ -657,9 +663,9 @@ async function quit(
             (value: bigint, asset: AssetId) => {
                 if (
                     AssetId.getPolicyId(asset).toLowerCase() ==
-                        shipyard_policy &&
+                    shipyard_policy &&
                     AssetId.getAssetName(asset).toLowerCase() ==
-                        old_ship_datum.pilot_token_name
+                    old_ship_datum.pilot_token_name
                 ) {
                     pilot_utxo = utxo;
                 }
