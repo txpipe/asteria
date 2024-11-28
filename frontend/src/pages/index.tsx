@@ -93,7 +93,7 @@ export default function Landing() {
                   Network | <span className="text-[#F1E9D9] capitalize">{ challenge.network }</span>
                 </p>
                 <p className="mb-2 font-dmsans-regular text-[#6F6F6F] text-md truncate">
-                  Shipyard Policy | <span className="text-[#F1E9D9]">{ challenge.policyId }</span>
+                  Shipyard Policy | <span className="text-[#F1E9D9]">{ challenge.shipyardPolicyId }</span>
                 </p>
                 <p className="mb-4 font-dmsans-semibold text-white text-2xl truncate">
                   { challenge.label }
@@ -104,10 +104,7 @@ export default function Landing() {
                     disabled={selected === index}
                     className="font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] bg-transparent py-4 px-6 rounded-full text-lg flex-initial disabled:opacity-50"
                   >
-                    Play
-                  </button>
-                  <button className="border border-[#F1E9D9] bg-transparent p-4 rounded-full flex-initial">
-                    <img src="/share-icon.svg" className="w-6 h-6" />
+                    Select
                   </button>
                 </div>
               </div>

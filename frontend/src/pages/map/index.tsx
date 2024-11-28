@@ -7,6 +7,7 @@ export default function Map() {
     const params = new URLSearchParams([
       ['apiUrl', `${process.env.API_URL}/graphql`],
       ['shipyardPolicyId', current().shipyardPolicyId],
+      ['fuelPolicyId', current().fuelPolicyId],
       ['shipAddress', current().shipAddress],
       ['fuelAddress', current().fuelAddress],
       ['asteriaAddress', current().asteriaAddress]

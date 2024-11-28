@@ -38,7 +38,7 @@ const NavBar: React.FunctionComponent = () => {
           <span className="border-l border-l-solid border-l-[#F1E9D9] w-0 h-7 opacity-50" />
           <Link href="/map">
             <button className={`font-monocraft-regular py-2 px-4 rounded-full text-md mx-4 ${isActive('map')}`}>
-              Map
+              Game Map
             </button>
           </Link>
           <span className="border-l border-l-solid border-l-[#F1E9D9] w-0 h-7 opacity-50" />

@@ -6,6 +6,7 @@ const radius = 1000
 
 var api_url = ""
 var shipyard_policy_id = ""
+var fuel_policy_id = ""
 var ship_address = ""
 var fuel_address = ""
 var asteria_address = ""
@@ -17,6 +18,7 @@ const query = """
 		center: { x: 0, y: 0 },
 		radius: %s,
 		shipyardPolicyId: "%s",
+		fuelPolicyId: "%s",
 		shipAddress: "%s",
 		fuelAddress: "%s",
 		asteriaAddress: "%s"
@@ -51,6 +53,7 @@ func fetch_data():
 		"query": query % [
 			radius,
 			shipyard_policy_id,
+			fuel_policy_id,
 			ship_address,
 			fuel_address,
 			asteria_address
@@ -65,6 +68,7 @@ func _process(delta: float) -> void:
 func _ready():
 	api_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('apiUrl')")
 	shipyard_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipyardPolicyId')")
+	fuel_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelPolicyId')")
 	ship_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipAddress')")
 	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")

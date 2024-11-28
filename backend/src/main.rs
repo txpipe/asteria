@@ -305,6 +305,7 @@ impl QueryRoot {
         center: PositionInput,
         radius: i32,
         shipyard_policy_id: String,
+        fuel_policy_id: String,
         ship_address: String,
         fuel_address: String,
         asteria_address: String,
@@ -321,17 +322,17 @@ impl QueryRoot {
                 SELECT 
                     id,
                     'Ship' as class,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,
+                    CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
                     $4::varchar AS shipyard_policy,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS ship_token_name,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilot_token_name,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
                     0 AS total_rewards
                 FROM 
                     utxos
                 WHERE 
-                    utxo_address(era, cbor) = from_bech32($5::varchar)
+                    utxo_address(era, cbor) = from_bech32($6::varchar)
                     AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))
                     AND spent_slot IS NULL
                 
@@ -340,17 +341,17 @@ impl QueryRoot {
                 SELECT 
                     id,
                     'Fuel' as class,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_x,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER) AS position_y,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                    CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
                     0 AS total_rewards
                 FROM 
                     utxos
                 WHERE 
-                    utxo_address(era, cbor) = from_bech32($6::varchar)
+                    utxo_address(era, cbor) = from_bech32($7::varchar)
                     AND spent_slot IS NULL
 
                 UNION ALL
@@ -368,7 +369,7 @@ impl QueryRoot {
                 FROM 
                     utxos
                 WHERE 
-                    utxo_address(era, cbor) = from_bech32($7::varchar)
+                    utxo_address(era, cbor) = from_bech32($8::varchar)
                     AND spent_slot IS NULL
             )
             SELECT
@@ -391,6 +392,7 @@ impl QueryRoot {
             center.y,
             radius,
             shipyard_policy_id,
+            fuel_policy_id,
             ship_address,
             fuel_address,
             asteria_address,
@@ -515,6 +517,7 @@ impl QueryRoot {
         &self,
         ctx: &Context<'_>,
         shipyard_policy_id: String,
+        fuel_policy_id: String,
         ship_address: String,
     ) -> Result<Vec<LeaderboardRecord>, Error> {
         let pool = ctx
@@ -525,19 +528,20 @@ impl QueryRoot {
             "
             SELECT 
                 id,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS fuel,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS ship_token_name,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 4 ->> 'bytes' AS TEXT) AS pilot_token_name,
-                ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'int' AS INTEGER)) AS distance
+                CAST(utxo_subject_amount(era, cbor, decode($2::varchar, 'hex')) AS INTEGER) AS fuel,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
+                ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) AS distance
             FROM 
                 utxos
             WHERE 
-                utxo_address(era, cbor) = from_bech32($2::varchar)
+                utxo_address(era, cbor) = from_bech32($3::varchar)
                 AND utxo_has_policy_id(era, cbor, decode($1::varchar, 'hex'))
                 AND spent_slot IS NULL
             ORDER BY distance ASC
             ",
             shipyard_policy_id,
+            fuel_policy_id,
             ship_address,
         )
         .fetch_all(pool)

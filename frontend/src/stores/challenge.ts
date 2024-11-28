@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface Challenge {
   label: string;
   shipyardPolicyId: string;
+  fuelPolicyId: string;
   shipAddress: string;
   fuelAddress: string;
   asteriaAddress: string;
@@ -19,18 +20,12 @@ export interface ChallengeStoreState {
 export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
   selected: 0,
   challenges: [{
-    label: 'New challenge',
-    shipyardPolicyId: '06af6375746881387d42e09977ce826d49c4b1404ec14ca75aa4553b',
-    shipAddress: 'addr_test1wqr27cm4w35gzwragtsfja7wsfk5n393gp8vzn98t2j92wclzmt4v',
-    fuelAddress: 'addr_test1wrwy0q8xtcngksdxk7nxd8kxwxvssmha5kl62nyxk7dmuqsf3slrx',
-    asteriaAddress: 'addr_test1wr44k7mvy2aznjn5qk69xa5gax0fsxmv4q8n9xv9040kqjs9kcchd',
-    network: 'preview',
-  }, {
-    label: 'Builder fest workshop',
-    shipyardPolicyId: 'ecb96725c35e957f96be46bc1873cc8ae5b134f1b00f457675700511',
-    shipAddress: 'addr_test1wrktjee9cd0f2lukhertcxrnej9wtvf57xcq73tkw4cq2ygnz27xu',
-    fuelAddress: 'addr_test1wr37gywvcn3284cuxy4jke2w7np75jfm9apej7ns8d7n5ws3ecjrt',
-    asteriaAddress: 'addr_test1wzup673azpl4s09hckcxr496xpx6cghnhfhlj4ydsxwpf5qygteap',
+    label: 'Preview Challenge',
+    shipyardPolicyId: 'f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20',
+    fuelPolicyId: 'fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c',
+    shipAddress: 'addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6',
+    fuelAddress: 'addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63',
+    asteriaAddress: 'addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg',
     network: 'preview',
   }],
   current: () => get().challenges[get().selected],

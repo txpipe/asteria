@@ -5,8 +5,8 @@ import { useChallengeStore } from '@/stores/challenge';
 const PAGE_SIZE = 10;
 
 const GET_LEADERBOARD_RECORDS = gql`
-  query Leaderboard($shipyardPolicyId: String, $shipAddress: String) {
-    leaderboard(shipyardPolicyId: $shipyardPolicyId, shipAddress: $shipAddress) {
+  query Leaderboard($shipyardPolicyId: String, $fuelPolicyId: String, $shipAddress: String) {
+    leaderboard(shipyardPolicyId: $shipyardPolicyId, fuelPolicyId: $fuelPolicyId, shipAddress: $shipAddress) {
       ranking,
       address,
       shipName,
@@ -89,6 +89,7 @@ export default function Leaderboard() {
   const { data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS, {
     variables: {
       shipyardPolicyId: current().shipyardPolicyId,
+      fuelPolicyId: current().fuelPolicyId,
       shipAddress: current().shipAddress,
     },
   });

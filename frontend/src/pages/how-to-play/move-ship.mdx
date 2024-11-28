@@ -12,100 +12,51 @@ Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by 
 
 You can use the following Lucid script to move your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
 
-<CodeBlock content={`import {
-    Data,
-    toUnit,
-    TxHash,
-    Constr,
-    UTxO,
-  } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-  import { distance, lucidBase, required_fuel } from "../utils.ts";
-  import { ShipDatum, ShipDatumT } from "../types.ts";
+<CodeBlock content={`import { createShip, moveShip } from "../src";
+import { OutRef, GameIdentifier } from "../src/types";
 
-  // look up these values for the specific challenge you're particpating
-  const FUEL_PER_STEP = 5;
+async function main() {
+    const address =
+        "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
 
-  async function moveShip(
-    fuel_per_step: bigint,
-    delta_x: bigint,
-    delta_y: bigint,
-    ship_token_name: string,
-    pilot_token_name: string,
-    shipTxHash: TxHash
-  ): Promise<TxHash> {
-    const lucid = await lucidBase();
-
-    const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./spacetime-ref.json")
-    );
-    const spacetimeRef = await lucid.utxosByOutRef([
-      {
-        txHash: spacetimeRefTxHash.txHash,
-        outputIndex: 0,
-      },
-    ]);
-    const spacetimeValidator = spacetimeRef[0].scriptRef;
-    if (!spacetimeValidator) {
-      throw Error("Could not read spacetime validator from ref UTxO");
-    }
-    const spacetimeAddressBech32 =
-      lucid.utils.validatorToAddress(spacetimeValidator);
-
-    const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-    const shipTokenUnit = toUnit(shipyardPolicyId, ship_token_name);
-    const pilotTokenUnit = toUnit(shipyardPolicyId, pilot_token_name);
-
-    const ship: UTxO = (
-      await lucid.utxosByOutRef([
-        {
-          txHash: shipTxHash,
-          outputIndex: 0,
-        },
-      ])
-    )[0];
-    if (!ship.datum) {
-      throw Error("Ship datum not found");
-    }
-    const shipAda = ship.assets.lovelace;
-
-    const shipInputDatum = Data.from<ShipDatumT>(
-      ship.datum as string,
-      ShipDatum as unknown as ShipDatumT
-    );
-
-    const moved_distance = distance(delta_x, delta_y);
-    const spent_fuel = required_fuel(moved_distance, fuel_per_step);
-    const shipInfo = {
-      fuel: shipInputDatum.fuel - spent_fuel,
-      pos_x: shipInputDatum.pos_x + delta_x,
-      pos_y: shipInputDatum.pos_y + delta_y,
-      ship_token_name: shipInputDatum.ship_token_name,
-      pilot_token_name: shipInputDatum.pilot_token_name,
+    const ship_utxo: OutRef = {
+        tx_hash:
+            "41f2a593e131a3c5db878bbe7753b89c8c6de555b7127e812c0f488d1a898368",
+        tx_index: 0n,
     };
-    const shipOutputDatum = Data.to<ShipDatumT>(
-      shipInfo,
-      ShipDatum as unknown as ShipDatumT
+
+    const spacetime_script_reference: OutRef = {
+        tx_hash:
+            "41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921",
+        tx_index: 0n,
+    };
+
+    const pellet_script_reference: OutRef = {
+        tx_hash:
+            "ba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3",
+        tx_index: 0n,
+    };
+
+    const delta_x = -1n;
+    const delta_y = -1n
+
+    const move_ship_identifier: GameIdentifier = {
+        ship_utxo,
+        spacetime_script_reference,
+        pellet_script_reference,
+    };
+
+    const tx = await moveShip(
+        address,
+        move_ship_identifier,
+        delta_x,
+        delta_y,
     );
 
-    const moveShipRedeemer = Data.to(
-      new Constr(1, [new Constr(0, [delta_x, delta_y])])
-    );
+    return tx;
+}
 
-    const tx = await lucid
-      .newTx()
-      .collectFrom([ship], moveShipRedeemer)
-      .readFrom(spacetimeRef)
-      .payToContract(
-        spacetimeAddressBech32,
-        { inline: shipOutputDatum },
-        {
-          [shipTokenUnit]: BigInt(1),
-          lovelace: shipAda,
-        }
-      )
-      .payToAddress(await lucid.wallet.address(), {
-        [pilotTokenUnit]: BigInt(1),
-      })
-      .complete();
-  }
+main().then((tx) => {
+    console.log(tx.toCbor());
+});
 `} />
