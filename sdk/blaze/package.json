@@ -1,13 +1,27 @@
 {
-  "name": "asteria-blaze-sdk",
-  "version": "1.0.0",
+  "name": "@asteria/blaze-sdk",
+  "version": "0.1.0",
+  "description": "Blaze SDK for Asteria",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.js"
+    }
+  },
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "clean": "rm -rf node_modules && rm -rf lib",
+    "prepublish": "npm run build"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "typescript": "^5.7.2"
   },
@@ -16,6 +30,7 @@
     "@blaze-cardano/ogmios": "^0.0.7",
     "@blaze-cardano/sdk": "^0.2.11",
     "dotenv": "^16.4.5",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "tsup": "^8.3.5"
   }
 }
