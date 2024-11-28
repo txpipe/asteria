@@ -80,7 +80,6 @@ type OutRef = {
 };
 
 type GameIdentifier = {
-  asteria_utxo?: OutRef;
   ship_utxo?: OutRef;
   pellet_utxo?: OutRef;
   spacetime_script_reference?: OutRef;

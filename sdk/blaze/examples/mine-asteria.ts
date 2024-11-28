@@ -4,9 +4,7 @@ import { GameIdentifier, OutRef } from "../src/types";
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
-    const admin_token_subject =
-        "d37ec8944834e0ce98d655820e05a2d0215b725fd2b79562128f79fa417374657269612041646d696e";
-
+    
     const spacetime_script_reference: OutRef = {
         tx_hash:
             "41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921",
@@ -24,11 +22,6 @@ async function main() {
             "39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277",
         tx_index: 0n,
     };
-    const asteria_utxo: OutRef = {
-        tx_hash:
-            "bbcdff5ed1c0dd78c58c42dab8356c161f865d0c3efc1ea281026140a0d38516",
-        tx_index: 1n,
-    };
 
     const ship_utxo: OutRef = {
         tx_hash:
@@ -38,7 +31,6 @@ async function main() {
 
 
     const gameIdentifier: GameIdentifier = {
-        asteria_utxo,
         ship_utxo,
         spacetime_script_reference,
         pellet_script_reference,
