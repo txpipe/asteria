@@ -12,155 +12,62 @@ Updates the `AsteriaUtxo` by transferring its value to the ship owner's address.
 
 You can use the following Lucid script to mine Asteria with your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
 
-<CodeBlock content={`import {
-    Data,
-    toUnit,
-    TxHash,
-    Constr,
-    UTxO,
-    Script,
-    fromText,
-  } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-  import { fetchReferenceScript, lucidBase } from "../../utils.ts";
-  import {
-    AssetClassT,
-    AsteriaDatum,
-    AsteriaDatumT,
-    ShipDatum,
-    ShipDatumT,
-  } from "../../types.ts";
+<CodeBlock content={`import { mineAsteria } from "../src";
+import { GameIdentifier, OutRef } from "../src/types";
 
-  async function mineAsteria(
-    admin_token: AssetClassT,
-    max_asteria_mining: bigint,
-    ship_tx_hash: TxHash,
-    tx_earliest_posix_time: bigint
-  ): Promise<TxHash> {
-    const lucid = await lucidBase();
-    const seed = Deno.env.get("SEED");
-    if (!seed) {
-      throw Error("Unable to read wallet's seed from env");
-    }
-    lucid.selectWalletFromSeed(seed);
+async function main() {
+    const address =
+        "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
+    const admin_token_subject =
+        "d37ec8944834e0ce98d655820e05a2d0215b725fd2b79562128f79fa417374657269612041646d696e";
 
-    const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./script-refs/spacetime-ref.json")
-    );
-    const spacetimeRef = await fetchReferenceScript(
-      lucid,
-      spacetimeRefTxHash.txHash
-    );
-    const spacetimeValidator = spacetimeRef.scriptRef as Script;
-    const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-
-    const pelletRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./script-refs/pellet-ref.json")
-    );
-    const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
-    const pelletValidator = pelletRef.scriptRef as Script;
-    const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
-    const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
-
-    const asteriaRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./script-refs/asteria-ref.json")
-    );
-    const asteriaRef = await fetchReferenceScript(lucid, asteriaRefTxHash.txHash);
-    const asteriaValidator = asteriaRef.scriptRef as Script;
-    const asteriaAddressBech32 = lucid.utils.validatorToAddress(asteriaValidator);
-
-    const ship: UTxO = (
-      await lucid.utxosByOutRef([
-        {
-          txHash: ship_tx_hash,
-          outputIndex: 0,
-        },
-      ])
-    )[0];
-    if (!ship.datum) {
-      throw Error("Ship datum not found");
-    }
-    const shipInputDatum = Data.from<ShipDatumT>(
-      ship.datum as string,
-      ShipDatum as unknown as ShipDatumT
-    );
-    const shipFuel = ship.assets[fuelTokenUnit];
-
-    const asterias: UTxO[] = await lucid.utxosAt(asteriaAddressBech32);
-    if (asterias.length != 1) {
-      throw Error(
-        "Expected only one Asteria UTxO, but found: " + asterias.length
-      );
-    }
-    const asteria = asterias[0];
-    if (!asteria.datum) {
-      throw Error("Asteria datum not found");
-    }
-    const rewards = asteria.assets.lovelace;
-    const minedRewards = BigInt(
-      Math.floor((Number(rewards) * Number(max_asteria_mining)) / 100)
-    );
-
-    const asteriaInputDatum = Data.from<AsteriaDatumT>(
-      asteria.datum as string,
-      AsteriaDatum as unknown as AsteriaDatumT
-    );
-    const asteriaInfo = {
-      ship_counter: asteriaInputDatum.ship_counter,
-      shipyard_policy: shipyardPolicyId,
+    const spacetime_script_reference: OutRef = {
+        tx_hash:
+            "41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921",
+        tx_index: 0n,
     };
-    const asteriaOutputDatum = Data.to<AsteriaDatumT>(
-      asteriaInfo,
-      AsteriaDatum as unknown as AsteriaDatumT
+
+    const pellet_script_reference: OutRef = {
+        tx_hash:
+            "ba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3",
+        tx_index: 0n,
+    };
+
+    const asteria_script_reference: OutRef = {
+        tx_hash:
+            "39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277",
+        tx_index: 0n,
+    };
+    const asteria_utxo: OutRef = {
+        tx_hash:
+            "bbcdff5ed1c0dd78c58c42dab8356c161f865d0c3efc1ea281026140a0d38516",
+        tx_index: 1n,
+    };
+
+    const ship_utxo: OutRef = {
+        tx_hash:
+            "594fb0c4baff88873d15d5973103efc667052deec3315ba4bc89aeaaf53dd407",
+        tx_index: 0n,
+    };
+
+
+    const gameIdentifier: GameIdentifier = {
+        asteria_utxo,
+        ship_utxo,
+        spacetime_script_reference,
+        pellet_script_reference,
+        asteria_script_reference,
+    };
+
+    const tx = await mineAsteria(
+        address,
+        gameIdentifier,
     );
 
-    const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+    return tx;
+}
 
-    const shipTokenUnit = toUnit(
-      shipyardPolicyId,
-      shipInputDatum.ship_token_name
-    );
-    const pilotTokenUnit = toUnit(
-      shipyardPolicyId,
-      shipInputDatum.pilot_token_name
-    );
-
-    const shipRedeemer = Data.to(new Constr(1, [new Constr(2, [])]));
-    const asteriaRedeemer = Data.to(new Constr(1, []));
-    const burnShipRedeemer = Data.to(new Constr(1, []));
-    const burnFuelRedeemer = Data.to(new Constr(1, []));
-    const tx = await lucid
-      .newTx()
-      .validFrom(Number(tx_earliest_posix_time))
-      .mintAssets(
-        {
-          [shipTokenUnit]: BigInt(-1),
-        },
-        burnShipRedeemer
-      )
-      .mintAssets(
-        {
-          [fuelTokenUnit]: -shipFuel,
-        },
-        burnFuelRedeemer
-      )
-      .collectFrom([ship], shipRedeemer)
-      .collectFrom([asteria], asteriaRedeemer)
-      .readFrom([spacetimeRef, asteriaRef, pelletRef])
-      .payToContract(
-        asteriaAddressBech32,
-        { inline: asteriaOutputDatum },
-        {
-          [adminTokenUnit]: BigInt(1),
-          lovelace: rewards - minedRewards,
-        }
-      )
-      .payToAddress(await lucid.wallet.address(), {
-        [pilotTokenUnit]: BigInt(1),
-        lovelace: 1_500_000n,
-      })
-      .complete();
-
-    const signedTx = await tx.sign().complete();
-    return signedTx.submit();
-  }
+main().then((tx) => {
+    console.log(tx.toCbor());
+});
 `} />

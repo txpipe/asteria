@@ -12,165 +12,54 @@ Updates the `fuel` datum field of the `ShipState` UTxO by adding the amount of f
 
 You can use the following Lucid script to gather fuel for your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
 
-<CodeBlock content={`import {
-    Data,
-    toUnit,
-    TxHash,
-    Constr,
-    UTxO,
-    Script,
-    fromText,
-  } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-  import { fetchReferenceScript, lucidBase } from "../../utils.ts";
-  import {
-    AssetClassT,
-    PelletDatum,
-    PelletDatumT,
-    ShipDatum,
-    ShipDatumT,
-  } from "../../types.ts";
+<CodeBlock content={`import { max } from "rxjs";
+import { GameIdentifier, OutRef } from "../src/types";
+import { gatherFuel } from "../src";
 
-  async function gatherFuel(
-    admin_token: AssetClassT,
-    gather_amount: bigint,
-    ship_tx_hash: TxHash,
-    pellet_tx_hash: TxHash,
-    pellet_tx_index: number,
-    tx_earliest_posix_time: bigint
-  ): Promise<TxHash> {
-    const lucid = await lucidBase();
-    const seed = Deno.env.get("SEED");
-    if (!seed) {
-      throw Error("Unable to read wallet's seed from env");
-    }
-    lucid.selectWalletFromSeed(seed);
-
-    const spacetimeRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./script-refs/spacetime-ref.json")
-    );
-    const spacetimeRef = await fetchReferenceScript(
-      lucid,
-      spacetimeRefTxHash.txHash
-    );
-    const spacetimeValidator = spacetimeRef.scriptRef as Script;
-    const spacetimeAddressBech32 =
-      lucid.utils.validatorToAddress(spacetimeValidator);
-    const shipyardPolicyId = lucid.utils.mintingPolicyToId(spacetimeValidator);
-
-    const pelletRefTxHash: { txHash: string } = JSON.parse(
-      await Deno.readTextFile("./script-refs/pellet-ref.json")
-    );
-    const pelletRef = await fetchReferenceScript(lucid, pelletRefTxHash.txHash);
-    const pelletValidator = pelletRef.scriptRef as Script;
-    const pelletAddressBech32 = lucid.utils.validatorToAddress(pelletValidator);
-    const fuelPolicyId = lucid.utils.mintingPolicyToId(pelletValidator);
-
-    const ship: UTxO = (
-      await lucid.utxosByOutRef([
-        {
-          txHash: ship_tx_hash,
-          outputIndex: 0,
-        },
-      ])
-    )[0];
-    if (!ship.datum) {
-      throw Error("Ship datum not found");
-    }
-    const shipAda = ship.assets.lovelace;
-
-    const pellet: UTxO = (
-      await lucid.utxosByOutRef([
-        {
-          txHash: pellet_tx_hash,
-          outputIndex: pellet_tx_index,
-        },
-      ])
-    )[0];
-    if (!pellet.datum) {
-      throw Error("Pellet datum not found");
-    }
-    const pelletAda = pellet.assets.lovelace;
-
-    const shipInputDatum = Data.from<ShipDatumT>(
-      ship.datum as string,
-      ShipDatum as unknown as ShipDatumT
-    );
-    const shipInfo = {
-      pos_x: shipInputDatum.pos_x,
-      pos_y: shipInputDatum.pos_y,
-      ship_token_name: shipInputDatum.ship_token_name,
-      pilot_token_name: shipInputDatum.pilot_token_name,
-      last_move_latest_time: shipInputDatum.last_move_latest_time,
+async function main() {
+    const address =
+        "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
+    
+    const ship_utxo: OutRef = {
+        tx_hash:
+            "3e04a7a3e4a1015705c44822feaf5f2da1e9609eebd68310c87b7eba7923739a",
+        tx_index: 0n,
     };
-    const shipOutputDatum = Data.to<ShipDatumT>(
-      shipInfo,
-      ShipDatum as unknown as ShipDatumT
-    );
-
-    const pelletInputDatum = Data.from<PelletDatumT>(
-      pellet.datum as string,
-      PelletDatum as unknown as PelletDatumT
-    );
-    const pelletInfo = {
-      pos_x: pelletInputDatum.pos_x,
-      pos_y: pelletInputDatum.pos_y,
-      shipyard_policy: shipyardPolicyId,
+    const pellet_utxo: OutRef = {
+        tx_hash:
+            "22af0198b4e6e9c8306392c7ac0ea97b8a2f659a6312708b22b7717805554b97",
+        tx_index: 0n,
     };
-    const pelletOutputDatum = Data.to<PelletDatumT>(
-      pelletInfo,
-      PelletDatum as unknown as PelletDatumT
+
+    const spacetime_script_reference: OutRef = {
+        tx_hash:
+            "41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921",
+        tx_index: 0n,
+    };
+
+    const pellet_script_reference: OutRef = {
+        tx_hash:
+            "ba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3",
+        tx_index: 0n,
+    };
+
+
+    const gather_fuel_identifier: GameIdentifier = {
+        ship_utxo,
+        pellet_utxo,
+        spacetime_script_reference,
+        pellet_script_reference,
+    };
+
+    const tx = await gatherFuel(
+        address,
+        gather_fuel_identifier,
     );
 
-    const shipTokenUnit = toUnit(
-      shipyardPolicyId,
-      shipInputDatum.ship_token_name
-    );
-    const pilotTokenUnit = toUnit(
-      shipyardPolicyId,
-      shipInputDatum.pilot_token_name
-    );
-    const adminTokenUnit = toUnit(admin_token.policy, admin_token.name);
+    return tx;
+}
 
-    const fuelTokenUnit = toUnit(fuelPolicyId, fromText("FUEL"));
-    const shipFuel = ship.assets[fuelTokenUnit];
-    const pelletFuel = pellet.assets[fuelTokenUnit];
-
-    const shipRedeemer = Data.to(new Constr(1, [new Constr(1, [gather_amount])]));
-    const pelletRedeemer = Data.to(
-      new Constr(1, [new Constr(0, [gather_amount])])
-    );
-    const tx = await lucid
-      .newTx()
-      .validFrom(Number(tx_earliest_posix_time))
-      .collectFrom([ship], shipRedeemer)
-      .collectFrom([pellet], pelletRedeemer)
-      .readFrom([spacetimeRef, pelletRef])
-      .payToContract(
-        spacetimeAddressBech32,
-        { inline: shipOutputDatum },
-        {
-          [shipTokenUnit]: BigInt(1),
-          [fuelTokenUnit]: shipFuel + gather_amount,
-          lovelace: shipAda,
-        }
-      )
-      .payToContract(
-        pelletAddressBech32,
-        { inline: pelletOutputDatum },
-        {
-          [adminTokenUnit]: BigInt(1),
-          [fuelTokenUnit]: pelletFuel - gather_amount,
-          lovelace: pelletAda,
-        }
-      )
-      .payToAddress(await lucid.wallet.address(), {
-        [pilotTokenUnit]: BigInt(1),
-      })
-      .complete();
-
-    const signedTx = await tx.sign().complete();
-    return signedTx.submit();
-  }
-
-  export { gatherFuel };
+main().then((tx) => {
+    console.log(tx.toCbor());
+});
 `} />

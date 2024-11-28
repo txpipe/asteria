@@ -1,6 +1,6 @@
 extends Node
 
-const grid_size = 200
+const grid_size = 80
 const cell_size = 128
 
 var ships: Array[ShipData] = []

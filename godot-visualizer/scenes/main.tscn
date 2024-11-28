@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://b5ypw8og4vdle"]
+[gd_scene load_steps=38 format=3 uid="uid://b5ypw8og4vdle"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_4dsde"]
 [ext_resource type="PackedScene" uid="uid://ch6xqejnd1rqf" path="res://scenes/map.tscn" id="1_quhpi"]
@@ -23,19 +23,15 @@
 [ext_resource type="Texture2D" uid="uid://3idp7n15cwd1" path="res://resources/icons/icon_token_inactive.svg" id="8_vjqgv"]
 [ext_resource type="Texture2D" uid="uid://c2u6fpdbxqbrt" path="res://resources/icons/icon_fuel_active.svg" id="10_ycgkw"]
 [ext_resource type="Texture2D" uid="uid://d28tctb3snsau" path="res://resources/icons/icon_token_active.svg" id="12_dpchl"]
-[ext_resource type="StyleBox" uid="uid://dtipuahe6umv4" path="res://resources/textures/zoom_button.tres" id="24_0x7f7"]
 [ext_resource type="StyleBox" uid="uid://cuqtwls2gtt0v" path="res://resources/textures/tooltip.tres" id="25_q05r4"]
 [ext_resource type="FontFile" uid="uid://2ctrem352y4" path="res://resources/fonts/JetBrainsMono.ttf" id="26_btrf2"]
+[ext_resource type="Texture2D" uid="uid://bwjppc04feraa" path="res://resources/icons/icon_zoom_in.svg" id="27_evo6j"]
 [ext_resource type="FontFile" uid="uid://b7vayqoopjyv" path="res://resources/fonts/DMSans.ttf" id="27_u6i6b"]
+[ext_resource type="Texture2D" uid="uid://j1rgnsv8l1ne" path="res://resources/icons/icon_zoom_out.svg" id="28_kl1su"]
 [ext_resource type="Texture2D" uid="uid://dqpu7ll4k1fs1" path="res://resources/loader.png" id="28_wxhmh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gt7hn"]
 bg_color = Color(1, 1, 1, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aclu6"]
-bg_color = Color(0, 0, 0, 0)
-
-[sub_resource type="ButtonGroup" id="ButtonGroup_1ar33"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_jrdxu"]
 font = ExtResource("4_r2c3r")
@@ -48,6 +44,11 @@ font_color = Color(0.027451, 0.952941, 0.901961, 1)
 base_font = ExtResource("4_r2c3r")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ltxx7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aclu6"]
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_1ar33"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iitb5"]
 
@@ -142,105 +143,6 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 alignment = 2
-
-[node name="VBoxContainerStart" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer"]
-layout_mode = 2
-alignment = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart"]
-layout_mode = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 40
-
-[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="MinimapBackground" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer"]
-clip_contents = true
-layout_mode = 2
-theme_override_styles/panel = ExtResource("3_n4qh8")
-script = ExtResource("3_46wls")
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer"]
-clip_contents = true
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-
-[node name="Minimap" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer"]
-custom_minimum_size = Vector2(800, 400)
-layout_mode = 2
-size_flags_vertical = 10
-theme_override_styles/panel = SubResource("StyleBoxFlat_aclu6")
-script = ExtResource("3_n1hxv")
-
-[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer"]
-layout_mode = 2
-theme_override_constants/margin_top = 40
-
-[node name="MinimapControlPanel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer"]
-custom_minimum_size = Vector2(320, 120)
-layout_mode = 2
-theme_override_styles/panel = ExtResource("6_fqp1o")
-
-[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="ShipButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
-custom_minimum_size = Vector2(88, 88)
-layout_mode = 2
-mouse_filter = 1
-toggle_mode = true
-action_mode = 0
-button_group = SubResource("ButtonGroup_1ar33")
-texture_normal = ExtResource("6_0e6fi")
-texture_pressed = ExtResource("8_8e8w0")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="FuelButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
-custom_minimum_size = Vector2(88, 88)
-layout_mode = 2
-mouse_filter = 1
-toggle_mode = true
-button_pressed = true
-button_group = SubResource("ButtonGroup_1ar33")
-texture_normal = ExtResource("7_wdsf5")
-texture_pressed = ExtResource("10_ycgkw")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="TokenButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
-custom_minimum_size = Vector2(88, 88)
-layout_mode = 2
-mouse_filter = 1
-toggle_mode = true
-button_group = SubResource("ButtonGroup_1ar33")
-texture_normal = ExtResource("8_vjqgv")
-texture_pressed = ExtResource("12_dpchl")
-ignore_texture_size = true
-stretch_mode = 0
 
 [node name="VBoxContainerEnd" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer"]
 layout_mode = 2
@@ -426,47 +328,140 @@ theme_override_constants/margin_bottom = 40
 
 [node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom"]
 layout_mode = 2
+theme_override_constants/separation = 40
 alignment = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+size_flags_horizontal = 8
 
-[node name="PanelZoomPlus" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(120, 120)
+[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_styles/panel = ExtResource("24_0x7f7")
 
-[node name="ZoomPlusButton" type="Button" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/PanelZoomPlus"]
+[node name="MinimapBackground" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer"]
+clip_contents = true
+layout_mode = 2
+theme_override_styles/panel = ExtResource("3_n4qh8")
+script = ExtResource("3_46wls")
+
+[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer"]
+clip_contents = true
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Minimap" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer"]
+custom_minimum_size = Vector2(800, 400)
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_styles/panel = SubResource("StyleBoxFlat_aclu6")
+script = ExtResource("3_n1hxv")
+
+[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 40
+
+[node name="MinimapControlPanel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer"]
+custom_minimum_size = Vector2(320, 120)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("6_fqp1o")
+
+[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("7_nw756")
-theme_override_font_sizes/font_size = 80
-theme_override_styles/focus = SubResource("StyleBoxEmpty_iitb5")
-text = "+"
-flat = true
+mouse_filter = 2
 
-[node name="PanelZoomLess" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ShipButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+mouse_filter = 1
+toggle_mode = true
+action_mode = 0
+button_group = SubResource("ButtonGroup_1ar33")
+texture_normal = ExtResource("6_0e6fi")
+texture_pressed = ExtResource("8_8e8w0")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="FuelButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+mouse_filter = 1
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_1ar33")
+texture_normal = ExtResource("7_wdsf5")
+texture_pressed = ExtResource("10_ycgkw")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="TokenButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+mouse_filter = 1
+toggle_mode = true
+button_group = SubResource("ButtonGroup_1ar33")
+texture_normal = ExtResource("8_vjqgv")
+texture_pressed = ExtResource("12_dpchl")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_top = 90
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="PanelZoomPlus" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(120, 120)
 layout_mode = 2
-theme_override_styles/panel = ExtResource("24_0x7f7")
+theme_override_styles/panel = ExtResource("6_fqp1o")
 
-[node name="ZoomLessButton" type="Button" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/PanelZoomLess"]
+[node name="ZoomPlusButton" type="Button" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer/PanelZoomPlus"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("7_nw756")
-theme_override_font_sizes/font_size = 80
 theme_override_styles/focus = SubResource("StyleBoxEmpty_iitb5")
-text = "-"
+icon = ExtResource("27_evo6j")
 flat = true
+icon_alignment = 1
+expand_icon = true
+
+[node name="PanelZoomLess" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+theme_override_styles/panel = ExtResource("6_fqp1o")
+
+[node name="ZoomLessButton" type="Button" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer/PanelZoomLess"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/focus = SubResource("StyleBoxEmpty_iitb5")
+icon = ExtResource("28_kl1su")
+flat = true
+icon_alignment = 1
+expand_icon = true
 
 [node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer"]
 anchors_preset = 15
@@ -484,21 +479,13 @@ expand_mode = 1
 stretch_mode = 3
 
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
-[connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
-[connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
-[connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
+[connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
+[connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
+[connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
 [connection signal="hide_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_hide_tooltip"]
 [connection signal="show_asteria_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_asteria_tooltip"]
 [connection signal="show_fuel_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_fuel_tooltip"]
 [connection signal="show_ship_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_ship_tooltip"]
-[connection signal="minimap_position_changed" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_minimap_position_changed"]
-[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_entered"]
-[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_exited"]
-[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel" to="MapCanvasLayer/Map" method="_on_minimap_control_panel_mouse_entered"]
-[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel" to="MapCanvasLayer/Map" method="_on_minimap_control_panel_mouse_exited"]
-[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/ShipButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_ship_button_toggled"]
-[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/FuelButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_fuel_button_toggled"]
-[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/TokenButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerStart/MarginContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_token_button_toggled"]
 [connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_entered"]
 [connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_exited"]
 [connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/CloseButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_close_button_pressed"]
@@ -508,5 +495,13 @@ stretch_mode = 3
 [connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/MoveButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_move_button_pressed"]
 [connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/GatherFuelButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_gather_fuel_button_pressed"]
 [connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/MineTokenButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_mine_token_button_pressed"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/PanelZoomPlus/ZoomPlusButton" to="MapCanvasLayer/Map" method="_on_zoom_plus_button_pressed"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/PanelZoomLess/ZoomLessButton" to="MapCanvasLayer/Map" method="_on_zoom_less_button_pressed"]
+[connection signal="minimap_position_changed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_minimap_position_changed"]
+[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_entered"]
+[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_exited"]
+[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel" to="MapCanvasLayer/Map" method="_on_minimap_control_panel_mouse_entered"]
+[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel" to="MapCanvasLayer/Map" method="_on_minimap_control_panel_mouse_exited"]
+[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/ShipButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_ship_button_toggled"]
+[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/FuelButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_fuel_button_toggled"]
+[connection signal="toggled" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/CenterContainer/MarginContainer/MinimapControlPanel/CenterContainer/HBoxContainer/TokenButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_token_button_toggled"]
+[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer/PanelZoomPlus/ZoomPlusButton" to="MapCanvasLayer/Map" method="_on_zoom_plus_button_pressed"]
+[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/MarginContainer/VBoxContainer/PanelZoomLess/ZoomLessButton" to="MapCanvasLayer/Map" method="_on_zoom_less_button_pressed"]

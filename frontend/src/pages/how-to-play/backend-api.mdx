@@ -1,0 +1,108 @@
+import Layout from "./layout";
+import CodeBlock from "@/components/CodeBlock";
+export default ({ children }) => <Layout>{children}</Layout>;
+
+# Querying the Backend API
+
+Project Asteria provides a `GraphQL` API to query the state of the game. The primary query used is `objectsInRadius`, which retrieves objects within a specified radius around a given point.
+
+## Example Query
+
+Below is an example of a query to get objects around the center point (0,0) with a radius of 10:
+
+<CodeBlock lang="graphql" content={`query getObjects {
+    objectsInRadius(center: { x: 0, y: 0 }, radius: 10) {
+      ... on Ship {
+        __typename
+        id
+        position {
+          x
+          y
+        }
+      }
+      
+      ... on Fuel {
+        __typename
+        id
+        position {
+          x
+          y
+        }
+      }
+      
+      ... on Asteria {
+        __typename
+        id
+        position {
+          x
+          y
+        }
+      }
+    }
+  }
+`} />
+
+## Example Response
+
+<CodeBlock lang="json" content={`{
+    "data": {
+      "objectsInRadius": [
+        {
+          "__typename": "Fuel",
+          "id": "4e0016f77ce8a21423f6934d2d88f4cc8e2fb4f8f97c518d4514b0d3a2924f35#0",
+          "position": {
+            "x": 1,
+            "y": 3
+          }
+        },
+        {
+          "__typename": "Fuel",
+          "id": "ea172bf05a38f3957b0c0c6ba2a52475e0e0be4cd5e90b4e90af158f7fde3b2b#0",
+          "position": {
+            "x": 7,
+            "y": -1
+          }
+        },
+        {
+          "__typename": "Fuel",
+          "id": "761740a434acd2601cb363d5be6b979dd7fb270a6ba6d5f2a4f719e15bec693a#0",
+          "position": {
+            "x": -2,
+            "y": -8
+          }
+        },
+        {
+          "__typename": "Asteria",
+          "id": "fc6bec839c05a4ec687c42057818c0cb9b8fbd827b6779e2c06c63487439f95a#1",
+          "position": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
+  }
+`} />
+
+A preview testnet `GraphQL` endpoint is available at [https://dmtr_scrolls_v0_preview_1t9nhgnmxtpzrzm2gwv0723cu.scrolls-m0.demeter.run/graphql](https://dmtr_scrolls_v0_preview_1t9nhgnmxtpzrzm2gwv0723cu.scrolls-m0.demeter.run/graphql).
+
+## Implementation Details
+
+The backend uses a SQL query with a Manhattan distance calculation to find objects within the specified radius. The query ensures that the objects are within the bounds defined by the radius and the center point.
+
+<CodeBlock lang="rs" content={`let fetched_objects = sqlx::query_as!(MapObjectRecord,
+    "SELECT
+      id, fuel, positionX as position_x, positionY as position_y, shipyardPolicy as policy_id,
+      shipTokenName as token_name, pilotTokenName as pilot_name, class, totalRewards as total_rewards
+    FROM mapobjects
+    WHERE positionX BETWEEN ($1::int - $3::int) AND ($1::int + $3::int)
+    AND positionY BETWEEN ($2::int - $3::int) AND ($2::int + $3::int)
+    AND ABS(positionX - $1::int) + ABS(positionY - $2::int) <= $3::int
+    AND shipyardPolicy = $4::text",
+    center.x, center.y, radius, shipyard_policy_id.id.to_string()
+)
+`} />
+
+## Database and Projection
+
+The database consists of UTXOs in the smart contract validators. These UTXOs are projected into a materialized view using [Mumak](https://github.com/txpipe/mumak), a PostgreSQL extension that allows developers to project or filter CBOR data within PostgreSQL. The generated materialized view is queried by the backend API as if it were a regular table. This enables efficient distance queries over CBOR data directly within PostgreSQL.

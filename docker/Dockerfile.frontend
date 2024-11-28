@@ -50,6 +50,9 @@ COPY ./frontend/package*.json ./
 RUN npm install
 
 COPY ./frontend ./
+
+COPY ./frontend/public/godot.png ./public/visualizer/index.png
+
 RUN npm run build
 
 CMD ["npm", "start"]
