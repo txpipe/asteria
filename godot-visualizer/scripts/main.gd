@@ -4,14 +4,23 @@ signal dataset_updated
 
 const radius = 1000
 
-# Fallback api_url and shipyard_policy_id
-var api_url = "https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
-var shipyard_policy_id = "ecb96725c35e957f96be46bc1873cc8ae5b134f1b00f457675700511"
+var api_url = ""
+var shipyard_policy_id = ""
+var ship_address = ""
+var fuel_address = ""
+var asteria_address = ""
 
 const headers = ["Content-Type: application/json"]
 const query = """
 {
-	objectsInRadius(center: { x: 0, y: 0 }, radius: %s, shipyardPolicyId: "%s") {
+	objectsInRadius(
+		center: { x: 0, y: 0 },
+		radius: %s,
+		shipyardPolicyId: "%s",
+		shipAddress: "%s",
+		fuelAddress: "%s",
+		asteriaAddress: "%s"
+	) {
 		__typename,
 		position {
 			x,
@@ -37,22 +46,31 @@ const query = """
 }
 """
 
+func fetch_data():
+	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({
+		"query": query % [
+			radius,
+			shipyard_policy_id,
+			ship_address,
+			fuel_address,
+			asteria_address
+		]
+	}))
+
 
 func _process(delta: float) -> void:
 	$GUICanvasLayer/CenterContainer/Loader.rotation += delta * 10
 
 
 func _ready():
-	#if OS.is_userfs_persistent():
-		#var stored_api_url = FileAccess.open("user://api_url", FileAccess.READ).get_as_text()
-		#if stored_api_url.length() > 0:
-			#api_url = stored_api_url + "/graphql"
-		#var stored_shipyard_policy_id = FileAccess.open("user://shipyard_policy_id", FileAccess.READ).get_as_text()
-		#if stored_shipyard_policy_id.length() > 0:
-			#shipyard_policy_id = stored_shipyard_policy_id
+	api_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('apiUrl')")
+	shipyard_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipyardPolicyId')")
+	ship_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipAddress')")
+	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
+	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
 	
 	$HTTPRequest.request_completed.connect(_on_request_completed)
-	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query % [radius, shipyard_policy_id] }))
+	fetch_data()
 	
 	var request_timer = Timer.new()
 	request_timer.wait_time = 20
@@ -70,7 +88,7 @@ func _on_request_completed(result, response_code, headers, body):
 
 
 func _on_request_timer_timeout():
-	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({ "query": query % [radius, shipyard_policy_id] }))
+	fetch_data()
 
 
 func update_tooltip_position(position: Vector2) -> void:
