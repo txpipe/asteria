@@ -1,16 +1,14 @@
 import { Address, AssetId, NetworkId, TransactionId, TransactionInput } from "@blaze-cardano/core";
 import { Unwrapped } from "@blaze-cardano/ogmios";
 import { Blaze, ColdWallet, Core, Kupmios } from "@blaze-cardano/sdk";
-import { GameIdentifier, OutRef } from "./types";
+import { GameIdentifier, KupmiosConfig, OutRef } from "./types";
 
-async function blazeInit(address: string): Promise<Blaze<Kupmios, ColdWallet>> {
+async function blazeInit(address: string, kupmios_config: KupmiosConfig): Promise<Blaze<Kupmios, ColdWallet>> {
     const blaze_address = Core.Address.fromBech32(address);
     const provider = new Kupmios(
-        "https://kupo1dce45wncnj6zgxxext7.preview-v2.kupo-m1.demeter.run",
-        await Unwrapped.Ogmios.new(
-            "https://ogmios13lw5mnhwypg5shrt9eh.preview-v5.ogmios-m1.demeter.run",
-        ),
-    );
+        kupmios_config.kupo_url,
+        await Unwrapped.Ogmios.new(kupmios_config.ogmios_url)
+    )
     const wallet = new ColdWallet(blaze_address, NetworkId.Testnet, provider);
 
     return Blaze.from(provider, wallet);

@@ -27,6 +27,7 @@ import {
     AsteriaDatum,
     AsteriaScriptDatum,
     GameIdentifier,
+    KupmiosConfig,
     PelletDatum,
     PelletScriptDatum,
     ShipDatum,
@@ -35,12 +36,13 @@ import {
 import { max } from "rxjs";
 
 async function createShip(
+    kupmios_config: KupmiosConfig,
     address: string,
     game_identifier: GameIdentifier,
     pos_x: bigint,
     pos_y: bigint,
 ): Promise<Transaction> {
-    const blaze = await blazeInit(address);
+    const blaze = await blazeInit(address, kupmios_config);
 
     const spacetime_ref_input = outRefToTransactionInput(
         game_identifier.spacetime_script_reference!,
@@ -177,12 +179,13 @@ async function createShip(
 }
 
 async function moveShip(
+    kupmios_config: KupmiosConfig,
     address: string,
     game_identifier: GameIdentifier,
     delta_x: bigint,
     delta_y: bigint,
 ): Promise<Transaction> {
-    const blaze = await blazeInit(address);
+    const blaze = await blazeInit(address, kupmios_config);
 
     const ship_input = outRefToTransactionInput(game_identifier.ship_utxo!);
     const spacetime_ref_input = outRefToTransactionInput(
@@ -314,10 +317,11 @@ async function moveShip(
 }
 
 async function gatherFuel(
+    kupmios_config: KupmiosConfig,
     address: string,
     game_identifier: GameIdentifier,
 ): Promise<Transaction> {
-    const blaze = await blazeInit(address);
+    const blaze = await blazeInit(address, kupmios_config);
 
     const ship_input = outRefToTransactionInput(
         game_identifier.ship_utxo!,
@@ -482,10 +486,11 @@ async function gatherFuel(
 }
 
 async function mineAsteria(
+    kupmios_config: KupmiosConfig,
     address: string,
     game_identifier: GameIdentifier,
 ): Promise<Transaction> {
-    const blaze = await blazeInit(address);
+    const blaze = await blazeInit(address, kupmios_config);
 
     const asteria_ref_input = outRefToTransactionInput(
         game_identifier.asteria_script_reference!,
@@ -603,10 +608,11 @@ async function mineAsteria(
 }
 
 async function quit(
+    kupmios_config: KupmiosConfig,
     address: string,
     game_identifier: GameIdentifier,
 ): Promise<Transaction> {
-    const blaze = await blazeInit(address);
+    const blaze = await blazeInit(address, kupmios_config);
 
     const ship_input = outRefToTransactionInput(
         game_identifier.ship_utxo!,

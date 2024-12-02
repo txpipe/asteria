@@ -1,10 +1,15 @@
 import { createShip } from "../src";
-import { GameIdentifier, OutRef } from "../src/types";
+import { GameIdentifier, KupmiosConfig, OutRef } from "../src/types";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
-
+    
+    const kupmios_config: KupmiosConfig ={
+        kupo_url: process.env.KUPO_URL!,
+        ogmios_url: process.env.OGMIOS_URL!,
+    };
+    
     const spacetime_script_reference: OutRef = {
         tx_hash:
             "41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921",
@@ -33,6 +38,7 @@ async function main() {
     };
 
     const tx = await createShip(
+        kupmios_config,
         address,
         gameIdentifier,
         pos_x,
