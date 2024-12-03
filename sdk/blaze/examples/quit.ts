@@ -1,9 +1,17 @@
-import { createShip, moveShip, quit } from "../src";
+import { Unwrapped } from "@blaze-cardano/ogmios";
+import { Kupmios } from "@blaze-cardano/sdk";
+import { quit } from "../src";
 import { OutRef, GameIdentifier } from "../src/types";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
+
+    const provider = new Kupmios(
+        process.env.KUPO_URL!,
+        await Unwrapped.Ogmios.new(process.env.OGMIOS_URL!)
+    );
+
 
     const ship_utxo: OutRef = {
         tx_hash:
@@ -23,8 +31,6 @@ async function main() {
         tx_index: 0n,
     };
 
-   
-
     const quit_game_identifier: GameIdentifier = {
         ship_utxo,
         spacetime_script_reference,
@@ -32,6 +38,7 @@ async function main() {
     };
 
     const tx = await quit(
+        provider,
         address,
         quit_game_identifier,
     );

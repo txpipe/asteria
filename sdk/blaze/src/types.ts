@@ -95,5 +95,6 @@ export {
   PelletDatum,
   ShipDatum,
   SpaceTimeScriptDatum,
-  PelletScriptDatum
+  PelletScriptDatum,
 };
+
