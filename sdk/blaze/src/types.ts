@@ -87,10 +87,6 @@ type GameIdentifier = {
   asteria_script_reference?: OutRef;
 };
 
-type KupmiosConfig = {
-  kupo_url: string;
-  ogmios_url: string;
-}
 export {
   AsteriaDatum,
   AsteriaScriptDatum,
@@ -100,6 +96,5 @@ export {
   ShipDatum,
   SpaceTimeScriptDatum,
   PelletScriptDatum,
-  KupmiosConfig,
 };
 
