@@ -1,5 +1,6 @@
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/collection/pairs
 use aiken/interval.{Finite}
 use aiken/math/rational
 use aiken/option
@@ -8,14 +9,14 @@ use aiken/primitive/string
 use asteria/types.{
   AssetClass, AsteriaDatum, BurnShip, GatherFuel, MineAsteria, MintShip,
   MoveShip, PelletDatum, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
-  ShipyardRedeemer, Speed,
+  ShipyardRedeemer, Speed, Provide,
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
 use cardano/assets.{
   PolicyId, add, flatten, from_asset, quantity_of, tokens, zero,
 }
-use cardano/transaction.{InlineDatum, OutputReference, Transaction, find_input}
+use cardano/transaction.{InlineDatum, OutputReference, Transaction, Spend, find_input}
 
 validator spacetime(
   pellet_validator_address: ScriptAddress,
@@ -34,7 +35,7 @@ validator spacetime(
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } = self
     expect Some(datum) = datum
     let ShipDatum {
       pos_x,
@@ -171,6 +172,12 @@ validator spacetime(
           quantity_of(ship_output.value, shipyard_policy, ship_token_name) == 1
         let must_add_fuel_tokens = output_fuel == input_fuel + amount
         let must_hold_3_assets = list.length(ship_output.value |> flatten) == 3
+
+        // gathered fuel amount must be equal to amount provided by pellet
+        let pellet_purpose = Spend(pellet_input.output_reference)
+        let pellet_redeemer: Data = Provide(amount)
+        expect pairs.get_all(redeemers, pellet_purpose) == [pellet_redeemer]
+
         let must_spend_two_script_inputs =
           list.length(
             list.filter(
