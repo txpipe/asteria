@@ -10,6 +10,7 @@ var fuel_policy_id = ""
 var ship_address = ""
 var fuel_address = ""
 var asteria_address = ""
+var explorer_url = ""
 
 const headers = ["Content-Type: application/json"]
 const query = """
@@ -39,9 +40,11 @@ const query = """
 			}
 		},
 		... on Fuel {
+			id,
 			fuel
 		},
 		... on Asteria {
+			id,
 			totalRewards
 		}
 	}
@@ -65,13 +68,16 @@ func _process(delta: float) -> void:
 	$GUICanvasLayer/CenterContainer/Loader.rotation += delta * 10
 
 
-func _ready():
+func _ready():	
 	api_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('apiUrl')")
 	shipyard_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipyardPolicyId')")
 	fuel_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelPolicyId')")
 	ship_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipAddress')")
 	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
+	explorer_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('explorerUrl')")
+	
+	Global.set_explorer_url(explorer_url)
 	
 	$HTTPRequest.request_completed.connect(_on_request_completed)
 	fetch_data()
@@ -120,14 +126,16 @@ func update_tooltip_position(position: Vector2) -> void:
 
 
 func _on_map_hide_tooltip() -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	$GUICanvasLayer/Tooltip.visible = false
 
 
 func _on_map_show_ship_tooltip(ship: Global.ShipData) -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "SHIP"
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [ship.position.x, ship.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Ship Token | %s" % ship.shipTokenName
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.text = "Pilot Token | %s" % ship.pilotTokenName
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Ship Token | %s" % ship.shipTokenName.hex_decode().get_string_from_utf8()
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.text = "Pilot Token | %s" % ship.pilotTokenName.hex_decode().get_string_from_utf8()
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label4.text = "Fuel | %s" % ship.fuel
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
@@ -137,6 +145,7 @@ func _on_map_show_ship_tooltip(ship: Global.ShipData) -> void:
 
 
 func _on_map_show_fuel_tooltip(fuel: Global.FuelData) -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "FUEL PELLET"
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [fuel.position.x, fuel.position.y]
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Fuel | %s" % fuel.fuel
@@ -148,6 +157,7 @@ func _on_map_show_fuel_tooltip(fuel: Global.FuelData) -> void:
 
 
 func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "ASTERIA"
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [asteria.position.x, asteria.position.y]
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Total rewards | %s" % asteria.totalRewards

@@ -18,6 +18,8 @@ var mouse_entered_minimap = false
 var mouse_entered_minimap_control = false
 var mouse_entered_modal = false
 
+var current_id = ""
+
 
 func _on_main_dataset_updated() -> void:
 	const center = Vector2(0, 0)
@@ -42,6 +44,13 @@ func _on_main_dataset_updated() -> void:
 	$Entities.add_child(asteria)
 
 
+func _input(event):
+	if event is InputEventMouseButton and event.pressed and current_id != "":
+		JavaScriptBridge.eval("window.open('%s%s', '_blank')" % [
+			Global.get_explorer_url(), current_id.split("#")[0]
+		])
+
+
 func _process(delta: float) -> void:
 	var cell_size = Global.get_cell_size()
 	var mouse_position = get_viewport().get_mouse_position() / $Camera.zoom
@@ -58,17 +67,22 @@ func _process(delta: float) -> void:
 		if asteria and asteria.position == cell_position:
 			$Cell.animation = "filled"
 			show_asteria_tooltip.emit(asteria)
+			current_id = asteria.id
 		elif ships.size() > 0:
 			$Cell.animation = "filled"
 			show_ship_tooltip.emit(ships[0])
+			current_id = ships[0].id
 		elif fuels.size() > 0:
 			$Cell.animation = "filled"
 			show_fuel_tooltip.emit(fuels[0])
+			current_id = fuels[0].id
 		else:
 			$Cell.animation = "empty"
 			hide_tooltip.emit()
+			current_id = ""
 	else:
 		hide_tooltip.emit()
+		current_id = ""
 
 
 func is_mouse_hover_gui() -> bool:

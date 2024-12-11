@@ -8,16 +8,23 @@ Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by 
 
 ![moveShip diagram](/txs/move-ship.png)
 
-## Lucid Example
+## Blaze Example
 
-You can use the following Lucid script to move your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
+You can use the following Blaze script to move your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
 
-<CodeBlock content={`import { createShip, moveShip } from "../src";
+<CodeBlock content={`import { Unwrapped } from "@blaze-cardano/ogmios";
+import { Kupmios } from "@blaze-cardano/sdk";
+import { moveShip } from "../src";
 import { OutRef, GameIdentifier } from "../src/types";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
+    
+    const provider = new Kupmios(
+        process.env.KUPO_URL!,
+        await Unwrapped.Ogmios.new(process.env.OGMIOS_URL!)
+    );
 
     const ship_utxo: OutRef = {
         tx_hash:
@@ -47,6 +54,7 @@ async function main() {
     };
 
     const tx = await moveShip(
+        provider,
         address,
         move_ship_identifier,
         delta_x,

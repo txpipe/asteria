@@ -10,7 +10,8 @@ export default function Map() {
       ['fuelPolicyId', current().fuelPolicyId],
       ['shipAddress', current().shipAddress],
       ['fuelAddress', current().fuelAddress],
-      ['asteriaAddress', current().asteriaAddress]
+      ['asteriaAddress', current().asteriaAddress],
+      ['explorerUrl', current().explorerUrl],
     ]);
     return `/visualizer/index.html?${params.toString()}`;
   };

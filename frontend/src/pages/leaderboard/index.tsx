@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, gql } from '@apollo/client';
-import { useChallengeStore } from '@/stores/challenge';
+import { useChallengeStore, Challenge } from '@/stores/challenge';
 
 const PAGE_SIZE = 10;
 
@@ -31,7 +31,12 @@ interface LeaderboardRecord {
 }
 
 interface RecordProps {
+  challenge: Challenge;
   record: LeaderboardRecord;
+}
+
+const hexToAscii = (hex: string): string => {
+  return Buffer.from(hex, 'hex').toString();
 }
 
 const getShipByAddress = (address: string): string => {
@@ -41,21 +46,23 @@ const getShipByAddress = (address: string): string => {
 }
 
 const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
-  <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-gradient-to-r from-[#46434312] to-[#FFFFFF12]">
-    <h1 className="flex-initial pb-1 mr-6 font-monocraft-regular text-5xl text-[#07F3E6]">
-      {props.record.ranking}
-    </h1>
-    <div className="flex-initial mr-6 p-4 rounded-full bg-[#FFFFFF08] border-b-[#333] border-b-solid border-b">
-      <img className="w-8 h-8" src={getShipByAddress(props.record.address)} />
+  <a href={`${props.challenge.explorerUrl}${props.record.address.replace('#0', '')}`} target="_blank">
+    <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-gradient-to-r from-[#46434312] to-[#FFFFFF12]">
+      <h1 className="flex-initial pb-1 mr-6 font-monocraft-regular text-5xl text-[#07F3E6]">
+        {props.record.ranking}
+      </h1>
+      <div className="flex-initial mr-6 p-4 rounded-full bg-[#FFFFFF08] border-b-[#333] border-b-solid border-b">
+        <img className="w-8 h-8" src={getShipByAddress(props.record.address)} />
+      </div>
+      <p className="flex-initial mr-6 font-dmsans-regular text-white">
+        <span className="font-dmsans-bold">Pilot: </span> {hexToAscii(props.record.pilotName)}<br/>
+        <span className="font-dmsans-bold">Ship: </span> {hexToAscii(props.record.shipName)}
+      </p>
+      <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
+        {`${props.record.distance}km`}
+      </div>
     </div>
-    <p className="flex-initial mr-6 font-dmsans-regular text-white">
-      <span className="font-dmsans-bold">Pilot: </span> {props.record.pilotName.toUpperCase().slice(-6)}<br/>
-      <span className="font-dmsans-bold">Ship: </span> {props.record.shipName.toUpperCase().slice(-6)}
-    </p>
-    <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
-      {`${props.record.distance}km`}
-    </div>
-  </div>
+  </a>
 );
 
 const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
@@ -65,13 +72,19 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
       <img className="inline mr-4 w-8 h-8" src={getShipByAddress(props.record.address)} />
-      <span>{props.record.address.replace('#0', '')}</span>
+      <a
+        className="text-[#07F3E6] underline"
+        href={`${props.challenge.explorerUrl}${props.record.address.replace('#0', '')}`}
+        target="_blank"
+      >
+        {props.record.address.replace('#0', '')}
+      </a>
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-      {props.record.pilotName.toUpperCase().slice(-6)}
+      {hexToAscii(props.record.pilotName)}
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
-     {props.record.shipName.toUpperCase().slice(-6)}
+     {hexToAscii(props.record.shipName)}
     </td>
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
       {props.record.fuel}
@@ -139,7 +152,7 @@ export default function Leaderboard() {
 
       <div className="flex flex-row justify-center items-center mb-12">
         {data && data.leaderboard && data.leaderboard.slice(0, 3).map(record =>
-          <LeaderboardChip key={record.address} record={record} />
+          <LeaderboardChip key={record.address} record={record} challenge={current()} />
         )}
       </div>
 
@@ -153,7 +166,7 @@ export default function Leaderboard() {
         </thead>
         <tbody>
           {getPageData().map(record =>
-            <LeaderboardRow key={record.address} record={record} />
+            <LeaderboardRow key={record.address} record={record} challenge={current()} />
           )}
         </tbody>
       </table>

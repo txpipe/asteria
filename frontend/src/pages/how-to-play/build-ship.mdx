@@ -8,22 +8,23 @@ Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx)
 
 ![createShip diagram](/txs/build-ship.png)
 
-## Lucid Example
+## Blaze Example
 
-You can use the following Lucid script to build your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
+You can use the following Blaze script to build your ship. The supporting files are available [here](https://github.com/txpipe/asteria/tree/main/offchain).
 
-<CodeBlock content={`import { createShip } from "../src";
+<CodeBlock content={`import { Kupmios } from "@blaze-cardano/sdk";
+import { createShip } from "../src";
 import { GameIdentifier, OutRef } from "../src/types";
+import { Unwrapped } from "@blaze-cardano/ogmios";
 
 async function main() {
     const address =
         "addr_test1qzjpgxkhe06gxzstfhywg02ggy5ltuwne6mfr406dlf0mpwp9a07r34cwsnkpn44tllxuydw4wp0xvstw5jqv5q9lszsk2qynn";
- 
-    const asteria_utxo: OutRef = {
-        tx_hash:
-            "a8c77645426fc3031f1daedb657dd1e9af03e2883576d694bcd188b653e91a28",
-        tx_index: 0n,
-    };
+    
+    const provider = new Kupmios(
+        process.env.KUPO_URL!,
+        await Unwrapped.Ogmios.new(process.env.OGMIOS_URL!)
+    );
 
     const spacetime_script_reference: OutRef = {
         tx_hash:
@@ -47,13 +48,13 @@ async function main() {
     const pos_y = 20n;
 
     const gameIdentifier: GameIdentifier = {
-        asteria_utxo,
         spacetime_script_reference,
         pellet_script_reference,
         asteria_script_reference,
     };
 
     const tx = await createShip(
+        provider,
         address,
         gameIdentifier,
         pos_x,
