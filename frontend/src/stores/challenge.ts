@@ -8,6 +8,7 @@ export interface Challenge {
   fuelAddress: string;
   asteriaAddress: string;
   network: string;
+  explorerUrl: string;
 }
 
 export interface ChallengeStoreState {
@@ -27,6 +28,7 @@ export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
     fuelAddress: 'addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63',
     asteriaAddress: 'addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg',
     network: 'preview',
+    explorerUrl: 'https://preview.cexplorer.io/tx/',
   }],
   current: () => get().challenges[get().selected],
   select: (index: number) => set(() => ({ selected: index })),

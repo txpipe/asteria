@@ -7,6 +7,8 @@ var ships: Array[ShipData] = []
 var fuels: Array[FuelData] = []
 var asteria: AsteriaData = null
 
+var explorer_url = ""
+
 
 func init_data(data: Variant):
 	ships = []
@@ -27,10 +29,10 @@ func init_data(data: Variant):
 			))
 		
 		if item["__typename"] == "Fuel":
-			fuels.append(FuelData.new(item["fuel"], position))
+			fuels.append(FuelData.new(item["id"], item["fuel"], position))
 		
 		if item["__typename"] == "Asteria":
-			asteria = AsteriaData.new(item["totalRewards"], position)
+			asteria = AsteriaData.new(item["id"], item["totalRewards"], position)
 
 func get_ships():
 	return ships
@@ -46,6 +48,12 @@ func get_grid_size():
 
 func get_cell_size():
 	return cell_size
+
+func set_explorer_url(_explorer_url: String):
+	explorer_url = _explorer_url
+
+func get_explorer_url():
+	return explorer_url
 
 
 class ShipData:
@@ -64,18 +72,22 @@ class ShipData:
 
 
 class FuelData:
+	var id: String = ""
 	var fuel: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	
-	func _init(_fuel: int, _position: Vector2):
+	func _init(_id: String, _fuel: int, _position: Vector2):
+		id = _id
 		fuel = _fuel
 		position = _position
 
 
 class AsteriaData:
+	var id: String = ""
 	var totalRewards: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	
-	func _init(_totalRewards: int, _position: Vector2):
+	func _init(_id: String, _totalRewards: int, _position: Vector2):
+		id = _id
 		totalRewards = _totalRewards
 		position = _position
