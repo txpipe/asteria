@@ -513,7 +513,7 @@ impl QueryRoot {
         actions
     }
 
-    async fn leaderboard(
+    async fn leaderboard_players(
         &self,
         ctx: &Context<'_>,
         shipyard_policy_id: String,
@@ -558,6 +558,56 @@ impl QueryRoot {
                 pilot_name: record.pilot_token_name.unwrap_or_default(),
                 fuel: record.fuel.unwrap_or(0),
                 distance: record.distance.unwrap_or(0)
+            })
+            .collect();
+
+        Ok(map_objects)
+    }
+
+    async fn leaderboard_winners(
+        &self,
+        ctx: &Context<'_>,
+        shipyard_policy_id: String,
+        fuel_policy_id: String,
+        ship_address: String,
+    ) -> Result<Vec<LeaderboardRecord>, Error> {
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let fetched_objects = sqlx::query!(
+            "
+            SELECT 
+                id,
+                CAST(utxo_subject_amount(era, cbor, decode($2::varchar, 'hex')) AS INTEGER) AS fuel,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
+                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name
+            FROM 
+                utxos
+            WHERE 
+                utxo_address(era, cbor) = from_bech32($3::varchar)
+                AND utxo_has_policy_id(era, cbor, decode($1::varchar, 'hex'))
+                AND ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) = 0
+            order by slot ASC
+            ",
+            shipyard_policy_id,
+            fuel_policy_id,
+            ship_address,
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        let map_objects: Vec<LeaderboardRecord> = fetched_objects
+            .into_iter()
+            .enumerate()
+            .map(|(i, record)| LeaderboardRecord {
+                ranking: i as i32 + 1,
+                address: record.id,
+                ship_name: record.ship_token_name.unwrap_or_default(),
+                pilot_name: record.pilot_token_name.unwrap_or_default(),
+                fuel: record.fuel.unwrap_or(0),
+                distance: 0
             })
             .collect();
 

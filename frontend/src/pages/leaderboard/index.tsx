@@ -4,9 +4,9 @@ import { useChallengeStore, Challenge } from '@/stores/challenge';
 
 const PAGE_SIZE = 10;
 
-const GET_LEADERBOARD_RECORDS = gql`
-  query Leaderboard($shipyardPolicyId: String, $fuelPolicyId: String, $shipAddress: String) {
-    leaderboard(shipyardPolicyId: $shipyardPolicyId, fuelPolicyId: $fuelPolicyId, shipAddress: $shipAddress) {
+const GET_LEADERBOARD_PLAYERS_RECORDS = gql`
+  query LeaderboardPlayers($shipyardPolicyId: String, $fuelPolicyId: String, $shipAddress: String) {
+    leaderboardPlayers(shipyardPolicyId: $shipyardPolicyId, fuelPolicyId: $fuelPolicyId, shipAddress: $shipAddress) {
       ranking,
       address,
       shipName,
@@ -17,8 +17,21 @@ const GET_LEADERBOARD_RECORDS = gql`
   }
 `;
 
+const GET_LEADERBOARD_WINNERS_RECORDS = gql`
+  query LeaderboardWinners($shipyardPolicyId: String, $fuelPolicyId: String, $shipAddress: String) {
+    leaderboardWinners(shipyardPolicyId: $shipyardPolicyId, fuelPolicyId: $fuelPolicyId, shipAddress: $shipAddress) {
+      ranking,
+      address,
+      shipName,
+      pilotName,
+      fuel
+    }
+  }
+`;
+
 interface LeaderboardQueryResult {
-  leaderboard: LeaderboardRecord[];
+  leaderboardPlayers: LeaderboardRecord[];
+  leaderboardWinners: LeaderboardRecord[];
 }
 
 interface LeaderboardRecord {
@@ -31,6 +44,7 @@ interface LeaderboardRecord {
 }
 
 interface RecordProps {
+  leaderboard: boolean;
   challenge: Challenge;
   record: LeaderboardRecord;
 }
@@ -89,27 +103,35 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
     <td className="p-4 font-dmsans-regular text-[#D7D7D7] text-left border border-[#333333]">
       {props.record.fuel}
     </td>
-    <td className="p-4 text-left border border-[#333333]">
-      <span className="py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
-        {`${props.record.distance}km`}
-      </span>
-    </td>
+    {props.leaderboard && (
+      <td className="p-4 text-left border border-[#333333]">
+        <span className="py-2 px-4 rounded-full bg-[#E7ECEF] font-dmsans-regular text-[#171717]">
+          {`${props.record.distance}km`}
+        </span>
+      </td>
+    )}
   </tr>
 );
 
 export default function Leaderboard() {
+  const [ offset, setOffset ] = useState<number>(0);
+  const [ leaderboard, setLeaderboard ] = useState<boolean>(true);
+
   const { current } = useChallengeStore();
-  const { data } = useQuery<LeaderboardQueryResult>(GET_LEADERBOARD_RECORDS, {
+  const { data } = useQuery<LeaderboardQueryResult>(leaderboard ? GET_LEADERBOARD_PLAYERS_RECORDS : GET_LEADERBOARD_WINNERS_RECORDS, {
     variables: {
       shipyardPolicyId: current().shipyardPolicyId,
       fuelPolicyId: current().fuelPolicyId,
       shipAddress: current().shipAddress,
     },
   });
-  const [ offset, setOffset ] = useState<number>(0);
 
   const hasNextPage = () => {
-    return data && data.leaderboard && offset + PAGE_SIZE < data.leaderboard.slice(3).length;
+    if (leaderboard) {
+      return data && data.leaderboardPlayers && offset + PAGE_SIZE < data.leaderboardPlayers.slice(3).length;
+    } else {
+      return data && data.leaderboardWinners && offset + PAGE_SIZE < data.leaderboardWinners.length;
+    }
   }
 
   const nextPage = () => {
@@ -128,9 +150,30 @@ export default function Leaderboard() {
     }
   }
 
+  const getPagination = () => {
+    if (leaderboard) {
+      return `Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboardPlayers ? data.leaderboardPlayers.length-3 : 0}`;
+    } else {
+      return `Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboardWinners ? data.leaderboardWinners.length : 0}`;
+    }
+  }
+
   const getPageData = () => {
-    if (!data || !data.leaderboard) return [];
-    return data.leaderboard.slice(3).slice(offset, offset+PAGE_SIZE);
+    if (leaderboard) {
+      if (!data || !data.leaderboardPlayers) return [];
+      return data.leaderboardPlayers.slice(3).slice(offset, offset+PAGE_SIZE);
+    } else {
+      if (!data || !data.leaderboardWinners) return [];
+      return data.leaderboardWinners.slice(offset, offset+PAGE_SIZE);
+    }
+  }
+
+  const getColumns = () => {
+    if (leaderboard) {
+      return ['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel', 'Distance'];
+    } else {
+      return ['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel'];
+    }
   }
 
   return (
@@ -138,7 +181,9 @@ export default function Leaderboard() {
       
       <div className="flex flex-row items-center mb-12">
         <h1 className="flex-auto mr-6 font-monocraft-regular text-4xl text-[#FFF75D]">
-          DISTANCE TO ASTERIA
+          <span className="cursor-pointer" onClick={() => setLeaderboard(!leaderboard) }>
+            {`ASTERIA ${ leaderboard ? 'PLAYERS' : 'WINNERS' } >`}
+          </span>
         </h1>
         <input
           type="text"
@@ -150,30 +195,32 @@ export default function Leaderboard() {
         </button>
       </div>
 
-      <div className="flex flex-row justify-center items-center mb-12">
-        {data && data.leaderboard && data.leaderboard.slice(0, 3).map(record =>
-          <LeaderboardChip key={record.address} record={record} challenge={current()} />
-        )}
-      </div>
+      {leaderboard && (
+        <div className="flex flex-row justify-center items-center mb-12">
+          {data && data.leaderboardPlayers && data.leaderboardPlayers.slice(0, 3).map(record =>
+            <LeaderboardChip key={record.address} leaderboard={leaderboard} record={record} challenge={current()} />
+          )}
+        </div>
+      )}
 
       <table className="w-full mb-12 border-collapse border border-[#333333]">
         <thead>
           <tr>
-            {['Ranking', 'Address', 'Ship name', 'Pilot name', 'Fuel', 'Distance'].map(header =>
+            {getColumns().map(header =>
               <th key={header} className="p-4 font-dmsans-regular text-[#FAFAFA] text-left border border-[#333333]">{header}</th>
             )}
           </tr>
         </thead>
         <tbody>
           {getPageData().map(record =>
-            <LeaderboardRow key={record.address} record={record} challenge={current()} />
+            <LeaderboardRow key={record.address} leaderboard={leaderboard} record={record} challenge={current()} />
           )}
         </tbody>
       </table>
 
       <div className="flex flex-row justify-center items-center mb-12">
         <p className="flex-initial font-dmsans-regular text-[#848484] mr-8">
-          {`Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboard ? data.leaderboard.length-3 : 0}`}
+          {getPagination()}
         </p>
         <button
           className={`flex-initial w-12 h-12 font-monocraft-regular text-black p-3 rounded-xl text-md mr-4 ${hasPrevPage() ? 'bg-[#07F3E6]' : 'bg-[#AFAFAF]'}`}
