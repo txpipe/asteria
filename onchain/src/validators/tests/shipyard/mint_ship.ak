@@ -21,7 +21,6 @@ type MintTestOptions {
   fuel_paid: Int,
   latest_time: Int,
   ship_counter: Int,
-  initial_fuel: Int,
   ship_tokens_paid: Int,
   extra_token_amount: Int,
   fuel_minted_amount: Int,
@@ -43,7 +42,6 @@ fn get_default_mint_options() {
     fuel_paid: 40,
     latest_time: 10_000,
     ship_counter: 7,
-    initial_fuel: 40,
     ship_tokens_paid: 1,
     extra_token_amount: 0,
     fuel_minted_amount: 40,
@@ -62,7 +60,6 @@ fn get_default_mint_options() {
 fn mint_ship(options: MintTestOptions) -> Bool {
   let fuel_per_step = 1
   let max_ship_fuel = 100
-  let min_distance = 10
   let shipyard_policy = mock.shipyard_policy
   let max_speed = Speed { distance: 1, time: 1_000 }
   let admin_token =
@@ -190,8 +187,6 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       max_speed,
       max_ship_fuel,
       fuel_per_step,
-      options.initial_fuel,
-      min_distance,
       redeemer,
       shipyard_policy,
       tx,

@@ -23,8 +23,6 @@ validator spacetime(
   max_speed: Speed,
   max_ship_fuel: Int,
   fuel_per_step: Int,
-  _initial_fuel: Int,  // TODO: remove
-  _min_asteria_distance: Int,  // TODO: remove
 ) {
   // SPACETIME VALIDATOR:
   spend(

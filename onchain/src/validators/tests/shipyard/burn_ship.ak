@@ -40,8 +40,6 @@ fn get_default_burn_options() -> BurnTestOptions {
 fn burn_ship(options: BurnTestOptions) -> Bool {
   let fuel_per_step = 1
   let max_ship_fuel = 100
-  let initial_fuel = 40
-  let min_distance = 10
   let ship_token_name = mock.ship_token_name
   let pilot_token_name = mock.pilot_token_name
   let shipyard_policy = mock.shipyard_policy
@@ -120,8 +118,6 @@ fn burn_ship(options: BurnTestOptions) -> Bool {
       max_speed,
       max_ship_fuel,
       fuel_per_step,
-      initial_fuel,
-      min_distance,
       redeemer,
       shipyard_policy,
       tx,
