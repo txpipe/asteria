@@ -11,6 +11,7 @@ use asteria/types.{
   ShipDatum,
 }
 use asteria/utils
+use cardano/address.{Address}
 use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
 }
@@ -47,6 +48,7 @@ validator asteria(
         expect InlineDatum(asteria_output_datum) = asteria_output.datum
         expect asteria_output_datum: AsteriaDatum = asteria_output_datum
 
+        // check for correct Asteria output value
         let must_hold_admin_token =
           quantity_of(
             asteria_output.value,
@@ -58,6 +60,8 @@ validator asteria(
             asteria_input.output.value
               |> add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
           )
+
+        // check for correct Asteria output datum
         let must_increment_counter =
           asteria_output_datum.ship_counter == ship_counter + 1
         let must_preserve_shipyard_policy =
@@ -67,8 +71,7 @@ validator asteria(
         expect [ship_output] =
           transaction.find_script_outputs(outputs, shipyard_policy)
         expect Output {
-          address: _ship_address,
-          // XXX: must check??
+          address: Address(_, None),
           value: ship_value,
           datum: InlineDatum(ship_datum),
           reference_script: None,
