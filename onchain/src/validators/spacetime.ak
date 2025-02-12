@@ -26,7 +26,7 @@ validator spacetime(
   max_ship_fuel: Int,
   fuel_per_step: Int,
   initial_fuel: Int,
-  min_asteria_distance: Int,
+  _min_asteria_distance: Int,  // TODO: remove
 ) {
   // SPACETIME VALIDATOR:
   spend(
@@ -279,7 +279,7 @@ validator spacetime(
 
   // SHIPYARD POLICY:
   mint(redeemer: ShipyardRedeemer, shipyard_policy: PolicyId, self: Transaction) {
-    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let Transaction { inputs, mint, .. } = self
     let minted_value = mint
 
     let fuel_policy = pellet_validator_address
@@ -306,12 +306,6 @@ validator spacetime(
         expect InlineDatum(asteria_datum) = asteria_input.output.datum
         expect asteria_datum: AsteriaDatum = asteria_datum
 
-        expect [ship_state] =
-          transaction.find_script_outputs(outputs, shipyard_policy)
-        expect InlineDatum(ship_datum) = ship_state.datum
-        expect ship_datum: ShipDatum = ship_datum
-        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
-
         let ship_token_name =
           bytearray.concat(
             "SHIP",
@@ -328,29 +322,10 @@ validator spacetime(
             |> add(fuel_policy, "FUEL", initial_fuel)
 
         let must_mint_expected_value = minted_value == expected_minted_value
-        let must_respect_min_distance =
-          utils.distance(ship_datum.pos_x, ship_datum.pos_y) >= min_asteria_distance
-        let must_have_ship_name = ship_datum.ship_token_name == ship_token_name
-        let must_have_pilot_name =
-          ship_datum.pilot_token_name == pilot_token_name
-        let must_have_latest_time =
-          ship_datum.last_move_latest_time == tx_latest_time
-        let must_hold_ship_token =
-          quantity_of(ship_state.value, shipyard_policy, ship_token_name) == 1
-        let must_hold_initial_fuel =
-          quantity_of(ship_state.value, fuel_policy, "FUEL") == initial_fuel
-        let must_hold_3_assets = list.length(ship_state.value |> flatten) == 3
 
         and {
           must_be_valid_asteria?,
           must_mint_expected_value?,
-          must_respect_min_distance?,
-          must_have_ship_name?,
-          must_have_pilot_name?,
-          must_have_latest_time?,
-          must_hold_ship_token?,
-          must_hold_initial_fuel?,
-          must_hold_3_assets?,
         }
       }
 

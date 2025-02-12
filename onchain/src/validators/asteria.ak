@@ -1,20 +1,27 @@
+use aiken/primitive/bytearray
+use aiken/primitive/string
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/crypto.{ScriptHash}
+use aiken/interval.{Finite}
 use aiken/math/rational.{compare_with, from_int}
 use aiken/option
 use asteria/types.{
-  AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
+  ShipDatum, AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
 }
 use asteria/utils
 use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
 }
-use cardano/transaction.{InlineDatum, OutputReference, Transaction, find_input}
+use cardano/transaction.{InlineDatum, Output, OutputReference, Transaction, find_input}
 
 validator asteria(
+  pellet_address: ScriptHash,
   admin_token: AssetClass,
   ship_mint_lovelace_fee: Int,
   max_asteria_mining: Int,
+  min_asteria_distance: Int,
+  initial_fuel: Int,
 ) {
   spend(
     datum: Option<AsteriaDatum>,
@@ -22,7 +29,7 @@ validator asteria(
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, .. } = self
+    let Transaction { inputs, outputs, validity_range, .. } = self
     expect Some(datum) = datum
     let AsteriaDatum { ship_counter, shipyard_policy } = datum
     expect Some(asteria_input) = find_input(inputs, utxo)
@@ -53,11 +60,61 @@ validator asteria(
         let must_preserve_shipyard_policy =
           asteria_output_datum.shipyard_policy == shipyard_policy
 
+        // check for correct creation of ship UTxO
+        expect [ship_output] =
+          transaction.find_script_outputs(outputs, shipyard_policy)
+        expect Output {
+              address: _ship_address,  // XXX: must check??
+              value: ship_value,
+              datum: InlineDatum(ship_datum),
+              reference_script: None,
+            } = ship_output
+
+        let expected_ship_token_name = bytearray.concat(
+          "SHIP",
+          bytearray.from_string(string.from_int(ship_counter)),
+        )
+
+        // check for correct creation of ship UTxO: check value
+        let expected_ship_value =
+          assets.from_asset(shipyard_policy, expected_ship_token_name, 1)
+          |> assets.add(pellet_address, "FUEL", initial_fuel)
+        let must_have_correct_value =
+          assets.match(ship_value, expected_ship_value, >=)
+
+        // check for correct creation of ship UTxO: check datum
+        expect ShipDatum {
+          pos_x,
+          pos_y,
+          ship_token_name,
+          pilot_token_name,
+          last_move_latest_time,
+        } = ship_datum
+        let must_respect_min_distance =
+          utils.distance(pos_x, pos_y) >= min_asteria_distance
+        let must_have_ship_name =
+          ship_token_name == expected_ship_token_name
+        let must_have_pilot_name =
+          pilot_token_name ==
+            bytearray.concat(
+              "PILOT",
+              bytearray.from_string(string.from_int(ship_counter)),
+            )
+        let must_have_latest_time = {
+          expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
+          last_move_latest_time == tx_latest_time
+        }
+
         and {
           must_add_fee?,
           must_hold_admin_token?,
           must_increment_counter?,
           must_preserve_shipyard_policy?,
+          must_have_correct_value?,
+          must_respect_min_distance?,
+          must_have_ship_name?,
+          must_have_pilot_name?,
+          must_have_latest_time?,
         }
       }
 
