@@ -71,7 +71,7 @@ fn add_new_ship(options: AddTestOptions) -> Bool {
   let shipyard_policy = mock.shipyard_policy
   let ship_mint_lovelace_fee = 2_000
   let max_asteria_mining = 40
-  let ship_counter = 7
+  let ship_counter = options.ship_counter
   let admin_token =
     AssetClass { policy: mock.admin_policy, name: mock.admin_token_name }
   let redeemer = AddNewShip
