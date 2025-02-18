@@ -45,27 +45,38 @@ validator asteria(
             outputs,
             fn(output) { output.address == asteria_input.output.address },
           )
-        expect InlineDatum(asteria_output_datum) = asteria_output.datum
-        expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+        expect Output {
+          address: Address(_, None),
+          value: asteria_value,
+          datum: InlineDatum(asteria_datum),
+          reference_script: None,
+        } = asteria_output
+
+        // check for correct Asteria output datum
+        expect asteria_datum: AsteriaDatum = asteria_datum
+        let asteria_must_have_correct_datum =
+          AsteriaDatum {
+            ship_counter: ship_counter + 1,
+            shipyard_policy: shipyard_policy,
+          } == asteria_datum
 
         // check for correct Asteria output value
         let must_hold_admin_token =
           quantity_of(
-            asteria_output.value,
+            asteria_value,
             admin_token.policy,
             admin_token.name,
           ) > 0
         let must_add_fee =
-          asteria_output.value == (
+          asteria_value == (
             asteria_input.output.value
               |> add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
           )
-
-        // check for correct Asteria output datum
-        let must_increment_counter =
-          asteria_output_datum.ship_counter == ship_counter + 1
-        let must_preserve_shipyard_policy =
-          asteria_output_datum.shipyard_policy == shipyard_policy
+        let asteria_must_have_correct_value =
+          and {
+            must_add_fee?,
+            must_hold_admin_token?,
+          }
 
         // check for correct creation of ship UTxO
         expect [ship_output] =
@@ -123,10 +134,8 @@ validator asteria(
         let must_mint_expected_value = mint == expected_minted_value
 
         and {
-          must_add_fee?,
-          must_hold_admin_token?,
-          must_increment_counter?,
-          must_preserve_shipyard_policy?,
+          asteria_must_have_correct_value?,
+          asteria_must_have_correct_datum?,
           ship_must_have_correct_datum?,
           ship_must_have_correct_value?,
           must_mint_expected_value?,
