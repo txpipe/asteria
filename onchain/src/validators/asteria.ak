@@ -99,7 +99,7 @@ validator asteria(
           )
         let must_have_latest_time = {
           expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
-          last_move_latest_time == tx_latest_time
+          last_move_latest_time >= tx_latest_time
         }
         let ship_must_have_correct_datum = and {
             must_respect_min_distance?,
