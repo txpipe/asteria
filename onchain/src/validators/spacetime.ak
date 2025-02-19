@@ -5,8 +5,8 @@ use aiken/interval.{Finite}
 use aiken/math/rational
 use aiken/option
 use asteria/types.{
-  AddNewShip, AssetClass, BurnShip, GatherFuel, MineAsteria, MintShip, MoveShip,
-  PelletDatum, Provide, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
+  AddNewShip, AssetClass, BurnShip, GatherFuel, Mine, MineAsteria, MintShip,
+  MoveShip, PelletDatum, Provide, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
   ShipyardRedeemer, Speed,
 }
 use asteria/utils
@@ -217,6 +217,13 @@ validator spacetime(
             admin_token.policy,
             admin_token.name,
           ) > 0
+
+        let must_be_correct_purpose = {
+          let asteria_purpose = Spend(asteria_input.output_reference)
+          let asteria_redeemer: Data = Mine
+          pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
+        }
+
         let must_spend_two_script_inputs =
           list.length(
             list.filter(
@@ -226,9 +233,10 @@ validator spacetime(
           ) == 2
 
         and {
-          must_spend_two_script_inputs?,
           must_be_valid_asteria?,
           must_include_pilot_token?,
+          must_be_correct_purpose?,
+          must_spend_two_script_inputs?,
         }
       }
       Quit -> {
@@ -275,6 +283,7 @@ validator spacetime(
               }
             },
           )
+
         let must_be_valid_asteria =
           quantity_of(
             asteria_input.output.value,
@@ -282,10 +291,11 @@ validator spacetime(
             admin_token.name,
           ) > 0
 
-        let asteria_purpose = Spend(asteria_input.output_reference)
-        let asteria_redeemer: Data = AddNewShip
-        let must_be_correct_purpose =
+        let must_be_correct_purpose = {
+          let asteria_purpose = Spend(asteria_input.output_reference)
+          let asteria_redeemer: Data = AddNewShip
           pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
+        }
 
         and {
           must_be_valid_asteria?,
