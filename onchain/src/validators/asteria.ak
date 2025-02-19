@@ -148,15 +148,17 @@ validator asteria(
         } = asteria_output
 
         // check for correct Asteria output datum
-        expect asteria_datum: AsteriaDatum = asteria_datum
-        let must_preserve_datum = datum == asteria_datum
+        let must_preserve_datum = {
+          expect asteria_datum: AsteriaDatum = asteria_datum
+          datum == asteria_datum
+        }
 
         // check for correct Asteria output value
         // first lovelace: output_rewards >= input_rewards * (1 - max_asteria_mining / 100)
-        let input_rewards = lovelace_of(asteria_input.output.value)
-        let output_rewards = lovelace_of(asteria_value)
-        expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let must_respect_max_mining =
+        let must_respect_max_mining = {
+          let input_rewards = lovelace_of(asteria_input.output.value)
+          let output_rewards = lovelace_of(asteria_value)
+          expect Some(percentage) = rational.new(max_asteria_mining, 100)
           compare_with(
             from_int(output_rewards),
             >=,
@@ -165,28 +167,64 @@ validator asteria(
               rational.sub(from_int(1), percentage),
             ),
           )
+        }
         let must_preserve_other_tokens =
-          assets.without_lovelace(asteria_value) ==
-          assets.without_lovelace(asteria_input.output.value)
-
-        // check if ship_token is present in some input
-        let must_input_ship_token =
-          option.is_some(
-            list.find(
-              inputs,
-              fn(input) {
-                list.any(
-                  dict.keys(tokens(input.output.value, shipyard_policy)),
-                  fn(name) { utils.has_prefix("SHIP", name) },
-                )
-              },
-            ),
+          assets.without_lovelace(asteria_value) == assets.without_lovelace(
+            asteria_input.output.value,
           )
+
+        // check for correct state in ship input
+        // TODO: CHANGE FOR FILTER
+        expect Some(ship_input) =
+          list.find(
+            inputs,
+            fn(input) {
+              list.any(
+                dict.keys(tokens(input.output.value, shipyard_policy)),
+                fn(name) { utils.has_prefix("SHIP", name) },
+              )
+            },
+          )
+        expect Output {
+          address: Address(_, None),
+          value: ship_value,
+          datum: InlineDatum(ship_datum),
+          reference_script: None,
+        } = ship_input.output
+
+        expect ShipDatum {
+          pos_x,
+          pos_y,
+          ship_token_name,
+          pilot_token_name,
+          last_move_latest_time,
+        } = ship_datum
+
+        // check ship datum
+        let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
+        let must_respect_latest_time = {
+          expect Finite(tx_earliest_time) =
+            validity_range.lower_bound.bound_type
+          last_move_latest_time <= tx_earliest_time
+        }
+
+        // check minting
+        // TODO: we can also just burn all ship_value without lovelace:
+        let must_burn_expected_value = {
+          let fuel_amount = quantity_of(ship_value, pellet_address, "FUEL")
+          let expected_minted_value =
+            assets.from_asset(shipyard_policy, ship_token_name, -1)
+              |> assets.add(pellet_address, "FUEL", -fuel_amount)
+          mint == expected_minted_value
+        }
+
         and {
           must_preserve_datum?,
           must_respect_max_mining?,
           must_preserve_other_tokens?,
-          must_input_ship_token?,
+          must_have_asteria_position?,
+          must_respect_latest_time?,
+          must_burn_expected_value?,
         }
       }
 

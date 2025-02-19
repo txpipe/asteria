@@ -217,13 +217,6 @@ validator spacetime(
             admin_token.policy,
             admin_token.name,
           ) > 0
-
-        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
-
-        let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
-        let must_burn_ship_token =
-          quantity_of(mint, shipyard_policy, ship_token_name) < 0
-        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
         let must_spend_two_script_inputs =
           list.length(
             list.filter(
@@ -231,21 +224,11 @@ validator spacetime(
               fn(input) { utils.is_script_address(input.output.address) },
             ),
           ) == 2
-        let must_burn_fuel_tokens =
-          quantity_of(mint, fuel_policy, "FUEL") == -quantity_of(
-            ship_input.output.value,
-            fuel_policy,
-            "FUEL",
-          )
 
         and {
           must_spend_two_script_inputs?,
           must_be_valid_asteria?,
           must_include_pilot_token?,
-          must_have_asteria_position?,
-          must_burn_ship_token?,
-          must_burn_fuel_tokens?,
-          must_respect_latest_time?,
         }
       }
       Quit -> {
