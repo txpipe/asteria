@@ -140,8 +140,34 @@ validator asteria(
             outputs,
             fn(output) { output.address == asteria_input.output.address },
           )
-        expect InlineDatum(asteria_output_datum) = asteria_output.datum
-        expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+        expect Output {
+          address: Address(_, None),
+          value: asteria_value,
+          datum: InlineDatum(asteria_datum),
+          reference_script: None,
+        } = asteria_output
+
+        // check for correct Asteria output datum
+        expect asteria_datum: AsteriaDatum = asteria_datum
+        let must_preserve_datum = datum == asteria_datum
+
+        // check for correct Asteria output value
+        // first lovelace: output_rewards >= input_rewards * (1 - max_asteria_mining / 100)
+        let input_rewards = lovelace_of(asteria_input.output.value)
+        let output_rewards = lovelace_of(asteria_value)
+        expect Some(percentage) = rational.new(max_asteria_mining, 100)
+        let must_respect_max_mining =
+          compare_with(
+            from_int(output_rewards),
+            >=,
+            rational.mul(
+              from_int(input_rewards),
+              rational.sub(from_int(1), percentage),
+            ),
+          )
+        let must_preserve_other_tokens =
+          assets.without_lovelace(asteria_value) ==
+          assets.without_lovelace(asteria_input.output.value)
 
         // check if ship_token is present in some input
         let must_input_ship_token =
@@ -156,23 +182,11 @@ validator asteria(
               },
             ),
           )
-        expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let input_rewards = lovelace_of(asteria_input.output.value)
-        let output_rewards = lovelace_of(asteria_output.value)
-        let must_respect_max_mining =
-          compare_with(
-            from_int(output_rewards),
-            >=,
-            rational.mul(
-              from_int(input_rewards),
-              rational.sub(from_int(1), percentage),
-            ),
-          )
-        let must_preserve_datum = datum == asteria_output_datum
         and {
-          must_input_ship_token?,
-          must_respect_max_mining?,
           must_preserve_datum?,
+          must_respect_max_mining?,
+          must_preserve_other_tokens?,
+          must_input_ship_token?,
         }
       }
 
