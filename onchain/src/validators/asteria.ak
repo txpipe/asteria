@@ -11,7 +11,7 @@ use asteria/types.{
   ShipDatum,
 }
 use asteria/utils
-use cardano/address.{Address}
+use cardano/address.{Address, Script}
 use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
 }
@@ -148,14 +148,14 @@ validator asteria(
         } = asteria_output
 
         // check for correct Asteria output datum
-        let must_preserve_datum = {
+        let asteria_must_preserve_datum = {
           expect asteria_datum: AsteriaDatum = asteria_datum
           datum == asteria_datum
         }
 
         // check for correct Asteria output value
         // first lovelace: output_rewards >= input_rewards * (1 - max_asteria_mining / 100)
-        let must_respect_max_mining = {
+        let asteria_must_respect_max_mining = {
           let input_rewards = lovelace_of(asteria_input.output.value)
           let output_rewards = lovelace_of(asteria_value)
           expect Some(percentage) = rational.new(max_asteria_mining, 100)
@@ -168,7 +168,7 @@ validator asteria(
             ),
           )
         }
-        let must_preserve_other_tokens =
+        let asteria_must_preserve_other_tokens =
           assets.without_lovelace(asteria_value) == assets.without_lovelace(
             asteria_input.output.value,
           )
@@ -186,11 +186,12 @@ validator asteria(
             },
           )
         expect Output {
-          address: Address(_, None),
+          address: Address(Script(ship_address), None),
           value: ship_value,
           datum: InlineDatum(ship_datum),
           reference_script: None,
         } = ship_input.output
+        let ship_must_have_correct_address = ship_address == shipyard_policy
 
         expect ShipDatum {
           pos_x,
@@ -201,8 +202,8 @@ validator asteria(
         } = ship_datum
 
         // check ship datum
-        let must_have_asteria_position = (pos_x, pos_y) == (0, 0)
-        let must_respect_latest_time = {
+        let ship_must_have_asteria_position = (pos_x, pos_y) == (0, 0)
+        let ship_must_respect_latest_time = {
           expect Finite(tx_earliest_time) =
             validity_range.lower_bound.bound_type
           last_move_latest_time <= tx_earliest_time
@@ -219,11 +220,12 @@ validator asteria(
         }
 
         and {
-          must_preserve_datum?,
-          must_respect_max_mining?,
-          must_preserve_other_tokens?,
-          must_have_asteria_position?,
-          must_respect_latest_time?,
+          asteria_must_preserve_datum?,
+          asteria_must_respect_max_mining?,
+          asteria_must_preserve_other_tokens?,
+          ship_must_have_correct_address?,
+          ship_must_have_asteria_position?,
+          ship_must_respect_latest_time?,
           must_burn_expected_value?,
         }
       }
