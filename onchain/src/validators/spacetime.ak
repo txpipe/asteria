@@ -263,8 +263,9 @@ validator spacetime(
 
     when redeemer is {
       MintShip -> {
-        expect Some(asteria_input) =
-          list.find(
+        // exactly one valid asteria input is present
+        expect [asteria_input] =
+          list.filter(
             inputs,
             fn(input) {
               when input.output.address.payment_credential is {
@@ -288,6 +289,7 @@ validator spacetime(
           pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
         }
 
+        // no need to check minted amounts here as it is checked in asteria
         and {
           must_be_valid_asteria?,
           must_be_correct_purpose?,
