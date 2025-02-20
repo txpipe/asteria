@@ -46,7 +46,7 @@ validator asteria(
             fn(output) { output.address == asteria_input.output.address },
           )
         expect Output {
-          address: Address(_, None),
+          address: _,
           value: asteria_value,
           datum: InlineDatum(asteria_datum),
           reference_script: None,
@@ -55,25 +55,17 @@ validator asteria(
         // check for correct Asteria output datum
         expect asteria_datum: AsteriaDatum = asteria_datum
         let asteria_must_have_correct_datum =
-          AsteriaDatum {
-            ship_counter: ship_counter + 1,
-            shipyard_policy: shipyard_policy,
-          } == asteria_datum
+          AsteriaDatum { ship_counter: ship_counter + 1, shipyard_policy } == asteria_datum
 
         // check for correct Asteria output value
         let must_hold_admin_token =
-          quantity_of(
-            asteria_value,
-            admin_token.policy,
-            admin_token.name,
-          ) > 0
+          quantity_of(asteria_value, admin_token.policy, admin_token.name) > 0
         let must_add_fee =
           asteria_value == (
             asteria_input.output.value
               |> add(ada_policy_id, ada_asset_name, ship_mint_lovelace_fee)
           )
-        let asteria_must_have_correct_value =
-          and {
+        let asteria_must_have_correct_value = and {
             must_add_fee?,
             must_hold_admin_token?,
           }
