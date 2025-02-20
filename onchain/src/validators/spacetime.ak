@@ -199,9 +199,9 @@ validator spacetime(
         }
       }
       MineAsteria -> {
-        // check that the Asteria UTxO is present as an input
-        expect Some(asteria_input) =
-          list.find(
+        // exactly one valid asteria input is present
+        expect [asteria_input] =
+          list.filter(
             inputs,
             fn(input) {
               when input.output.address.payment_credential is {
@@ -218,25 +218,16 @@ validator spacetime(
             admin_token.name,
           ) > 0
 
-        let must_be_correct_purpose = {
+        let must_have_correct_purpose = {
           let asteria_purpose = Spend(asteria_input.output_reference)
           let asteria_redeemer: Data = Mine
           pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
         }
 
-        let must_spend_two_script_inputs =
-          list.length(
-            list.filter(
-              inputs,
-              fn(input) { utils.is_script_address(input.output.address) },
-            ),
-          ) == 2
-
         and {
-          must_be_valid_asteria?,
           must_include_pilot_token?,
-          must_be_correct_purpose?,
-          must_spend_two_script_inputs?,
+          must_be_valid_asteria?,
+          must_have_correct_purpose?,
         }
       }
       Quit -> {

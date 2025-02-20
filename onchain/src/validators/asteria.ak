@@ -1,5 +1,6 @@
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/collection/pairs
 use aiken/crypto.{ScriptHash}
 use aiken/interval.{Finite}
 use aiken/math/rational.{compare_with, from_int}
@@ -8,7 +9,7 @@ use aiken/primitive/bytearray
 use aiken/primitive/string
 use asteria/types.{
   AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
-  ShipDatum,
+  MineAsteria, ShipDatum,
 }
 use asteria/utils
 use cardano/address.{Address, Script}
@@ -16,7 +17,7 @@ use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
 }
 use cardano/transaction.{
-  InlineDatum, Output, OutputReference, Transaction, find_input,
+  InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
 
 validator asteria(
@@ -33,7 +34,8 @@ validator asteria(
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } =
+      self
     expect Some(datum) = datum
     let AsteriaDatum { ship_counter, shipyard_policy } = datum
     expect Some(asteria_input) = find_input(inputs, utxo)
@@ -173,26 +175,35 @@ validator asteria(
             asteria_input.output.value,
           )
 
-        // check for correct state in ship input
-        // TODO: CHANGE FOR FILTER
-        expect Some(ship_input) =
-          list.find(
+        // check for exactly one ship input with correct state and redeemer
+        expect [ship_input] =
+          list.filter(
             inputs,
             fn(input) {
-              list.any(
-                dict.keys(tokens(input.output.value, shipyard_policy)),
-                fn(name) { utils.has_prefix("SHIP", name) },
-              )
+              when input.output.address is {
+                Address(Script(addr_payment), None) ->
+                  addr_payment == shipyard_policy
+                _ -> False
+              }
             },
           )
         expect Output {
-          address: Address(Script(ship_address), None),
+          address: _,
           value: ship_value,
           datum: InlineDatum(ship_datum),
           reference_script: None,
         } = ship_input.output
-        let ship_must_have_correct_address = ship_address == shipyard_policy
 
+        let ship_must_be_valid =
+          !dict.is_empty(tokens(ship_value, shipyard_policy))
+
+        let ship_must_have_correct_redeemer = {
+          let ship_purpose = Spend(ship_input.output_reference)
+          let ship_redeemer: Data = MineAsteria
+          pairs.get_all(redeemers, ship_purpose) == [ship_redeemer]
+        }
+
+        // check ship datum
         expect ShipDatum {
           pos_x,
           pos_y,
@@ -201,8 +212,8 @@ validator asteria(
           last_move_latest_time,
         } = ship_datum
 
-        // check ship datum
         let ship_must_have_asteria_position = (pos_x, pos_y) == (0, 0)
+
         let ship_must_respect_latest_time = {
           expect Finite(tx_earliest_time) =
             validity_range.lower_bound.bound_type
@@ -223,7 +234,8 @@ validator asteria(
           asteria_must_preserve_datum?,
           asteria_must_respect_max_mining?,
           asteria_must_preserve_other_tokens?,
-          ship_must_have_correct_address?,
+          ship_must_be_valid?,
+          ship_must_have_correct_redeemer?,
           ship_must_have_asteria_position?,
           ship_must_respect_latest_time?,
           must_burn_expected_value?,
