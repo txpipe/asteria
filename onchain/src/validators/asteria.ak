@@ -42,6 +42,9 @@ validator asteria(
 
     when redeemer is {
       AddNewShip -> {
+        // NOTE: double satisfaction with two Asteria inputs is not possible
+        // thanks to checks in shipyard minting policy
+
         expect [asteria_output] =
           list.filter(
             outputs,
@@ -137,13 +140,16 @@ validator asteria(
       }
 
       Mine -> {
+        // NOTE: double satisfaction with two Asteria inputs is not possible
+        // thanks to checks in spacetime spend validator
+
         expect [asteria_output] =
           list.filter(
             outputs,
             fn(output) { output.address == asteria_input.output.address },
           )
         expect Output {
-          address: Address(_, None),
+          address: _,
           value: asteria_value,
           datum: InlineDatum(asteria_datum),
           reference_script: None,
@@ -208,7 +214,7 @@ validator asteria(
           pos_x,
           pos_y,
           ship_token_name,
-          pilot_token_name,
+          pilot_token_name: _pilot_token_name,
           last_move_latest_time,
         } = ship_datum
 
