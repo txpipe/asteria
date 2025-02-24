@@ -25,22 +25,38 @@ validator pellet(admin_token: AssetClass) {
     expect Some(pellet_input) = find_input(inputs, utxo)
     expect Script(fuel_policy) = pellet_input.output.address.payment_credential
 
-    let remaining_fuel =
-      quantity_of(pellet_input.output.value, fuel_policy, "FUEL")
-
     when redeemer is {
       Provide(provided_amount) -> {
-        expect Some(datum) = datum
-        let PelletDatum { shipyard_policy, .. } = datum
         expect [pellet_output] =
           filter(
             outputs,
             fn(output) { output.address == pellet_input.output.address },
           )
-        expect InlineDatum(out_datum) = pellet_output.datum
-        expect out_datum: PelletDatum = out_datum
+        expect Output {
+          address: _,
+          value: pellet_value,
+          datum: InlineDatum(pellet_datum),
+          reference_script: None,
+        } = pellet_output
+
+        // check for correct pellet output datum
+        let must_preserve_datum = {
+          expect pellet_datum: PelletDatum = pellet_datum
+          Some(pellet_datum) == datum
+        }
+
+        // check for correct pellet output value
+        // implies that there is enough fuel
+        let must_provide_fuel_amount = {
+          let expected_pellet_value =
+            pellet_input.output.value
+              |> assets.add(fuel_policy, "FUEL", -provided_amount)
+          pellet_value == expected_pellet_value
+        }
 
         // check if ship_token is present in some input
+        expect Some(datum) = datum
+        let PelletDatum { shipyard_policy, .. } = datum
         let must_input_ship_token =
           option.is_some(
             list.find(
@@ -54,17 +70,8 @@ validator pellet(admin_token: AssetClass) {
             ),
           )
 
-        let must_have_enough_fuel = provided_amount <= remaining_fuel
-        let must_hold_admin_token =
-          quantity_of(pellet_output.value, admin_token.policy, admin_token.name) == 1
-        let must_provide_fuel_amount =
-          quantity_of(pellet_output.value, fuel_policy, "FUEL") == remaining_fuel - provided_amount
-        let must_preserve_datum = out_datum == datum
-
         and {
           must_input_ship_token?,
-          must_hold_admin_token?,
-          must_have_enough_fuel?,
           must_provide_fuel_amount?,
           must_preserve_datum?,
         }
