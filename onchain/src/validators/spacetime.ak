@@ -6,14 +6,14 @@ use aiken/math/rational
 use aiken/option
 use asteria/types.{
   AddNewShip, AssetClass, BurnShip, GatherFuel, Mine, MineAsteria, MintShip,
-  MoveShip, PelletDatum, Provide, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
-  ShipyardRedeemer, Speed,
+  MoveShip, Quit, ScriptAddress, ShipDatum, ShipRedeemer, ShipyardRedeemer,
+  Speed,
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{PolicyId, flatten, quantity_of, tokens, zero}
+use cardano/assets.{PolicyId, flatten, quantity_of, tokens}
 use cardano/transaction.{
-  InlineDatum, OutputReference, Spend, Transaction, find_input,
+  InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
 
 validator spacetime(
@@ -127,75 +127,42 @@ validator spacetime(
       }
 
       GatherFuel(amount) -> {
+        // allows adding fuel from any external source
+
+        // XXX: exposed to double satisfaction only if two equal ship tokens
+        // can exist (requires two Asterias running with same parameters)
+
         expect [ship_output] =
           list.filter(
             outputs,
             fn(output) { output.address == ship_input.output.address },
           )
-        expect InlineDatum(ship_output_datum) = ship_output.datum
-        expect ship_output_datum: ShipDatum = ship_output_datum
-        expect Some(pellet_input) =
-          list.find(
-            inputs,
-            fn(input) {
-              when input.output.address.payment_credential is {
-                VerificationKey(_) -> False
-                Script(addr_payment) -> addr_payment == pellet_validator_address
-              }
-            },
-          )
-        let must_be_valid_pellet =
-          quantity_of(
-            pellet_input.output.value,
-            admin_token.policy,
-            admin_token.name,
-          ) > 0
+        expect Output {
+          address: _,
+          value: ship_value,
+          datum: InlineDatum(ship_datum),
+          reference_script: None,
+        } = ship_output
+        expect ship_datum: ShipDatum = ship_datum
 
-        expect InlineDatum(pellet_datum) = pellet_input.output.datum
-        expect pellet_datum: PelletDatum = pellet_datum
-        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
+        let must_preserve_datum = ship_datum == datum
 
-        let input_fuel =
-          quantity_of(ship_input.output.value, fuel_policy, "FUEL")
-        let output_fuel = quantity_of(ship_output.value, fuel_policy, "FUEL")
+        let must_have_correct_value = {
+          let expected_ship_value =
+            ship_input.output.value |> add(fuel_policy, "FUEL", amount)
+          without_lovelace(ship_value) == without_lovelace(expected_ship_value)
+        }
 
-        let must_have_pellet_position =
-          pos_x == pellet_datum.pos_x && pos_y == pellet_datum.pos_y
-        let must_not_exceed_capacity = input_fuel + amount <= max_ship_fuel
-        let must_preserve_datum = ship_output_datum == datum
-        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
-
-        let must_hold_ship_token =
-          quantity_of(ship_output.value, shipyard_policy, ship_token_name) == 1
-        let must_add_fuel_tokens = output_fuel == input_fuel + amount
-        let must_hold_3_assets = list.length(ship_output.value |> flatten) == 3
-
-        // gathered fuel amount must be equal to amount provided by pellet
-        let pellet_purpose = Spend(pellet_input.output_reference)
-        let pellet_redeemer: Data = Provide(amount)
-        expect pairs.get_all(redeemers, pellet_purpose) == [pellet_redeemer]
-
-        let must_spend_two_script_inputs =
-          list.length(
-            list.filter(
-              inputs,
-              fn(input) { utils.is_script_address(input.output.address) },
-            ),
-          ) == 2
-        let must_not_mint_tokens = mint == zero
+        let must_be_correct_amount = {
+          let output_fuel = quantity_of(ship_value, fuel_policy, "FUEL")
+          amount > 0 && output_fuel <= max_ship_fuel
+        }
 
         and {
-          must_spend_two_script_inputs?,
-          must_be_valid_pellet?,
           must_include_pilot_token?,
-          must_have_pellet_position?,
-          must_add_fuel_tokens?,
-          must_not_exceed_capacity?,
-          must_respect_latest_time?,
           must_preserve_datum?,
-          must_hold_ship_token?,
-          must_hold_3_assets?,
-          must_not_mint_tokens?,
+          must_have_correct_value?,
+          must_be_correct_amount?,
         }
       }
       MineAsteria -> {
