@@ -1,14 +1,15 @@
 use aiken/collection/dict
 use aiken/collection/list.{filter}
 use aiken/collection/pairs
+use aiken/interval.{Finite}
 use aiken/option
 use asteria/types.{
-  AddNewShip, AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, MintFuel,
-  PelletDatum, PelletRedeemer, Provide,
+  AddNewShip, AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, GatherFuel,
+  MintFuel, PelletDatum, PelletRedeemer, Provide, ShipDatum,
 }
 use asteria/utils
-use cardano/address.{Script, VerificationKey}
-use cardano/assets.{PolicyId, quantity_of, tokens}
+use cardano/address.{Address, Script, VerificationKey}
+use cardano/assets.{PolicyId, quantity_of, tokens, zero}
 use cardano/transaction.{
   InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
@@ -20,7 +21,8 @@ validator pellet(admin_token: AssetClass) {
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, .. } = self
+    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } =
+      self
 
     expect Some(pellet_input) = find_input(inputs, utxo)
     expect Script(fuel_policy) = pellet_input.output.address.payment_credential
@@ -38,6 +40,7 @@ validator pellet(admin_token: AssetClass) {
           datum: InlineDatum(pellet_datum),
           reference_script: None,
         } = pellet_output
+        expect PelletDatum { pos_x, pos_y, shipyard_policy } = pellet_datum
 
         // check for correct pellet output datum
         let must_preserve_datum = {
@@ -47,33 +50,78 @@ validator pellet(admin_token: AssetClass) {
 
         // check for correct pellet output value
         // implies that there is enough fuel
-        let must_provide_fuel_amount = {
+        let must_have_correct_value = {
           let expected_pellet_value =
             pellet_input.output.value
               |> assets.add(fuel_policy, "FUEL", -provided_amount)
           pellet_value == expected_pellet_value
         }
 
-        // check if ship_token is present in some input
-        expect Some(datum) = datum
-        let PelletDatum { shipyard_policy, .. } = datum
-        let must_input_ship_token =
-          option.is_some(
-            list.find(
-              inputs,
-              fn(input) {
-                list.any(
-                  dict.keys(tokens(input.output.value, shipyard_policy)),
-                  fn(name) { utils.has_prefix("SHIP", name) },
-                )
-              },
-            ),
+        // check for exactly one ship input with correct state and redeemer
+        expect [ship_input] =
+          list.filter(
+            inputs,
+            fn(input) {
+              when input.output.address is {
+                Address(Script(addr_payment), None) ->
+                  addr_payment == shipyard_policy
+                _ -> False
+              }
+            },
           )
+        expect Output {
+          address: _,
+          value: ship_value,
+          datum: InlineDatum(ship_datum),
+          reference_script: None,
+        } = ship_input.output
+
+        let ship_must_be_valid =
+          !dict.is_empty(tokens(ship_value, shipyard_policy))
+
+        // gathered fuel amount must be equal to amount provided by pellet
+        let ship_must_have_correct_redeemer = {
+          let ship_purpose = Spend(ship_input.output_reference)
+          let ship_redeemer: Data = GatherFuel(provided_amount)
+          pairs.get_all(redeemers, ship_purpose) == [ship_redeemer]
+        }
+
+        // check ship datum
+        expect ShipDatum {
+          pos_x: ship_pos_x,
+          pos_y: ship_pos_y,
+          last_move_latest_time,
+          ..
+        } = ship_datum
+
+        let ship_must_have_correct_position =
+          (pos_x, pos_y) == (ship_pos_x, ship_pos_y)
+
+        let must_respect_latest_time = {
+          expect Finite(tx_earliest_time) =
+            validity_range.lower_bound.bound_type
+          last_move_latest_time <= tx_earliest_time
+        }
+
+        let must_not_mint = mint == zero
+
+        let must_spend_two_script_inputs =
+          list.length(
+            list.filter(
+              inputs,
+              fn(input) { utils.is_script_address(input.output.address) },
+            ),
+          ) == 2
 
         and {
-          must_input_ship_token?,
-          must_provide_fuel_amount?,
           must_preserve_datum?,
+          must_have_correct_value?,
+          ship_must_be_valid?,
+          ship_must_have_correct_redeemer?,
+          ship_must_have_correct_position?,
+          must_respect_latest_time?,
+          must_not_mint?,
+          must_spend_two_script_inputs?,
         }
       }
 
