@@ -49,8 +49,8 @@ validator pellet(admin_token: AssetClass) {
         }
 
         // check for correct pellet output value
-        // implies that there is enough fuel
         let must_have_correct_value = {
+          // implies that there is enough fuel
           let expected_pellet_value =
             pellet_input.output.value
               |> assets.add(fuel_policy, "FUEL", -provided_amount)
@@ -171,14 +171,11 @@ validator pellet(admin_token: AssetClass) {
             },
           )
 
-        // admin token is in a wallet input
-        let must_be_admin =
-          not(utils.is_script_address(admin_token_input.output.address))
-
-        // admin token is in an Asteria input with redeemer AddNewShip
-        let must_be_add_new_ship =
+        let must_be_admin_or_add_new_ship =
           when admin_token_input.output.address.payment_credential is {
-            VerificationKey(_) -> False
+            // admin token is in a wallet input
+            VerificationKey(_) -> True
+            // admin token is in an Asteria input with redeemer AddNewShip
             Script(addr_payment) -> {
               // it is a script and not a pellet, then it is Asteria
               let must_be_asteria = addr_payment != fuel_policy
@@ -192,7 +189,7 @@ validator pellet(admin_token: AssetClass) {
             }
           }
 
-        amount > 0 && ( must_be_admin? || must_be_add_new_ship? )
+        amount > 0 && must_be_admin_or_add_new_ship?
       }
       BurnFuel -> amount < 0
     }
