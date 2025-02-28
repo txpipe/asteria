@@ -15,6 +15,7 @@ use asteria/utils
 use cardano/address.{Address, Script}
 use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
+  without_lovelace,
 }
 use cardano/transaction.{
   InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
@@ -177,7 +178,7 @@ validator asteria(
           )
         }
         let asteria_must_preserve_other_tokens =
-          assets.without_lovelace(asteria_value) == assets.without_lovelace(
+          without_lovelace(asteria_value) == without_lovelace(
             asteria_input.output.value,
           )
 
