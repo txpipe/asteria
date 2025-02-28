@@ -11,7 +11,9 @@ use asteria/types.{
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{PolicyId, flatten, quantity_of, tokens}
+use cardano/assets.{
+  PolicyId, add, from_asset, quantity_of, tokens, without_lovelace,
+}
 use cardano/transaction.{
   InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
@@ -65,71 +67,77 @@ validator spacetime(
 
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
+        // exposed to double satisfaction only if two equal ship tokens
+        // can exist (requires two Asterias running with same parameters)
+
+        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
+        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
+
+        // calculate moving distance and required fuel
+        let distance = utils.distance(delta_x, delta_y)
+        let required_fuel = utils.required_fuel(distance, fuel_per_step)
+
+        let must_respect_max_speed = {
+          expect Some(speed) =
+            rational.new(distance, tx_latest_time - tx_earliest_time)
+          rational.compare_with(speed, <=, max_speed_rational)
+        }
+
+        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
+
+        // check for correct ship output
         expect [ship_output] =
           list.filter(
             outputs,
             fn(output) { output.address == ship_input.output.address },
           )
-        expect InlineDatum(ship_output_datum) = ship_output.datum
-        expect ship_output_datum: ShipDatum = ship_output_datum
-        expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
-        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
+        expect Output {
+          address: _,
+          value: ship_out_value,
+          datum: InlineDatum(ship_out_datum),
+          reference_script: None,
+        } = ship_output
+        expect ship_out_datum: ShipDatum = ship_out_datum
 
-        let distance = utils.distance(delta_x, delta_y)
-        let required_fuel = utils.required_fuel(distance, fuel_per_step)
-        expect Some(speed) =
-          rational.new(distance, tx_latest_time - tx_earliest_time)
+        // check for correct ship output datum
+        let expected_ship_datum =
+          ShipDatum {
+            pos_x: pos_x + delta_x,
+            pos_y: pos_y + delta_y,
+            ship_token_name,
+            pilot_token_name,
+            last_move_latest_time: ship_out_datum.last_move_latest_time,
+          }
+        let must_have_correct_datum =
+          expected_ship_datum == ship_out_datum && ship_out_datum.last_move_latest_time >= tx_latest_time
 
-        let input_fuel =
-          quantity_of(ship_input.output.value, fuel_policy, "FUEL")
-        let output_fuel = quantity_of(ship_output.value, fuel_policy, "FUEL")
+        // check for correct ship output value
+        let must_have_correct_value = {
+          // implies that there is enough fuel
+          let expected_ship_value =
+            ship_input.output.value |> add(fuel_policy, "FUEL", -required_fuel)
+          without_lovelace(ship_out_value) == without_lovelace(
+            expected_ship_value,
+          )
+        }
 
-        let must_preserve_pilot_token =
-          pilot_token_name == ship_output_datum.pilot_token_name
-        let must_update_x = ship_output_datum.pos_x == pos_x + delta_x
-        let must_update_y = ship_output_datum.pos_y == pos_y + delta_y
+        // check minting
         let must_burn_spent_fuel =
-          quantity_of(mint, fuel_policy, "FUEL") == -required_fuel
-        let must_update_upper_bound =
-          ship_output_datum.last_move_latest_time == tx_latest_time
-        let must_respect_max_speed =
-          rational.compare_with(speed, <=, max_speed_rational)
-        let must_respect_latest_time = last_move_latest_time <= tx_earliest_time
-        let must_have_enough_fuel = required_fuel <= input_fuel
-        let must_hold_ship_token =
-          quantity_of(ship_output.value, shipyard_policy, ship_token_name) == 1
-        let must_subtract_fuel_tokens =
-          output_fuel == input_fuel - required_fuel
-        let must_hold_3_assets = list.length(ship_output.value |> flatten) == 3
-        let must_spend_one_script_input =
-          list.length(
-            list.filter(
-              inputs,
-              fn(input) { utils.is_script_address(input.output.address) },
-            ),
-          ) == 1
+          mint == from_asset(fuel_policy, "FUEL", -required_fuel)
 
         and {
-          must_spend_one_script_input?,
           must_include_pilot_token?,
-          must_have_enough_fuel?,
           must_respect_max_speed?,
           must_respect_latest_time?,
-          must_subtract_fuel_tokens?,
+          must_have_correct_datum?,
+          must_have_correct_value?,
           must_burn_spent_fuel?,
-          must_update_x?,
-          must_update_y?,
-          must_update_upper_bound?,
-          must_preserve_pilot_token?,
-          must_hold_ship_token?,
-          must_hold_3_assets?,
         }
       }
-
       GatherFuel(amount) -> {
         // allows adding fuel from any external source
 
-        // XXX: exposed to double satisfaction only if two equal ship tokens
+        // exposed to double satisfaction only if two equal ship tokens
         // can exist (requires two Asterias running with same parameters)
 
         expect [ship_output] =
