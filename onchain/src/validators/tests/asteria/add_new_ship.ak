@@ -240,11 +240,15 @@ test no_admin_token() fail {
 }
 
 test counter_not_updated() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), update_counter: False })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), update_counter: False },
+  )
 }
 
 test shipyard_policy_not_preserved() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), preserve_policy: False })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), preserve_policy: False },
+  )
 }
 
 test ship_token_not_minted() fail {
@@ -272,11 +276,15 @@ test pilot_token_wrong_amount() fail {
 }
 
 test fuel_tokens_not_minted() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), fuel_minted_amount: 0 })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), fuel_minted_amount: 0 },
+  )
 }
 
 test fuel_tokens_wrong_amount() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), fuel_minted_amount: 50 })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), fuel_minted_amount: 50 },
+  )
 }
 
 test wrong_ship_token_prefix() fail {
@@ -316,7 +324,9 @@ test initial_distance_below_min() fail {
 }
 
 test wrong_ship_name_in_datum() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), datum_ship_name: "FOO" })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), datum_ship_name: "FOO" },
+  )
 }
 
 test wrong_pilot_name_in_datum() fail {
@@ -340,5 +350,7 @@ test wrong_initial_fuel() fail {
 }
 
 test add_extra_token() fail {
-  add_new_ship(AddTestOptions { ..default_add_options(), extra_token_amount: 1 })
+  add_new_ship(
+    AddTestOptions { ..default_add_options(), extra_token_amount: 1 },
+  )
 }
