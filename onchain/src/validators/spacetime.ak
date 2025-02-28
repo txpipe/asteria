@@ -1,13 +1,13 @@
 use aiken/collection/dict
 use aiken/collection/list
 use aiken/collection/pairs
+use aiken/crypto.{ScriptHash}
 use aiken/interval.{Finite}
 use aiken/math/rational
 use aiken/option
 use asteria/types.{
   AddNewShip, AssetClass, BurnShip, GatherFuel, Mine, MineAsteria, MintShip,
-  MoveShip, Quit, ScriptAddress, ShipDatum, ShipRedeemer, ShipyardRedeemer,
-  Speed,
+  MoveShip, Quit, ShipDatum, ShipRedeemer, ShipyardRedeemer, Speed,
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
@@ -19,8 +19,8 @@ use cardano/transaction.{
 }
 
 validator spacetime(
-  pellet_validator_address: ScriptAddress,
-  asteria_validator_address: ScriptAddress,
+  pellet_validator_address: ScriptHash,
+  asteria_validator_address: ScriptHash,
   admin_token: AssetClass,
   max_speed: Speed,
   max_ship_fuel: Int,
