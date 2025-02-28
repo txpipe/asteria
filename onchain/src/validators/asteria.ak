@@ -1,5 +1,6 @@
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/collection/pairs
 use aiken/crypto.{ScriptHash}
 use aiken/interval.{Finite}
 use aiken/math/rational.{compare_with, from_int}
@@ -8,15 +9,16 @@ use aiken/primitive/bytearray
 use aiken/primitive/string
 use asteria/types.{
   AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
-  ShipDatum,
+  MineAsteria, ShipDatum,
 }
 use asteria/utils
-use cardano/address.{Address}
+use cardano/address.{Address, Script}
 use cardano/assets.{
   ada_asset_name, ada_policy_id, add, lovelace_of, quantity_of, tokens,
+  without_lovelace,
 }
 use cardano/transaction.{
-  InlineDatum, Output, OutputReference, Transaction, find_input,
+  InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
 
 validator asteria(
@@ -33,13 +35,17 @@ validator asteria(
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } =
+      self
     expect Some(datum) = datum
     let AsteriaDatum { ship_counter, shipyard_policy } = datum
     expect Some(asteria_input) = find_input(inputs, utxo)
 
     when redeemer is {
       AddNewShip -> {
+        // NOTE: double satisfaction with two Asteria inputs is not possible
+        // thanks to checks in shipyard minting policy
+
         expect [asteria_output] =
           list.filter(
             outputs,
@@ -135,31 +141,33 @@ validator asteria(
       }
 
       Mine -> {
+        // NOTE: double satisfaction with two Asteria inputs is not possible
+        // thanks to checks in spacetime spend validator
+
         expect [asteria_output] =
           list.filter(
             outputs,
             fn(output) { output.address == asteria_input.output.address },
           )
-        expect InlineDatum(asteria_output_datum) = asteria_output.datum
-        expect asteria_output_datum: AsteriaDatum = asteria_output_datum
+        expect Output {
+          address: _,
+          value: asteria_value,
+          datum: InlineDatum(asteria_datum),
+          reference_script: None,
+        } = asteria_output
 
-        // check if ship_token is present in some input
-        let must_input_ship_token =
-          option.is_some(
-            list.find(
-              inputs,
-              fn(input) {
-                list.any(
-                  dict.keys(tokens(input.output.value, shipyard_policy)),
-                  fn(name) { utils.has_prefix("SHIP", name) },
-                )
-              },
-            ),
-          )
-        expect Some(percentage) = rational.new(max_asteria_mining, 100)
-        let input_rewards = lovelace_of(asteria_input.output.value)
-        let output_rewards = lovelace_of(asteria_output.value)
-        let must_respect_max_mining =
+        // check for correct Asteria output datum
+        let asteria_must_preserve_datum = {
+          expect asteria_datum: AsteriaDatum = asteria_datum
+          datum == asteria_datum
+        }
+
+        // check for correct Asteria output value
+        // first lovelace: output_rewards >= input_rewards * (1 - max_asteria_mining / 100)
+        let asteria_must_respect_max_mining = {
+          let input_rewards = lovelace_of(asteria_input.output.value)
+          let output_rewards = lovelace_of(asteria_value)
+          expect Some(percentage) = rational.new(max_asteria_mining, 100)
           compare_with(
             from_int(output_rewards),
             >=,
@@ -168,11 +176,76 @@ validator asteria(
               rational.sub(from_int(1), percentage),
             ),
           )
-        let must_preserve_datum = datum == asteria_output_datum
+        }
+        let asteria_must_preserve_other_tokens =
+          without_lovelace(asteria_value) == without_lovelace(
+            asteria_input.output.value,
+          )
+
+        // check for exactly one ship input with correct state and redeemer
+        expect [ship_input] =
+          list.filter(
+            inputs,
+            fn(input) {
+              when input.output.address is {
+                Address(Script(addr_payment), None) ->
+                  addr_payment == shipyard_policy
+                _ -> False
+              }
+            },
+          )
+        expect Output {
+          address: _,
+          value: ship_value,
+          datum: InlineDatum(ship_datum),
+          reference_script: None,
+        } = ship_input.output
+
+        let ship_must_be_valid =
+          !dict.is_empty(tokens(ship_value, shipyard_policy))
+
+        let ship_must_have_correct_redeemer = {
+          let ship_purpose = Spend(ship_input.output_reference)
+          let ship_redeemer: Data = MineAsteria
+          pairs.get_all(redeemers, ship_purpose) == [ship_redeemer]
+        }
+
+        // check ship datum
+        expect ShipDatum {
+          pos_x,
+          pos_y,
+          ship_token_name,
+          pilot_token_name: _pilot_token_name,
+          last_move_latest_time,
+        } = ship_datum
+
+        let ship_must_have_asteria_position = (pos_x, pos_y) == (0, 0)
+
+        let ship_must_respect_latest_time = {
+          expect Finite(tx_earliest_time) =
+            validity_range.lower_bound.bound_type
+          last_move_latest_time <= tx_earliest_time
+        }
+
+        // check minting
+        // TODO: we can also just burn all ship_value without lovelace:
+        let must_burn_expected_value = {
+          let fuel_amount = quantity_of(ship_value, pellet_address, "FUEL")
+          let expected_minted_value =
+            assets.from_asset(shipyard_policy, ship_token_name, -1)
+              |> assets.add(pellet_address, "FUEL", -fuel_amount)
+          mint == expected_minted_value
+        }
+
         and {
-          must_input_ship_token?,
-          must_respect_max_mining?,
-          must_preserve_datum?,
+          asteria_must_preserve_datum?,
+          asteria_must_respect_max_mining?,
+          asteria_must_preserve_other_tokens?,
+          ship_must_be_valid?,
+          ship_must_have_correct_redeemer?,
+          ship_must_have_asteria_position?,
+          ship_must_respect_latest_time?,
+          must_burn_expected_value?,
         }
       }
 
