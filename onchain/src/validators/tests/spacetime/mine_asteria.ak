@@ -45,9 +45,7 @@ fn mine(options: MineTestOptions) -> Bool {
   let min_ada = from_lovelace(2_000_000)
   let fuel_per_step = 1
   let max_ship_fuel = 100
-  let initial_fuel = 40
   let ship_fuel = 30
-  let min_distance = 10
   let max_speed = Speed { distance: 1, time: 1_000 }
   let earliest_time =
     if options.respects_latest_time {
@@ -220,8 +218,6 @@ fn mine(options: MineTestOptions) -> Bool {
       max_speed,
       max_ship_fuel,
       fuel_per_step,
-      initial_fuel,
-      min_distance,
       Some(ship_input_datum),
       redeemer,
       OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 },

@@ -126,11 +126,16 @@ fn consume(options: ConsumeTestOptions) -> Bool {
       current_treasury_amount: None,
       treasury_donation: None,
     }
+  let min_distance = 10
+  let initial_fuel = 480
   let result =
     asteria.asteria.spend(
+      mock.pellet_credential,
       admin_token,
       ship_mint_lovelace_fee,
       max_asteria_mining,
+      min_distance,
+      initial_fuel,
       Some(asteria_datum),
       redeemer,
       OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 },

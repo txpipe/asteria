@@ -61,8 +61,6 @@ fn move(options: MoveTestOptions) -> Bool {
   let fuel_per_step = 1
   let required_fuel = fuel_per_step * distance(options.delta_x, options.delta_y)
   let max_ship_fuel = 100
-  let initial_pellet_fuel = 40
-  let min_asteria_distance = 10
   let max_speed = Speed { distance: 1, time: 1_000 }
   let earliest_time =
     if options.respects_latest_time {
@@ -256,8 +254,6 @@ fn move(options: MoveTestOptions) -> Bool {
       max_speed,
       max_ship_fuel,
       fuel_per_step,
-      initial_pellet_fuel,
-      min_asteria_distance,
       Some(ship_input_datum),
       redeemer,
       OutputReference { transaction_id: mock.transaction_id_1, output_index: 0 },

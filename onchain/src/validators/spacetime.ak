@@ -4,19 +4,17 @@ use aiken/collection/pairs
 use aiken/interval.{Finite}
 use aiken/math/rational
 use aiken/option
-use aiken/primitive/bytearray
-use aiken/primitive/string
 use asteria/types.{
-  AssetClass, AsteriaDatum, BurnShip, GatherFuel, MineAsteria, MintShip,
-  MoveShip, PelletDatum, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
-  ShipyardRedeemer, Speed, Provide,
+  AddNewShip, AssetClass, BurnShip, GatherFuel, MineAsteria, MintShip, MoveShip,
+  PelletDatum, Provide, Quit, ScriptAddress, ShipDatum, ShipRedeemer,
+  ShipyardRedeemer, Speed,
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{
-  PolicyId, add, flatten, from_asset, quantity_of, tokens, zero,
+use cardano/assets.{PolicyId, flatten, quantity_of, tokens, zero}
+use cardano/transaction.{
+  InlineDatum, OutputReference, Spend, Transaction, find_input,
 }
-use cardano/transaction.{InlineDatum, OutputReference, Transaction, Spend, find_input}
 
 validator spacetime(
   pellet_validator_address: ScriptAddress,
@@ -25,8 +23,6 @@ validator spacetime(
   max_speed: Speed,
   max_ship_fuel: Int,
   fuel_per_step: Int,
-  initial_fuel: Int,
-  min_asteria_distance: Int,
 ) {
   // SPACETIME VALIDATOR:
   spend(
@@ -35,7 +31,8 @@ validator spacetime(
     utxo: OutputReference,
     self: Transaction,
   ) {
-    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } = self
+    let Transaction { inputs, outputs, mint, validity_range, redeemers, .. } =
+      self
     expect Some(datum) = datum
     let ShipDatum {
       pos_x,
@@ -279,10 +276,8 @@ validator spacetime(
 
   // SHIPYARD POLICY:
   mint(redeemer: ShipyardRedeemer, shipyard_policy: PolicyId, self: Transaction) {
-    let Transaction { inputs, outputs, mint, validity_range, .. } = self
+    let Transaction { inputs, mint, redeemers, .. } = self
     let minted_value = mint
-
-    let fuel_policy = pellet_validator_address
 
     when redeemer is {
       MintShip -> {
@@ -303,54 +298,15 @@ validator spacetime(
             admin_token.policy,
             admin_token.name,
           ) > 0
-        expect InlineDatum(asteria_datum) = asteria_input.output.datum
-        expect asteria_datum: AsteriaDatum = asteria_datum
 
-        expect [ship_state] =
-          transaction.find_script_outputs(outputs, shipyard_policy)
-        expect InlineDatum(ship_datum) = ship_state.datum
-        expect ship_datum: ShipDatum = ship_datum
-        expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
-
-        let ship_token_name =
-          bytearray.concat(
-            "SHIP",
-            bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
-          )
-        let pilot_token_name =
-          bytearray.concat(
-            "PILOT",
-            bytearray.from_string(string.from_int(asteria_datum.ship_counter)),
-          )
-        let expected_minted_value =
-          from_asset(shipyard_policy, ship_token_name, 1)
-            |> add(shipyard_policy, pilot_token_name, 1)
-            |> add(fuel_policy, "FUEL", initial_fuel)
-
-        let must_mint_expected_value = minted_value == expected_minted_value
-        let must_respect_min_distance =
-          utils.distance(ship_datum.pos_x, ship_datum.pos_y) >= min_asteria_distance
-        let must_have_ship_name = ship_datum.ship_token_name == ship_token_name
-        let must_have_pilot_name =
-          ship_datum.pilot_token_name == pilot_token_name
-        let must_have_latest_time =
-          ship_datum.last_move_latest_time == tx_latest_time
-        let must_hold_ship_token =
-          quantity_of(ship_state.value, shipyard_policy, ship_token_name) == 1
-        let must_hold_initial_fuel =
-          quantity_of(ship_state.value, fuel_policy, "FUEL") == initial_fuel
-        let must_hold_3_assets = list.length(ship_state.value |> flatten) == 3
+        let asteria_purpose = Spend(asteria_input.output_reference)
+        let asteria_redeemer: Data = AddNewShip
+        let must_be_correct_purpose =
+          pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
 
         and {
           must_be_valid_asteria?,
-          must_mint_expected_value?,
-          must_respect_min_distance?,
-          must_have_ship_name?,
-          must_have_pilot_name?,
-          must_have_latest_time?,
-          must_hold_ship_token?,
-          must_hold_initial_fuel?,
-          must_hold_3_assets?,
+          must_be_correct_purpose?,
         }
       }
 

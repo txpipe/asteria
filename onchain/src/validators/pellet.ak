@@ -1,15 +1,16 @@
 use aiken/collection/dict
 use aiken/collection/list.{filter}
+use aiken/collection/pairs
 use aiken/option
 use asteria/types.{
-  AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, MintFuel, PelletDatum,
-  PelletRedeemer, Provide,
+  AddNewShip, AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, MintFuel,
+  PelletDatum, PelletRedeemer, Provide,
 }
 use asteria/utils
-use cardano/address.{Script}
+use cardano/address.{Script, VerificationKey}
 use cardano/assets.{PolicyId, quantity_of, tokens}
 use cardano/transaction.{
-  InlineDatum, Output, OutputReference, Transaction, find_input,
+  InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
 
 validator pellet(admin_token: AssetClass) {
@@ -89,13 +90,21 @@ validator pellet(admin_token: AssetClass) {
   }
 
   mint(redeemer: FuelRedeemer, fuel_policy: PolicyId, self: Transaction) {
-    let Transaction { inputs, mint, .. } = self
-    let minted_value = mint
+    let Transaction { inputs, mint, redeemers, .. } = self
+
+    // only "FUEL" can be minted, extract amount
+    expect [Pair("FUEL", amount)] =
+      mint
+        |> tokens(fuel_policy)
+        |> dict.to_pairs()
 
     when redeemer is {
       MintFuel -> {
-        // check that there is an input with the admin token
-        let admin_token_input =
+        // fuel can be minted by admin when creating a Pellet
+        // or by a user when creating a ship (Asteria is spent)
+
+        // there is an input with the admin token
+        expect Some(admin_token_input) =
           list.find(
             inputs,
             fn(input) {
@@ -107,17 +116,30 @@ validator pellet(admin_token: AssetClass) {
             },
           )
 
-        let must_mint_fuel_tokens =
-          quantity_of(minted_value, fuel_policy, "FUEL") > 0
+        // admin token is in a wallet input
+        let must_be_admin =
+          not(utils.is_script_address(admin_token_input.output.address))
 
-        option.is_some(admin_token_input)? && must_mint_fuel_tokens?
-      }
-      BurnFuel -> {
-        let must_burn_fuel_tokens =
-          quantity_of(minted_value, fuel_policy, "FUEL") < 0
+        // admin token is in an Asteria input with redeemer AddNewShip
+        let must_be_add_new_ship =
+          when admin_token_input.output.address.payment_credential is {
+            VerificationKey(_) -> False
+            Script(addr_payment) -> {
+              // it is a script and not a pellet, then it is Asteria
+              let must_be_asteria = addr_payment != fuel_policy
 
-        must_burn_fuel_tokens?
+              let asteria_purpose = Spend(admin_token_input.output_reference)
+              let asteria_redeemer: Data = AddNewShip
+              let must_be_correct_purpose =
+                pairs.get_all(redeemers, asteria_purpose) == [asteria_redeemer]
+
+              must_be_asteria? && must_be_correct_purpose?
+            }
+          }
+
+        amount > 0 && ( must_be_admin? || must_be_add_new_ship? )
       }
+      BurnFuel -> amount < 0
     }
   }
 

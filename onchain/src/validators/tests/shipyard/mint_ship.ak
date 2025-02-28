@@ -1,11 +1,13 @@
 use aiken/collection/dict
 use aiken/interval.{Finite, Interval, IntervalBound}
 use asteria/test_mock as mock
-use asteria/types.{AssetClass, AsteriaDatum, MintShip, ShipDatum, Speed}
+use asteria/types.{
+  AddNewShip, AssetClass, AsteriaDatum, MintShip, ShipDatum, Speed,
+}
 use cardano/address.{Address, Script}
 use cardano/assets.{AssetName, add, from_asset, from_lovelace}
 use cardano/transaction.{
-  InlineDatum, Input, Mint, Output, OutputReference, Transaction,
+  InlineDatum, Input, Mint, Output, OutputReference, Spend, Transaction,
 }
 use spacetime
 
@@ -19,7 +21,6 @@ type MintTestOptions {
   fuel_paid: Int,
   latest_time: Int,
   ship_counter: Int,
-  initial_fuel: Int,
   ship_tokens_paid: Int,
   extra_token_amount: Int,
   fuel_minted_amount: Int,
@@ -41,7 +42,6 @@ fn get_default_mint_options() {
     fuel_paid: 40,
     latest_time: 10_000,
     ship_counter: 7,
-    initial_fuel: 40,
     ship_tokens_paid: 1,
     extra_token_amount: 0,
     fuel_minted_amount: 40,
@@ -60,7 +60,6 @@ fn get_default_mint_options() {
 fn mint_ship(options: MintTestOptions) -> Bool {
   let fuel_per_step = 1
   let max_ship_fuel = 100
-  let min_distance = 10
   let shipyard_policy = mock.shipyard_policy
   let max_speed = Speed { distance: 1, time: 1_000 }
   let admin_token =
@@ -165,6 +164,13 @@ fn mint_ship(options: MintTestOptions) -> Bool {
             redeemer_data
           },
         ),
+        Pair(
+          Spend(asteria_in.output_reference),
+          {
+            let redeemer_data: Data = AddNewShip
+            redeemer_data
+          },
+        ),
       ],
       datums: dict.empty,
       id: transaction_id,
@@ -181,8 +187,6 @@ fn mint_ship(options: MintTestOptions) -> Bool {
       max_speed,
       max_ship_fuel,
       fuel_per_step,
-      options.initial_fuel,
-      min_distance,
       redeemer,
       shipyard_policy,
       tx,
@@ -200,129 +204,5 @@ test no_asteria_input() fail {
       ..get_default_mint_options(),
       includes_asteria_input: False,
     },
-  )
-}
-
-test ship_token_not_minted() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      ship_token_minted_amount: 0,
-    },
-  )
-}
-
-test ship_token_wrong_amount() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      ship_token_minted_amount: 2,
-    },
-  )
-}
-
-test pilot_token_not_minted() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      pilot_token_minted_amount: 0,
-    },
-  )
-}
-
-test pilot_token_wrong_amount() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      pilot_token_minted_amount: 2,
-    },
-  )
-}
-
-test fuel_tokens_not_minted() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), fuel_minted_amount: 0 },
-  )
-}
-
-test fuel_tokens_wrong_amount() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), fuel_minted_amount: 50 },
-  )
-}
-
-test wrong_ship_token_prefix() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), ship_token_name: "SHI7" },
-  )
-}
-
-test wrong_ship_token_count() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), ship_token_name: "SHP8" },
-  )
-}
-
-test wrong_pilot_token_prefix() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), pilot_token_name: "PILO7" },
-  )
-}
-
-test wrong_pilot_token_count() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), pilot_token_name: "PILOT8" },
-  )
-}
-
-test no_ship_output() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      includes_ship_output: False,
-    },
-  )
-}
-
-test initial_distance_below_min() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), initial_x: 3, initial_y: 3 },
-  )
-}
-
-test wrong_ship_name_in_datum() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), datum_ship_name: "FOO" },
-  )
-}
-
-test wrong_pilot_name_in_datum() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), datum_pilot_name: "FOO" },
-  )
-}
-
-test wrong_latest_time_in_datum() fail {
-  mint_ship(
-    MintTestOptions {
-      ..get_default_mint_options(),
-      uses_correct_latest_time: False,
-    },
-  )
-}
-
-test ship_token_not_paid() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), ship_tokens_paid: 0 },
-  )
-}
-
-test wrong_initial_fuel() fail {
-  mint_ship(MintTestOptions { ..get_default_mint_options(), fuel_paid: 30 })
-}
-
-test add_extra_token() fail {
-  mint_ship(
-    MintTestOptions { ..get_default_mint_options(), extra_token_amount: 1 },
   )
 }
