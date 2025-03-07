@@ -65,11 +65,27 @@ validator spacetime(
       )
     let fuel_policy = pellet_validator_address
 
+    // only one ship input can be spent (the own ship)
+    // A bit pedantic, because double satisfaction is only possible if
+    // the smart contract is misused: the ship output is unique because
+    // ships are enumerated, but if two Asterias with same parameters exist
+    // (including the admin token), ship names can collide and then the
+    // attack is enabled.
+    let must_spend_one_ship_input =
+      list.length(
+        list.filter(
+          inputs,
+          fn(input) {
+            when input.output.address.payment_credential is {
+              VerificationKey(_) -> False
+              Script(addr_payment) -> addr_payment == shipyard_policy
+            }
+          },
+        ),
+      ) == 1
+
     when redeemer is {
       MoveShip(delta_x, delta_y) -> {
-        // exposed to double satisfaction only if two equal ship tokens
-        // can exist (requires two Asterias running with same parameters)
-
         expect Finite(tx_earliest_time) = validity_range.lower_bound.bound_type
         expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
 
@@ -127,6 +143,7 @@ validator spacetime(
 
         and {
           must_include_pilot_token?,
+          must_spend_one_ship_input?,
           must_respect_max_speed?,
           must_respect_latest_time?,
           must_have_correct_datum?,
@@ -136,9 +153,6 @@ validator spacetime(
       }
       GatherFuel(amount) -> {
         // allows adding fuel from any external source
-
-        // exposed to double satisfaction only if two equal ship tokens
-        // can exist (requires two Asterias running with same parameters)
 
         expect [ship_output] =
           list.filter(
@@ -168,6 +182,7 @@ validator spacetime(
 
         and {
           must_include_pilot_token?,
+          must_spend_one_ship_input?,
           must_preserve_datum?,
           must_have_correct_value?,
           must_be_correct_amount?,
@@ -201,6 +216,7 @@ validator spacetime(
 
         and {
           must_include_pilot_token?,
+          must_spend_one_ship_input?,
           must_be_valid_asteria?,
           must_have_correct_purpose?,
         }
@@ -214,16 +230,10 @@ validator spacetime(
             fuel_policy,
             "FUEL",
           )
-        let must_spend_one_script_input =
-          list.length(
-            list.filter(
-              inputs,
-              fn(input) { utils.is_script_address(input.output.address) },
-            ),
-          ) == 1
+
         and {
-          must_spend_one_script_input?,
           must_include_pilot_token?,
+          must_spend_one_ship_input?,
           must_burn_ship_token?,
           must_burn_fuel_tokens?,
         }
