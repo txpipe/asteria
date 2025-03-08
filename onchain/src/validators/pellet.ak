@@ -9,7 +9,9 @@ use asteria/types.{
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{PolicyId, quantity_of, tokens, zero}
+use cardano/assets.{
+  PolicyId, add, quantity_of, reduce, restricted_to, tokens, zero,
+}
 use cardano/transaction.{
   InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
@@ -50,11 +52,28 @@ validator pellet(admin_token: AssetClass) {
 
         // check for correct pellet output value
         let must_have_correct_value = {
-          // implies that there is enough fuel
+          let in_value = pellet_input.output.value
+
+          // exact amounts are checked for lovelace, admin token and fuel
+          let base_policies = ["", admin_token.policy, fuel_policy]
           let expected_pellet_value =
-            pellet_input.output.value
-              |> assets.add(fuel_policy, "FUEL", -provided_amount)
-          pellet_value == expected_pellet_value
+            restricted_to(in_value, base_policies)
+              |> add(fuel_policy, "FUEL", -provided_amount)
+          let base_checks =
+            restricted_to(pellet_value, base_policies) == expected_pellet_value
+
+          // avoid token spamming: other tokens (prize tokens) can only be removed
+          let other_checks =
+            reduce(
+              pellet_value,
+              True,
+              fn(policy_id, asset_name, out_amount, res) {
+                let in_amount = quantity_of(in_value, policy_id, asset_name)
+                res && out_amount <= in_amount
+              },
+            )
+
+          base_checks && other_checks
         }
 
         // check for exactly one ship input with correct state and redeemer
