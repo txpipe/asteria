@@ -5,7 +5,7 @@ use aiken/crypto.{ScriptHash}
 use aiken/interval.{Finite}
 use aiken/math/rational.{compare_with, from_int}
 use aiken/option
-use aiken/primitive/bytearray
+use aiken/primitive/bytearray.{concat, from_string, starts_with}
 use aiken/primitive/string
 use asteria/types.{
   AddNewShip, AssetClass, AsteriaDatum, AsteriaRedeemer, ConsumeAsteria, Mine,
@@ -97,14 +97,14 @@ validator asteria(
         let must_respect_min_distance =
           utils.distance(pos_x, pos_y) >= min_asteria_distance
         let must_have_ship_name =
-          ship_token_name == bytearray.concat(
+          ship_token_name == concat(
             "SHIP",
-            bytearray.from_string(string.from_int(ship_counter)),
+            from_string(string.from_int(ship_counter)),
           )
         let must_have_pilot_name =
-          pilot_token_name == bytearray.concat(
+          pilot_token_name == concat(
             "PILOT",
-            bytearray.from_string(string.from_int(ship_counter)),
+            from_string(string.from_int(ship_counter)),
           )
         let must_have_latest_time = {
           expect Finite(tx_latest_time) = validity_range.upper_bound.bound_type
@@ -201,8 +201,11 @@ validator asteria(
           reference_script: None,
         } = ship_input.output
 
-        let ship_must_be_valid =
-          !dict.is_empty(tokens(ship_value, shipyard_policy))
+        let ship_must_be_valid = {
+          expect [ship_token_name] =
+            dict.keys(tokens(ship_value, shipyard_policy))
+          starts_with(ship_token_name, "SHIP")
+        }
 
         let ship_must_have_correct_redeemer = {
           let ship_purpose = Spend(ship_input.output_reference)

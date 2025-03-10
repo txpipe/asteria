@@ -3,6 +3,7 @@ use aiken/collection/list.{filter}
 use aiken/collection/pairs
 use aiken/interval.{Finite}
 use aiken/option
+use aiken/primitive/bytearray.{starts_with}
 use asteria/types.{
   AddNewShip, AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, GatherFuel,
   MintFuel, PelletDatum, PelletRedeemer, Provide, ShipDatum,
@@ -95,8 +96,11 @@ validator pellet(admin_token: AssetClass) {
           reference_script: None,
         } = ship_input.output
 
-        let ship_must_be_valid =
-          !dict.is_empty(tokens(ship_value, shipyard_policy))
+        let ship_must_be_valid = {
+          expect [ship_token_name] =
+            dict.keys(tokens(ship_value, shipyard_policy))
+          starts_with(ship_token_name, "SHIP")
+        }
 
         // gathered fuel amount must be equal to amount provided by pellet
         let ship_must_have_correct_redeemer = {
