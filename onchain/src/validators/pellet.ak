@@ -56,6 +56,8 @@ validator pellet(admin_token: AssetClass) {
           let in_value = pellet_input.output.value
 
           // exact amounts are checked for lovelace, admin token and fuel
+          // NOTE: depending on off-chain implementation, pellets may or may
+          // not have admin token. if they have, they must not leave the pellet.
           let base_policies = ["", admin_token.policy, fuel_policy]
           let expected_pellet_value =
             restricted_to(in_value, base_policies)
