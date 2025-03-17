@@ -17,7 +17,7 @@ type QuitTestOptions {
   burns_ship_token: Bool,
   burns_fuel_tokens: Bool,
   includes_pilot_token: Bool,
-  excludes_extra_script_input: Bool,
+  excludes_extra_ship_input: Bool,
 }
 
 fn default_quit_options() {
@@ -25,7 +25,7 @@ fn default_quit_options() {
     burns_ship_token: True,
     burns_fuel_tokens: True,
     includes_pilot_token: True,
-    excludes_extra_script_input: True,
+    excludes_extra_ship_input: True,
   }
 }
 
@@ -93,13 +93,10 @@ fn quit(options: QuitTestOptions) -> Bool {
       OutputReference { transaction_id: mock.transaction_id_1, output_index: 1 }
     Input { output_reference, output }
   }
-  let extra_script_input = {
+  let extra_ship_input = {
     let output =
       Output {
-        address: Address {
-          payment_credential: Script("7777"),
-          stake_credential: None,
-        },
+        address: ship_address,
         value: zero,
         datum: NoDatum,
         reference_script: None,
@@ -110,10 +107,10 @@ fn quit(options: QuitTestOptions) -> Bool {
   }
   let tx =
     Transaction {
-      inputs: if options.excludes_extra_script_input {
+      inputs: if options.excludes_extra_ship_input {
         [ship_input, pilot_input]
       } else {
-        [ship_input, pilot_input, extra_script_input]
+        [ship_input, pilot_input, extra_ship_input]
       },
       reference_inputs: [],
       outputs: [],
@@ -186,11 +183,11 @@ test quit_ok() {
   quit(default_quit_options())
 }
 
-test more_than_1_script_input() fail {
+test more_than_1_ship_input() fail {
   quit(
     QuitTestOptions {
       ..default_quit_options(),
-      excludes_extra_script_input: False,
+      excludes_extra_ship_input: False,
     },
   )
 }

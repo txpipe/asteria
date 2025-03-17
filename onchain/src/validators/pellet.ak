@@ -3,13 +3,16 @@ use aiken/collection/list.{filter}
 use aiken/collection/pairs
 use aiken/interval.{Finite}
 use aiken/option
+use aiken/primitive/bytearray.{starts_with}
 use asteria/types.{
   AddNewShip, AssetClass, BurnFuel, ConsumePellet, FuelRedeemer, GatherFuel,
   MintFuel, PelletDatum, PelletRedeemer, Provide, ShipDatum,
 }
 use asteria/utils
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{PolicyId, quantity_of, tokens, zero}
+use cardano/assets.{
+  PolicyId, add, quantity_of, reduce, restricted_to, tokens, zero,
+}
 use cardano/transaction.{
   InlineDatum, Output, OutputReference, Spend, Transaction, find_input,
 }
@@ -50,11 +53,30 @@ validator pellet(admin_token: AssetClass) {
 
         // check for correct pellet output value
         let must_have_correct_value = {
-          // implies that there is enough fuel
+          let in_value = pellet_input.output.value
+
+          // exact amounts are checked for lovelace, admin token and fuel
+          // NOTE: depending on off-chain implementation, pellets may or may
+          // not have admin token. if they have, they must not leave the pellet.
+          let base_policies = ["", admin_token.policy, fuel_policy]
           let expected_pellet_value =
-            pellet_input.output.value
-              |> assets.add(fuel_policy, "FUEL", -provided_amount)
-          pellet_value == expected_pellet_value
+            restricted_to(in_value, base_policies)
+              |> add(fuel_policy, "FUEL", -provided_amount)
+          let base_checks =
+            restricted_to(pellet_value, base_policies) == expected_pellet_value
+
+          // avoid token spamming: other tokens (prize tokens) can only be removed
+          let other_checks =
+            reduce(
+              pellet_value,
+              True,
+              fn(policy_id, asset_name, out_amount, res) {
+                let in_amount = quantity_of(in_value, policy_id, asset_name)
+                res && out_amount <= in_amount
+              },
+            )
+
+          base_checks && other_checks
         }
 
         // check for exactly one ship input with correct state and redeemer
@@ -76,8 +98,11 @@ validator pellet(admin_token: AssetClass) {
           reference_script: None,
         } = ship_input.output
 
-        let ship_must_be_valid =
-          !dict.is_empty(tokens(ship_value, shipyard_policy))
+        let ship_must_be_valid = {
+          expect [ship_token_name] =
+            dict.keys(tokens(ship_value, shipyard_policy))
+          starts_with(ship_token_name, "SHIP")
+        }
 
         // gathered fuel amount must be equal to amount provided by pellet
         let ship_must_have_correct_redeemer = {

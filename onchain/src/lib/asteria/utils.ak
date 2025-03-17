@@ -1,11 +1,5 @@
 use aiken/math
-use aiken/primitive/bytearray.{length, take}
 use cardano/address.{Address, Script, VerificationKey}
-use cardano/assets.{AssetName}
-
-pub fn has_prefix(prefix: ByteArray, name: AssetName) -> Bool {
-  take(name, length(prefix)) == prefix
-}
 
 pub fn distance(delta_x: Int, delta_y: Int) -> Int {
   math.abs(delta_x) + math.abs(delta_y)
