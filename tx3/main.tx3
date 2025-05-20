@@ -1,0 +1,181 @@
+party Admin;
+party Player;
+
+policy ShipShardPolicyId = 0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4;
+// policy pellet_id = 0x6a25ad5476105ac4a3784769cb93f92fd67a11932ef9a65a61abd1d6;
+
+asset Fuel = 0x6a25ad5476105ac4a3784769cb93f92fd67a11932ef9a65a61abd1d6.FUEL;
+asset AdminToken = 0x516238dd0a79bac4bebe041c44bad8bf880d74720733d2fc0d255d28.asteriaAdmin;
+// addr_test1vzwd7r44g55ccnhfgd288s7lndn7kpmt3w5um0eee748vlc34he52
+
+// Datums
+type ShipDatum {
+    pos_x: Int,
+    pos_y: Int,
+    ship_token_name: Bytes,
+    pilot_token_name: Bytes,
+    last_move_latest_time: Int,
+}
+
+type AsteriaDatum {
+    ship_counter: Int,
+    shipyard_policy: Bytes, // Is possible to define a maxLength?
+}
+
+tx createShip(
+    pos_x: Int, // Ship Position X
+    pos_y: Int, // Ship Position Y
+    initial_fuel: Int, // Initial Fuel
+    tx_latest_posix_time: Int,
+    ship_mint_lovelace_fee: Int, // Lovelace fee for minting ship
+) {
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x7853afe4445954b0b09262bfee4031d3100e7d976b0125fb9fea8130d36b1157#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xbfc7523659c6e649d72f1931e3d8bfe200bb51d3634b36249b68f96172de0b3b#0,
+    }
+
+    // Asteria
+    reference AsteriaRef {
+        ref: 0x999eb94c9fa1df83e7a18d074f4da5963c5945ed4410fa9fd402435d35a3991c#0,
+    }
+
+    // Input blocks
+    // Ensure that the Player has the required assets
+    input source {
+        from: Player,
+        min_amount: fees + Ada(ship_mint_lovelace_fee),
+    }
+
+    input asteria {
+        // Asteria Contract
+        // TODO: This should be party Game?
+        from: "addr_test1wzavzafatalrvzwfyamrw87sata82wyfu4cjsk8537urnqgnz87g0",
+        datum_is: AsteriaDatum,
+    }
+
+    // Optional mint/burn blocks
+    mint {
+        amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, "PILOT" + asteria.ship_counter + 1, 1)
+            + AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, "SHIP" + asteria.ship_counter + 1, 1),
+        redeemer: (),
+    }
+
+    mint {
+        amount: Fuel(initial_fuel),
+        redeemer: (),
+    }
+
+    // Output blocks
+    output {
+        to: Player,
+        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, "PILOT" + asteria.ship_counter + 1, 1),
+    }
+
+    // Output - Pay to Contract
+    output {
+        // Asteria Contract
+        to: "addr_test1wzavzafatalrvzwfyamrw87sata82wyfu4cjsk8537urnqgnz87g0",
+        amount: asteria + Ada(ship_mint_lovelace_fee) + AdminToken(1),
+        datum: AsteriaDatum {
+            ship_counter: asteria.ship_counter + 1,
+            shipyard_policy: 0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4,
+        },
+    }
+
+    output {
+        // SpaceTime Contract
+        // TODO: Should I create a input for this? To complete on amount as input + AnyAsset + Fuel?
+        to: "addr_test1wpa6jlakujqp3mcnrhggj95njdgvpnns2pf5lrj3khsw8fq7fdhdq",
+        amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, "SHIP" + asteria.ship_counter + 1, 1) + Fuel(initial_fuel),
+        datum: ShipDatum {
+            pos_x: pos_x,
+            pos_y: pos_y,
+            ship_token_name: "SHIP" + asteria.ship_counter + 1,
+            pilot_token_name: "PILOT" + asteria.ship_counter + 1,
+            last_move_latest_time: tx_latest_posix_time,
+        },
+    }
+
+    // Optional chain-specific blocks
+}
+
+type MoveShip { 
+    delta_x: Int,
+    delta_y: Int,
+}
+
+// Move ship
+tx moveShip(
+    delta_x: Int,
+    delta_y: Int,
+    tx_latest_posix_time: Int,
+    // ship_tx_hash: Bytes,
+    ship_name: Bytes,
+    required_fuel: Int,
+) {
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x7853afe4445954b0b09262bfee4031d3100e7d976b0125fb9fea8130d36b1157#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xbfc7523659c6e649d72f1931e3d8bfe200bb51d3634b36249b68f96172de0b3b#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        from: "addr_test1wpa6jlakujqp3mcnrhggj95njdgvpnns2pf5lrj3khsw8fq7fdhdq",
+        datum_is: ShipDatum,
+        min_amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, ship_name, 1) + Fuel(required_fuel),
+
+        redeemer: MoveShip { 
+            delta_x: delta_x,
+            delta_y: delta_y,
+        },
+    }
+
+    input pilot {
+        from: Player,
+        min_amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, ship.pilot_token_name, 1),
+    }
+
+    // Burn
+    burn {
+        amount: Fuel(required_fuel),
+        redeemer: (),
+    }
+
+    // Outputs
+    output {
+        // SpaceTime Contract
+        to: "addr_test1wpa6jlakujqp3mcnrhggj95njdgvpnns2pf5lrj3khsw8fq7fdhdq",
+        amount: ship - Fuel(required_fuel),
+        datum: ShipDatum {
+            // Spread ship?
+            pos_x: ship.pos_x + delta_x,
+            pos_y: ship.pos_y + delta_y,
+            last_move_latest_time: tx_latest_posix_time,
+            ...ship
+        },
+    }
+
+    output {
+        to: Player,
+        // I should include the pilot token here? It was already included on createShip
+        amount: source - fees,
+    }
+}

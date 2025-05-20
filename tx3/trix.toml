@@ -1,0 +1,31 @@
+[protocol]
+name = "asteria"
+scope = "txpipe"
+version = "0.1.0"
+main = "main.tx3"
+
+[profiles.devnet]
+chain = "CardanoDevnet"
+
+[[profiles.devnet.wallets]]
+name = "alice"
+random_key = true
+initial_balance = 1000000000000000000
+
+[[profiles.devnet.wallets]]
+name = "bob"
+random_key = true
+initial_balance = 1000000000000000000
+
+[profiles.preview]
+chain = "CardanoPreview"
+
+[profiles.preprod]
+chain = "CardanoPreprod"
+
+[profiles.mainnet]
+chain = "CardanoMainnet"
+
+[[bindings]]
+plugin = "typescript"
+output_dir = "./gen/typescript"
