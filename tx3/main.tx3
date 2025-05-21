@@ -22,6 +22,23 @@ type AsteriaDatum {
     shipyard_policy: Bytes, // Is possible to define a maxLength?
 }
 
+type PelletDatum {
+    pos_x: Int,
+    pos_y: Int,
+    shipyard_policy: Bytes,
+}
+
+// Actions
+type ShipActions {
+    MoveShip {
+        delta_x: Int,
+        delta_y: Int,
+    },
+    GatherFuel {
+        gather_amount: Int,
+    },
+}
+
 tx createShip(
     pos_x: Int, // Ship Position X
     pos_y: Int, // Ship Position Y
@@ -105,11 +122,6 @@ tx createShip(
     // Optional chain-specific blocks
 }
 
-type MoveShip { 
-    delta_x: Int,
-    delta_y: Int,
-}
-
 // Move ship
 tx moveShip(
     delta_x: Int,
@@ -142,7 +154,9 @@ tx moveShip(
         datum_is: ShipDatum,
         min_amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, ship_name, 1) + Fuel(required_fuel),
 
-        redeemer: MoveShip { 
+        // From Lucid Data.to(new Constr(1, [new Constr(0, [delta_x, delta_y])]));
+        // Is this correct?
+        redeemer: ShipActions::MoveShip { 
             delta_x: delta_x,
             delta_y: delta_y,
         },
@@ -177,5 +191,85 @@ tx moveShip(
         to: Player,
         // I should include the pilot token here? It was already included on createShip
         amount: source - fees,
+    }
+}
+
+tx gatherFuel (
+    gather_amount: Int,
+    ship_name: Bytes,
+    pellet_addr: Bytes,
+    // pellet_tx_hash: Bytes,
+    // pellet_tx_index: Int,
+    // tx_earliest_posix_time: Int,
+) {
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x7853afe4445954b0b09262bfee4031d3100e7d976b0125fb9fea8130d36b1157#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xbfc7523659c6e649d72f1931e3d8bfe200bb51d3634b36249b68f96172de0b3b#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        from: "addr_test1wpa6jlakujqp3mcnrhggj95njdgvpnns2pf5lrj3khsw8fq7fdhdq",
+        datum_is: ShipDatum,
+        min_amount: AnyAsset(0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4, ship_name, 1),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(1, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: gather_amount,
+        },
+    }
+
+    input pellet {
+        // from: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        from: pellet_addr,
+        datum_is: PelletDatum,
+        min_amount: Fuel(gather_amount),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(0, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: gather_amount,
+        },
+    }
+
+    // Outputs
+    output {
+        to: Player,
+        // I need to output pilot token to Player?
+        amount: source - fees,
+    }
+
+    output {
+        // SpaceTime Contract
+        // TODO: Should I create a input for this? To complete on amount as input + AnyAsset + Fuel?
+        to: "addr_test1wpa6jlakujqp3mcnrhggj95njdgvpnns2pf5lrj3khsw8fq7fdhdq",
+        amount: ship + Fuel(gather_amount),
+        datum: ShipDatum {
+            ...ship
+        },
+    }
+
+    output {
+        // Pellet Contract
+        to: "addr_test1wp4ztt25wcg9439r0prknjunlyhav7s3jvh0nfj6vx4ar4sfrhnd6",
+        amount: pellet - Fuel(gather_amount),
+        datum: PelletDatum {
+            pos_x: pellet.pos_x,
+            pos_y: pellet.pos_y,
+            shipyard_policy: 0x7ba97fb6e48018ef131dd08916939350c0ce7050534f8e51b5e0e3a4,
+        },
     }
 }
