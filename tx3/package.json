@@ -1,0 +1,44 @@
+{
+  "name": "asteria-joystick",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc",
+    "biome:check": "biome check",
+    "biome:format": "biome format",
+    "biome:fix": "biome check --fix"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.4",
+    "@react-router/fs-routes": "^7.6.2",
+    "@react-router/node": "^7.5.3",
+    "@react-router/serve": "^7.5.3",
+    "bech32": "^2.0.0",
+    "buffer": "^6.0.3",
+    "clsx": "^2.1.1",
+    "isbot": "^5.1.27",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router": "^7.5.3",
+    "tx3-sdk": "^0.3.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.0.0",
+    "@react-router/dev": "^7.5.3",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/node": "^20",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "shiki": "^3.7.0",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.3",
+    "vite-plugin-tx3": "^0.3.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "packageManager": "pnpm@10.12.2+sha512.a32540185b964ee30bb4e979e405adc6af59226b438ee4cc19f9e8773667a66d302f5bfee60a39d3cac69e35e4b96e708a71dd002b7e9359c4112a1722ac323f"
+}
