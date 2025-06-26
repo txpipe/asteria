@@ -67,11 +67,20 @@ type SpaceTimeDatum {
     min_asteria_distance: Int,
 }
 
+type PelletDatum {
+    pos_x: Int,
+    pos_y: Int,
+    shipyard_policy: Bytes,
+}
+
 // Actions
 type ShipActions {
     MoveShip {
         delta_x: Int,
         delta_y: Int,
+    },
+    GatherFuel {
+        gather_amount: Int,
     },
 }
 
@@ -152,10 +161,10 @@ tx createShip(
         // Asteria Contract
         to: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
         amount: asteria + Ada(ship_mint_lovelace_fee),
-        datum: AsteriaDatum {
-            ship_counter: asteria.ship_counter + 1,
-            shipyard_policy: asteria.shipyard_policy,
-        },
+        // datum: AsteriaDatum {
+        //     ship_counter: asteria.ship_counter + 1,
+        //     shipyard_policy: asteria.shipyard_policy,
+        // },
     }
 
     output {
@@ -257,5 +266,88 @@ tx moveShip(
     output {
         to: Player,
         amount: source - fees + pilot,
+    }
+}
+
+tx gatherFuel (
+    p_gather_amount: Int,
+    ship_name: Bytes,
+    // pellet_addr: Bytes,
+    // pellet_tx_hash: Bytes,
+    // pellet_tx_index: Int,
+    tx_earliest_posix_time: Int,
+) {
+    validity {
+        since_slot: tx_earliest_posix_time,
+    }
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        // SpaceTime Contract
+        from: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        datum_is: ShipDatum,
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(1, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: p_gather_amount,
+        },
+    }
+
+    input pellet {
+        from: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        datum_is: PelletDatum,
+        min_amount: Fuel(p_gather_amount),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(0, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: p_gather_amount,
+        },
+    }
+
+    // Outputs
+    output {
+        to: Player,
+        // I need to output pilot token to Player?
+        amount: source - fees,
+    }
+
+    output {
+        // SpaceTime Contract
+        // TODO: Should I create a input for this? To complete on amount as input + AnyAsset + Fuel?
+        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        amount: ship + Fuel(p_gather_amount),
+        datum: ShipDatum {
+            ...ship
+        },
+    }
+
+    output {
+        // Pellet Contract
+        to: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        amount: pellet - Fuel(p_gather_amount),
+        datum: PelletDatum {
+            pos_x: pellet.pos_x,
+            pos_y: pellet.pos_y,
+            shipyard_policy: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
+        },
     }
 }
