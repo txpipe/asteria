@@ -7,7 +7,10 @@ var ships: Array[ShipData] = []
 var fuels: Array[FuelData] = []
 var asteria: AsteriaData = null
 
+var mode = ""
 var explorer_url = ""
+var follow_ship_id = null
+var follow_position = null
 
 
 func init_data(data: Variant):
@@ -54,6 +57,24 @@ func set_explorer_url(_explorer_url: String):
 
 func get_explorer_url():
 	return explorer_url
+
+func set_mode(_mode: String):
+	mode = _mode
+
+func get_mode():
+	return mode
+
+func set_follow_ship_id(_follow_ship_id: String):
+	follow_ship_id = _follow_ship_id
+
+func get_follow_ship_id():
+	return follow_ship_id
+
+func set_follow_position(_follow_position: Vector2):
+	follow_position = _follow_position
+
+func get_follow_position():
+	return follow_position
 
 
 class ShipData:

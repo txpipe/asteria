@@ -1,9 +1,11 @@
 extends Node
 
 signal dataset_updated
+signal update_follow
 
 const radius = 1000
 
+var mode = ""
 var api_url = ""
 var shipyard_policy_id = ""
 var fuel_policy_id = ""
@@ -51,6 +53,9 @@ const query = """
 }
 """
 
+var callback = JavaScriptBridge.create_callback(on_message)
+var parent = JavaScriptBridge.get_interface("parent")
+
 func fetch_data():
 	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({
 		"query": query % [
@@ -68,7 +73,8 @@ func _process(delta: float) -> void:
 	$GUICanvasLayer/CenterContainer/Loader.rotation += delta * 10
 
 
-func _ready():	
+func _ready():
+	mode = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('mode')")
 	api_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('apiUrl')")
 	shipyard_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipyardPolicyId')")
 	fuel_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelPolicyId')")
@@ -77,17 +83,43 @@ func _ready():
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
 	explorer_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('explorerUrl')")
 	
+	Global.set_mode(mode)
 	Global.set_explorer_url(explorer_url)
+	
+	if Global.get_mode() == "joystick":
+		$GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom.visible = false
 	
 	$HTTPRequest.request_completed.connect(_on_request_completed)
 	fetch_data()
 	
 	var request_timer = Timer.new()
-	request_timer.wait_time = 20
+	request_timer.wait_time = 10
 	request_timer.autostart = true
 	request_timer.one_shot = false
 	request_timer.connect("timeout", _on_request_timer_timeout)
 	add_child(request_timer)
+	
+	if parent != null:
+		JavaScriptBridge.eval("""
+			parent.window.GODOT_BRIDGE = {
+				callback: null,
+				setCallback: (callback) => parent.window.GODOT_BRIDGE.callback = callback,
+				send: (data) => parent.window.GODOT_BRIDGE.callback(JSON.stringify(data)),
+			};
+		""", true)
+		parent.window.GODOT_BRIDGE.setCallback(callback)
+
+
+func on_message(args):
+	var data = JSON.parse_string(args[0])
+	
+	if data["action"] == "create_ship":
+		Global.set_follow_ship_id(data["shipId"])
+	
+	if data["action"] == "move_ship":
+		Global.set_follow_position(Vector2(data["x"], data["y"]))
+	
+	update_follow.emit()
 
 
 func _on_request_completed(result, response_code, headers, body):

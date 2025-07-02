@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build-godot": "mkdir public/visualizer; godot --path ../godot-visualizer --headless --export-release \"Web\" ../tx3/public/visualizer/index.html; cp public/godot.png public/visualizer/index.png",
     "build": "react-router build",
-    "dev": "react-router dev",
+    "dev": "npm run build-godot; react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "biome:check": "biome check",
@@ -37,7 +38,7 @@
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
-    "vite-plugin-tx3": "^0.3.0",
+    "vite-plugin-tx3": "link:../../../Library/pnpm/global/5/node_modules/vite-plugin-tx3",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "packageManager": "pnpm@10.12.2+sha512.a32540185b964ee30bb4e979e405adc6af59226b438ee4cc19f9e8773667a66d302f5bfee60a39d3cac69e35e4b96e708a71dd002b7e9359c4112a1722ac323f"

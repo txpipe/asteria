@@ -162,7 +162,7 @@ export function MoveShip() {
           {isSubmitting ? 'Moving...' : 'Move ship'}
         </button>
       </fetcher.Form>
-      <AsteriaMap
+      {/* <AsteriaMap
         apiUrl="https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
         shipyardPolicyId="f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
         fuelPolicyId="fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
@@ -170,7 +170,7 @@ export function MoveShip() {
         fuelAddress="addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
         asteriaAddress="addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
         className="aspect-square w-xl"
-      />
+      /> */}
     </div>
   );
 }

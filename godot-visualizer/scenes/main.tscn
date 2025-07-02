@@ -1,13 +1,13 @@
 [gd_scene load_steps=38 format=3 uid="uid://b5ypw8og4vdle"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_4dsde"]
+[ext_resource type="Script" uid="uid://csn0qk6y75lbp" path="res://scripts/main.gd" id="1_4dsde"]
 [ext_resource type="PackedScene" uid="uid://ch6xqejnd1rqf" path="res://scenes/map.tscn" id="1_quhpi"]
-[ext_resource type="Script" path="res://scripts/minimap_background.gd" id="3_46wls"]
+[ext_resource type="Script" uid="uid://cgpssrlmkcdc6" path="res://scripts/minimap_background.gd" id="3_46wls"]
 [ext_resource type="StyleBox" uid="uid://cu582sfg7gs6x" path="res://resources/textures/sidebar.tres" id="3_af3cf"]
 [ext_resource type="StyleBox" uid="uid://rxcw47ry73rj" path="res://resources/textures/modal.tres" id="3_m73wt"]
-[ext_resource type="Script" path="res://scripts/minimap.gd" id="3_n1hxv"]
+[ext_resource type="Script" uid="uid://dbwnhqahyuwve" path="res://scripts/minimap.gd" id="3_n1hxv"]
 [ext_resource type="StyleBox" uid="uid://bwavatvw423ao" path="res://resources/textures/minimap.tres" id="3_n4qh8"]
-[ext_resource type="Script" path="res://scripts/modal_panel.gd" id="4_0ugj1"]
+[ext_resource type="Script" uid="uid://cehro3qutc5lj" path="res://scripts/modal_panel.gd" id="4_0ugj1"]
 [ext_resource type="FontFile" uid="uid://blmuew6tip1jc" path="res://resources/fonts/Monocraft.otf" id="4_r2c3r"]
 [ext_resource type="Texture2D" uid="uid://b345rvjpq2yk6" path="res://resources/icons/icon_move.svg" id="4_yky0p"]
 [ext_resource type="Texture2D" uid="uid://hbgo5cp4jlpy" path="res://resources/icons/icon_close.svg" id="5_1gbsb"]
@@ -264,9 +264,9 @@ mouse_filter = 1
 theme_override_colors/font_disabled_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
 theme_override_colors/font_hover_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_pressed_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_focus_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
 theme_override_colors/font_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
+theme_override_colors/font_focus_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
+theme_override_colors/font_pressed_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
 theme_override_fonts/font = SubResource("FontVariation_wpmnj")
 theme_override_font_sizes/font_size = 48
 theme_override_styles/focus = SubResource("StyleBoxEmpty_ltxx7")
@@ -480,6 +480,7 @@ stretch_mode = 3
 
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
 [connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
+[connection signal="update_follow" from="." to="MapCanvasLayer/Map" method="_on_update_follow"]
 [connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
 [connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
 [connection signal="hide_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_hide_tooltip"]

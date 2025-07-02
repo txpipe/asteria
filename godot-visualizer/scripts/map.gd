@@ -20,13 +20,18 @@ var mouse_entered_modal = false
 
 var current_id = ""
 
+var tween_alpha = null
+var tween_position = null
+var tween_rotation = null
+var placeholder_ship = null
 
 func _on_main_dataset_updated() -> void:
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
 	
 	for child in $Entities.get_children():
-		child.free()
+		if child != placeholder_ship:
+			child.free()
 	
 	for ship_data in Global.get_ships():
 		var ship = Ship.new_ship(ship_data)
@@ -154,3 +159,51 @@ func _on_zoom_plus_button_pressed() -> void:
 	if $Camera.zoom < Vector2(1.5, 1.5):
 		$Camera.zoom += Vector2(.25, .25)
 		camera_zoom_changed.emit($Camera.zoom)
+
+
+func _on_update_follow() -> void:
+	const center = Vector2(0, 0)
+	var cell_size = Global.get_cell_size()
+	
+	if Global.get_mode() == "joystick" and Global.get_follow_ship_id() != null:
+		var data = Global.get_ships().filter(func(ship): return ship.id == Global.get_follow_ship_id())
+		if (len(data) > 0):
+			var ship_data = data[0]
+			$Camera.zoom = Vector2(2, 2)
+			$Camera.position = ship_data.position * cell_size
+			
+			if Global.get_follow_position() != null:
+				var old_position = ship_data.position * cell_size
+				var new_position = Global.get_follow_position() * cell_size
+				
+				var old_rotation = old_position.angle_to_point(center) + PI/2
+				var new_rotation = new_position.angle_to_point(center) + PI/2
+				
+				if placeholder_ship == null:
+					placeholder_ship = Ship.new_ship(ship_data)
+					$Entities.add_child(placeholder_ship)
+				
+				placeholder_ship.animation = str(ship_data.id.unicode_at(ship_data.id.length()-3) % 7)
+				placeholder_ship.position = old_position
+				placeholder_ship.rotation = old_rotation
+				placeholder_ship.modulate.a = 0
+				
+				if tween_alpha != null:
+					tween_alpha.stop()
+					tween_position.stop()
+					tween_rotation.stop()
+				
+				tween_alpha = get_tree().create_tween().set_loops()
+				tween_alpha.tween_property(placeholder_ship, "modulate:a", .75, 1).from(0)
+				tween_alpha.tween_property(placeholder_ship, "modulate:a", 0, 1).from(.75)
+				tween_alpha.play()
+				
+				tween_position = get_tree().create_tween().set_loops()
+				tween_position.tween_property(placeholder_ship, "position", new_position, 1).from(old_position)
+				tween_position.tween_property(placeholder_ship, "position", old_position, 1).from(new_position)
+				tween_position.play()
+				
+				tween_rotation = get_tree().create_tween().set_loops()
+				tween_rotation.tween_property(placeholder_ship, "rotation", new_rotation, 1).from(old_rotation)
+				tween_rotation.tween_property(placeholder_ship, "rotation", old_rotation, 1).from(new_rotation)
+				tween_rotation.play()
