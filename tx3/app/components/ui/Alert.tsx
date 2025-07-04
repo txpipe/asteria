@@ -11,10 +11,12 @@ export function Alert({ type, children, className, title }: AlertProps) {
   return (
     <div
       className={clsx(
-        'w-full border-l px-4 py-3 rounded-2xl wrap-break-word text-[#F1E9D9]/60 flex flex-col min-h-0 flex-1 max-h-fit',
+        'w-full border-l px-4 py-3 rounded-2xl wrap-break-word text-[#F1E9D9]/60 flex flex-col max-h-fit',
         {
           'bg-[#4ADE80]/4 border-[#4ADE80]': type === 'success',
           'bg-[#F87171]/4 border-[#F87171] text-[#F87171]/60': type === 'error',
+          'min-h-32': !!title,
+          'min-h-12': !title,
         },
         className,
       )}

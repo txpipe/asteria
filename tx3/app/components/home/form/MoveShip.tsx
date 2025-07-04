@@ -250,22 +250,23 @@ export function MoveShip() {
             />
           </div>
 
-          <div className="flex flex-1 flex-col gap-2 min-h-0">
-            {dataTx && (
-              <Alert type="success" title="Response">
-                {dataTx}
-              </Alert>
-            )}
-            {errors.global && <Alert type="error">{errors.global}</Alert>}
-          </div>
+          {dataTx && (
+            <Alert type="success" title="Response">
+              {dataTx}
+            </Alert>
+          )}
 
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Moving...' : 'Move ship'}
-          </button>
+          {errors.global && <Alert type="error">{errors.global}</Alert>}
+
+          <div className="flex flex-1 flex-col justify-end">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit disabled:bg-blue-400 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Moving...' : 'Move ship'}
+            </button>
+          </div>
         </fetcher.Form>
       </Tab>
 

@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
+
 // Components
 import { ConnectWallet } from '~/components/ui/ConnectWallet';
-import { CreateShip, createShipAction } from '~/components/home/form/CreateShip';
-import { MoveShip, moveShipAction } from '~/components/home/form/MoveShip';
 import { Section } from '~/components/Section';
 import { AsteriaMap } from '~/components/AsteriaMap';
+import { CreateShip, createShipAction } from '~/components/home/form/CreateShip';
+import { MoveShip, moveShipAction } from '~/components/home/form/MoveShip';
+import { SectionsMenu } from '~/components/home/SectionsMenu';
+
+// Hooks
+import { useScrollSnap } from '~/hooks/useScrollSnap';
 
 // Types
 import type { Route } from './+types/_index';
@@ -27,18 +33,35 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Home() {
+  useScrollSnap('main');
+
+   // Handle initial scroll to hash position
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const targetId = hash.substring(1);
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        // Use a small timeout to ensure the component is fully rendered
+        setTimeout(() => {
+          targetElement.scrollIntoView({ behavior: 'instant' });
+        }, 100);
+      }
+    }
+  }, []);
+
   return (
     <main className="relative h-dvh overflow-y-scroll gap-4 snap-y snap-mandatory scroll-smooth">
       <div className="relative z-1 w-fit">
-        <Section className="gap-4" title="CREATE SHIP">
+        <Section className="gap-4" title="CREATE SHIP" id="create-ship">
           <ConnectWallet />
           <CreateShip />
         </Section>
-        <Section title="MOVE SHIP">
+        <Section title="MOVE SHIP" id="move-ship">
           <MoveShip />
         </Section>
 
-        <Section>
+        <Section id="actions" title="ACTIONS">
           <button
             type="button"
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
@@ -85,6 +108,8 @@ export default function Home() {
           </button>
         </Section>
       </div>
+
+      <SectionsMenu />
 
       <AsteriaMap
         apiUrl="https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
