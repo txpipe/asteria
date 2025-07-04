@@ -463,15 +463,25 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
-[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer"]
+[node name="HBoxContainerLoader" type="HBoxContainer" parent="GUICanvasLayer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+alignment = 1
+
+[node name="BoxContainer" type="BoxContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="Loader" type="TextureRect" parent="GUICanvasLayer/CenterContainer"]
+[node name="Loader" type="TextureRect" parent="GUICanvasLayer/HBoxContainerLoader/CenterContainer"]
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("28_wxhmh")
@@ -480,7 +490,11 @@ stretch_mode = 3
 
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
 [connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
-[connection signal="update_follow" from="." to="MapCanvasLayer/Map" method="_on_update_follow"]
+[connection signal="follow_ship_reset" from="." to="MapCanvasLayer/Map" method="_on_follow_ship_reset"]
+[connection signal="follow_ship_selected" from="." to="MapCanvasLayer/Map" method="_on_follow_ship_selected"]
+[connection signal="init_joystick_mode" from="." to="MapCanvasLayer/Map" method="_on_init_joystick_mode"]
+[connection signal="next_position_reset" from="." to="MapCanvasLayer/Map" method="_on_next_position_reset"]
+[connection signal="next_position_selected" from="." to="MapCanvasLayer/Map" method="_on_next_position_selected"]
 [connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
 [connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
 [connection signal="hide_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_hide_tooltip"]

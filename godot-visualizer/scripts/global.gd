@@ -9,8 +9,7 @@ var asteria: AsteriaData = null
 
 var mode = ""
 var explorer_url = ""
-var follow_ship_id = null
-var follow_position = null
+var selected_ship = null
 
 
 func init_data(data: Variant):
@@ -64,17 +63,11 @@ func set_mode(_mode: String):
 func get_mode():
 	return mode
 
-func set_follow_ship_id(_follow_ship_id: String):
-	follow_ship_id = _follow_ship_id
+func set_selected_ship(_selected_ship: ShipData):
+	selected_ship = _selected_ship
 
-func get_follow_ship_id():
-	return follow_ship_id
-
-func set_follow_position(_follow_position: Vector2):
-	follow_position = _follow_position
-
-func get_follow_position():
-	return follow_position
+func get_selected_ship():
+	return selected_ship
 
 
 class ShipData:

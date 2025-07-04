@@ -66,4 +66,5 @@ animation = &"filled"
 
 [connection signal="minimap_position_changed" from="." to="Camera" method="_on_map_minimap_position_changed"]
 [connection signal="mouse_hover_gui" from="." to="Camera" method="_on_map_mouse_hover_gui"]
+[connection signal="selected_ship_position_changed" from="." to="Camera" method="_on_selected_ship_position_changed"]
 [connection signal="position_changed" from="Camera" to="." method="_on_camera_position_changed"]
