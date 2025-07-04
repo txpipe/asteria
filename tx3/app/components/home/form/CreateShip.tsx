@@ -6,6 +6,9 @@ import type { TxEnvelope } from 'tx3-sdk/trp';
 // Components
 import { Code } from '~/components/ui/code';
 import { Input } from '~/components/ui/input';
+import { CopyButton } from '~/components/CopyButton';
+import { Tab, Tabs } from '~/components/Tabs';
+import { Alert } from '~/components/ui/alert';
 
 // Store
 import { useWallet } from '~/store/wallet';
@@ -145,6 +148,17 @@ tx createShip(
     }
 }`;
 
+const jsFile = `const result = await protocol.createShipTx({
+  initialFuel: 480, // From SpaceTime datum
+  pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
+  player: playerAddress,
+  pPosX: 20,
+  pPosY: 20,
+  shipMintLovelaceFee: 1_000_000,
+  txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+  shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
+});`;
+
 export function CreateShip() {
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
@@ -175,51 +189,59 @@ export function CreateShip() {
   const isSubmitting = fetcher.state === 'submitting';
 
   return (
-    <div className="grid grid-cols-2 gap-4 items-start">
-      <fetcher.Form method="POST" className="border border-gray-500 p-4 rounded-lg min-w-xl">
-        <h2 className="text-2xl font-medium">Create ship</h2>
-        {dataTx && (
-          <div className="w-full bg-green-100 border-green-500 text-green-500 border-l-4 px-4 py-3 rounded mt-4 max-w-xl wrap-break-word">
-            {dataTx}
-          </div>
-        )}
-        {errors.global && (
-          <div className="w-full bg-red-100 border-red-500 text-red-500 border-l-4 px-4 py-3 rounded mt-4">
-            {errors.global}
-          </div>
-        )}
-        <input type="hidden" name="ACTION" value="createShip" />
-        <Input
-          name="shipNumber"
-          type="number"
-          placeholder="Enter ship number"
-          label="Ship Number"
-          disabled={isSubmitting}
-          error={errors.shipNumber}
-          defaultValue={10}
-          required
-        />
+    <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
+      <Tab label="Tx Form">
+        <fetcher.Form method="POST" className="flex flex-col gap-8 justify-between h-full">
+          <div>
+            <input type="hidden" name="ACTION" value="createShip" />
+            <Input
+              name="shipNumber"
+              type="number"
+              placeholder="Enter ship number"
+              label="Ship Number"
+              disabled={isSubmitting}
+              error={errors.shipNumber}
+              defaultValue={10}
+              required
+            />
 
-        <Input
-          ref={addressRef}
-          name="playerAddress"
-          placeholder="Enter player address"
-          label="Player Address"
-          disabled={isSubmitting}
-          error={errors.playerAddress}
-          defaultValue={walletAddress ?? ''}
-          required
-        />
+            <Input
+              ref={addressRef}
+              name="playerAddress"
+              placeholder="Enter player address"
+              label="Player Address"
+              disabled={isSubmitting}
+              error={errors.playerAddress}
+              defaultValue={walletAddress ?? ''}
+              required
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-2 min-h-0">
+            {dataTx && (
+              <Alert type="success" title="Response">
+                {dataTx}
+              </Alert>
+            )}
+            {errors.global && <Alert type="error">{errors.global}</Alert>}
+          </div>
 
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit'}
-        </button>
-      </fetcher.Form>
-      <Code code={tx3File} />
-    </div>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit disabled:bg-blue-400 disabled:cursor-not-allowed"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
+        </fetcher.Form>
+      </Tab>
+
+      <Tab label="Tx3 File" rightAction={<CopyButton text={tx3File} />}>
+        <Code code={tx3File} lang="tx3" />
+      </Tab>
+
+      <Tab label="JS Code" rightAction={<CopyButton text={jsFile} />}>
+        <Code code={jsFile} lang="js" />
+      </Tab>
+    </Tabs>
   );
 }

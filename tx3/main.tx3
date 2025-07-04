@@ -161,10 +161,10 @@ tx createShip(
         // Asteria Contract
         to: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
         amount: asteria + Ada(ship_mint_lovelace_fee),
-        // datum: AsteriaDatum {
-        //     ship_counter: asteria.ship_counter + 1,
-        //     shipyard_policy: asteria.shipyard_policy,
-        // },
+        datum: AsteriaDatum {
+            ship_counter: asteria.ship_counter + 1,
+            shipyard_policy: asteria.shipyard_policy,
+        },
     }
 
     output {
@@ -184,7 +184,6 @@ tx createShip(
 }
 
 // Move Ship
-// Move ship
 tx moveShip(
     p_delta_x: Int,
     p_delta_y: Int,

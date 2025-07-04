@@ -28,31 +28,61 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Home() {
   return (
-    <main className="h-dvh overflow-y-scroll gap-4 snap-y snap-mandatory scroll-smooth">
-      <div className="w-[50vw]">
-        <Section>
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
-            onClick={() => (parent.window as any).GODOT_BRIDGE.send({ action: 'create_ship', shipId: '3cd194e473e901de0b7f1b7150bd1e848840196dbccc26c261ccea621928c35e#0' })}
-          >
-            Set map ship
-          </button>
-
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
-            onClick={() => (parent.window as any).GODOT_BRIDGE.send({ action: 'move_ship', x: 14, y: 18 })}
-          >
-            Set move ship position
-          </button>
-        </Section>
-
-        <Section className="gap-4">
-          <h1 className="text-3xl font-bold">Welcome to Asteria Joystick</h1>
+    <main className="relative h-dvh overflow-y-scroll gap-4 snap-y snap-mandatory scroll-smooth">
+      <div className="relative z-1 w-fit">
+        <Section className="gap-4" title="CREATE SHIP">
           <ConnectWallet />
           <CreateShip />
         </Section>
-        <Section>
+        <Section title="MOVE SHIP">
           <MoveShip />
+        </Section>
+
+        <Section>
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            onClick={() =>
+              window.GODOT_BRIDGE?.send({
+                action: 'select_ship',
+                id: '3cd194e473e901de0b7f1b7150bd1e848840196dbccc26c261ccea621928c35e#0',
+              })
+            }
+          >
+            Focus ship
+          </button>
+
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            onClick={() => window.GODOT_BRIDGE?.send({ action: 'clear_ship' })}
+          >
+            Clear focus ship
+          </button>
+
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            onClick={() => window.GODOT_BRIDGE?.send({ action: 'move_ship', x: 14, y: 18 })}
+          >
+            Set move ship position
+          </button>
+
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            onClick={() => window.GODOT_BRIDGE?.send({ action: 'clear_move_ship' })}
+          >
+            Clear move ship
+          </button>
+
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            onClick={() => window.GODOT_BRIDGE?.send({ action: 'refresh_data' })}
+          >
+            Refresh asteria
+          </button>
         </Section>
       </div>
 
@@ -64,7 +94,7 @@ export default function Home() {
         fuelAddress="addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
         asteriaAddress="addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
         explorerUrl="https://preview.cexplorer.io/tx/"
-        className="fixed top-0 right-0 w-[50vw] h-[100vh]"
+        className="fixed top-0 right-0 w-dvw h-dvh z-0"
       />
     </main>
   );

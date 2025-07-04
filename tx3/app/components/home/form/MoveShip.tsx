@@ -5,7 +5,10 @@ import type { TxEnvelope } from 'tx3-sdk/trp';
 
 // Components
 import { Input } from '~/components/ui/input';
-import { AsteriaMap } from '~/components/AsteriaMap';
+import { Alert } from '~/components/ui/alert';
+import { Code } from '~/components/ui/code';
+import { Tab, Tabs } from '~/components/Tabs';
+import { CopyButton } from '~/components/CopyButton';
 
 // Store
 import { useWallet } from '~/store/wallet';
@@ -68,6 +71,107 @@ export async function moveShipAction(formData: FormData) {
   return null;
 }
 
+const tx3File = `// Asteria player
+party Player; // Sent by Form
+
+tx moveShip(
+    p_delta_x: Int,
+    p_delta_y: Int,
+    tx_latest_posix_time: Int,
+    // ship_tx_hash: Bytes,
+    ship_name: Bytes,
+    pilot_name: Bytes,
+    // distance: Int,
+    required_fuel: Int,
+) {
+    validity {
+        until_slot: tx_latest_posix_time,
+    }
+
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    input spaceTime {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+        datum_is: SpaceTimeDatum,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        from: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        datum_is: ShipDatum,
+        // Ideally
+        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(distance * fuel_per_step),
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+
+        // Is this correct?
+        redeemer: ShipActions::MoveShip { 
+            delta_x: p_delta_x,
+            delta_y: p_delta_y,
+        },
+    }
+
+    input pilot {
+        from: Player,
+        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship.pilot_token_name, 1),
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1),
+    }
+
+    // Burn
+    burn {
+        // amount: Fuel(distance * fuel_per_step),
+        amount: Fuel(required_fuel),
+        redeemer: (),
+    }
+
+    // Outputs
+    output {
+        // SpaceTime Contract
+        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        // amount: ship - Fuel(distance * fuel_per_step),
+        amount: ship - Fuel(required_fuel),
+        datum: ShipDatum {
+            pos_x: ship.pos_x + p_delta_x,
+            pos_y: ship.pos_y + p_delta_y,
+            last_move_latest_time: tx_latest_posix_time,
+            ...ship
+        },
+    }
+
+    output {
+        to: Player,
+        amount: source - fees + pilot,
+    }
+}
+`;
+
+const jsFile = `const distance = Math.abs(positionX) + Math.abs(positionY);
+
+const result = await protocol.moveShipTx({
+  pDeltaX: positionX,
+  pDeltaY: positionY,
+  player: playerAddress,
+  // distance,
+  requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
+  shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
+  pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
+  txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+});`;
+
 export function MoveShip() {
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
@@ -98,79 +202,80 @@ export function MoveShip() {
   const isSubmitting = fetcher.state === 'submitting';
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <fetcher.Form method="POST" className="border border-gray-500 p-4 rounded-lg w-xl">
-        <h2 className="text-2xl font-medium">Move ship</h2>
-        {dataTx && (
-          <div className="w-full bg-green-100 border-green-500 text-green-500 border-l-4 px-4 py-3 rounded mt-4 wrap-break-word">
-            {dataTx}
+    <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
+      <Tab label="Tx Form">
+        <fetcher.Form method="POST" className="flex flex-col gap-8 justify-between h-full">
+          <div>
+            <input type="hidden" name="ACTION" value="moveShip" />
+            <Input
+              name="shipNumber"
+              type="number"
+              placeholder="Enter ship number"
+              label="Ship Number"
+              disabled={isSubmitting}
+              error={errors.shipNumber}
+              defaultValue={10}
+              required
+            />
+
+            <Input
+              ref={addressRef}
+              name="playerAddress"
+              placeholder="Enter player address"
+              label="Player Address"
+              disabled={isSubmitting}
+              error={errors.playerAddress}
+              defaultValue={walletAddress ?? ''}
+              required
+            />
+
+            <Input
+              name="positionX"
+              type="number"
+              placeholder="Enter position X"
+              label="Position X"
+              disabled={isSubmitting}
+              error={errors.positionX}
+              required
+            />
+
+            <Input
+              name="positionY"
+              type="number"
+              placeholder="Enter position Y"
+              label="Position Y"
+              disabled={isSubmitting}
+              error={errors.positionY}
+              required
+            />
           </div>
-        )}
-        {errors.global && (
-          <div className="w-full bg-red-100 border-red-500 text-red-500 border-l-4 px-4 py-3 rounded mt-4 wrap-break-word">
-            {errors.global}
+
+          <div className="flex flex-1 flex-col gap-2 min-h-0">
+            {dataTx && (
+              <Alert type="success" title="Response">
+                {dataTx}
+              </Alert>
+            )}
+            {errors.global && <Alert type="error">{errors.global}</Alert>}
           </div>
-        )}
-        <input type="hidden" name="ACTION" value="moveShip" />
-        <Input
-          name="shipNumber"
-          type="number"
-          placeholder="Enter ship number"
-          label="Ship Number"
-          disabled={isSubmitting}
-          error={errors.shipNumber}
-          defaultValue={10}
-          required
-        />
 
-        <Input
-          ref={addressRef}
-          name="playerAddress"
-          placeholder="Enter player address"
-          label="Player Address"
-          disabled={isSubmitting}
-          error={errors.playerAddress}
-          defaultValue={walletAddress ?? ''}
-          required
-        />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Moving...' : 'Move ship'}
+          </button>
+        </fetcher.Form>
+      </Tab>
 
-        <Input
-          name="positionX"
-          type="number"
-          placeholder="Enter position X"
-          label="Position X"
-          disabled={isSubmitting}
-          error={errors.positionX}
-          required
-        />
+      <Tab label="Tx3 File" rightAction={<CopyButton text={tx3File} />}>
+        <Code code={tx3File} lang="tx3" />
+      </Tab>
 
-        <Input
-          name="positionY"
-          type="number"
-          placeholder="Enter position Y"
-          label="Position Y"
-          disabled={isSubmitting}
-          error={errors.positionY}
-          required
-        />
-
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer w-fit mt-6 disabled:bg-blue-400 disabled:cursor-not-allowed"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Moving...' : 'Move ship'}
-        </button>
-      </fetcher.Form>
-      {/* <AsteriaMap
-        apiUrl="https://8000-skillful-employee-kb9ou6.us1.demeter.run/graphql"
-        shipyardPolicyId="f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
-        fuelPolicyId="fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
-        shipAddress="addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6"
-        fuelAddress="addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
-        asteriaAddress="addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
-        className="aspect-square w-xl"
-      /> */}
-    </div>
+      <Tab label="JS Code" rightAction={<CopyButton text={jsFile} />}>
+        <Code code={jsFile} lang="js" />
+      </Tab>
+    </Tabs>
   );
 }

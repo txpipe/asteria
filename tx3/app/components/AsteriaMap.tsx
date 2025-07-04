@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import { useMemo } from 'react';
 
 interface AsteriaMapProps {
@@ -22,7 +21,7 @@ export function AsteriaMap({
   shipAddress,
   fuelAddress,
   asteriaAddress,
-  explorerUrl
+  explorerUrl,
 }: AsteriaMapProps) {
   const src = useMemo(() => {
     const params = new URLSearchParams([
@@ -38,11 +37,5 @@ export function AsteriaMap({
     return `${baseURL}?${params.toString()}`;
   }, [apiUrl, shipyardPolicyId, fuelPolicyId, shipAddress, fuelAddress, asteriaAddress, explorerUrl]);
 
-  return (
-    <iframe
-      src={src}
-      title="Asteria Map"
-      className={clsx(className)}
-    />
-  );
+  return <iframe src={src} title="Asteria Map" className={className} />;
 }
