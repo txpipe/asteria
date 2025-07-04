@@ -119,17 +119,17 @@ func _ready():
 func on_message(args):
 	var data = JSON.parse_string(args[0])
 	
-	if data["action"] == "create_ship":
-		if data["shipId"] != null:
-			follow_ship_selected.emit(data["shipId"])
-		else:
-			follow_ship_reset.emit()
+	if data["action"] == "select_ship":
+		follow_ship_selected.emit(data["id"])
+	
+	if data["action"] == "clear_ship":
+		follow_ship_reset.emit()
 	
 	if data["action"] == "move_ship":
-		if data["x"] != null and data["y"] != null:
-			next_position_selected.emit(Vector2(data["x"], data["y"]))
-		else:
-			next_position_reset.emit()
+		next_position_selected.emit(Vector2(data["x"], data["y"]))
+	
+	if data["action"] == "clear_move_ship":
+		next_position_reset.emit()
 	
 	if data["action"] == "refresh_data":
 		fetch_data()
