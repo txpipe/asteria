@@ -1,4 +1,4 @@
-import { CopyIcon } from './icons/copy-icon';
+import { CopyIcon } from './icons/CopyIcon';
 
 export function CopyButton({ text }: { text: string }) {
   const handleCopy = () => {

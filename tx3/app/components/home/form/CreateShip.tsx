@@ -4,11 +4,11 @@ import { data, useFetcher } from 'react-router';
 import type { TxEnvelope } from 'tx3-sdk/trp';
 
 // Components
-import { Code } from '~/components/ui/code';
-import { Input } from '~/components/ui/input';
+import { Code } from '~/components/ui/Code';
+import { Input } from '~/components/ui/Input';
+import { Alert } from '~/components/ui/Alert';
 import { CopyButton } from '~/components/CopyButton';
 import { Tab, Tabs } from '~/components/Tabs';
-import { Alert } from '~/components/ui/alert';
 
 // Store
 import { useWallet } from '~/store/wallet';

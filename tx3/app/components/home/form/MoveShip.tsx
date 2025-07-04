@@ -4,9 +4,9 @@ import { data, useFetcher } from 'react-router';
 import type { TxEnvelope } from 'tx3-sdk/trp';
 
 // Components
-import { Input } from '~/components/ui/input';
-import { Alert } from '~/components/ui/alert';
-import { Code } from '~/components/ui/code';
+import { Input } from '~/components/ui/Input';
+import { Alert } from '~/components/ui/Alert';
+import { Code } from '~/components/ui/Code';
 import { Tab, Tabs } from '~/components/Tabs';
 import { CopyButton } from '~/components/CopyButton';
 

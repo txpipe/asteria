@@ -1,8 +1,8 @@
 // Components
-import { ConnectWallet } from '~/components/ui/connect-wallet';
+import { ConnectWallet } from '~/components/ui/ConnectWallet';
 import { CreateShip, createShipAction } from '~/components/home/form/CreateShip';
 import { MoveShip, moveShipAction } from '~/components/home/form/MoveShip';
-import { Section } from '~/components/section';
+import { Section } from '~/components/Section';
 import { AsteriaMap } from '~/components/AsteriaMap';
 
 // Types
