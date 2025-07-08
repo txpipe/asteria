@@ -1,5 +1,5 @@
 import { protocol } from '@tx3/protocol';
-import { useEffect, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 
 // Components
 import { Code } from '@/components/ui/Code';
@@ -113,21 +113,82 @@ const jsFile = `const result = await protocol.createShipTx({
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
 });`;
 
+const initialState = {
+  tx: null,
+  errors: null,
+};
+
+type ActionState = typeof initialState;
+
+async function createShipAction(_initialState: ActionState, formData: FormData) {
+    'use server';
+
+    const shipNumber = formData.get('shipNumber') as string;
+    const playerAddress = formData.get('playerAddress') as string;
+    const positionXValue = formData.get('positionX') as string;
+    const positionYValue = formData.get('positionY') as string;
+
+    const errors: Record<string, string> = {};
+
+    if (!playerAddress) errors.playerAddress = 'Player address is required';
+
+    if (!positionXValue) errors.positionX = 'Position X is required';
+    const positionX = Number(positionXValue);
+    if (Number.isNaN(positionX)) errors.positionX = 'Position X is not a number';
+
+    if (!positionYValue) errors.positionY = 'Position Y is required';
+    const positionY = Number(positionYValue);
+    if (Number.isNaN(positionY)) errors.positionY = 'Position Y is not a number';
+
+    if (Object.keys(errors).length > 0) {
+      return {
+        errors,
+      }
+    }
+
+    // 83_176_681 <- Get this number from blockfrost using latest epoch from a latest block.
+    try {
+      const lastBlock = await (await fetch(`${process.env.BLOCKFROST_URL}/blocks/latest`)).json();
+      const result = await protocol.createShipTx({
+        player: playerAddress,
+        pPosX: positionX,
+        pPosY: positionY,
+        txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+        pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
+        shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
+      });
+      return {
+        tx: result.tx,
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.log('Cause', e.cause);
+        console.log('Message', e.message);
+        return {
+          errors: {
+            global: (typeof e.cause === 'string' ? e.cause : e.message) || 'Unknown error',
+          }
+        };
+      }
+    }
+  }
+
 export function CreateShip() {
-  const [dataTx, setDataTx] = useState<string|null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [state, formAction, submitting] = useActionState(createShipAction, initialState)
 
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
   const addressRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (dataTx && walletApi) {
-      walletApi.signTx(dataTx, true).then((signedTx) => {
+    if (state?.tx && walletApi) {
+      walletApi.signTx(state.tx, true).then((signedTx) => {
         console.log('Signed transaction:', signedTx);
+      }).catch((error) => {
+        console.log('Error signing transaction:', error)
       });
     }
-  }, [dataTx, walletApi]);
+  }, [state?.tx, walletApi]);
 
   useEffect(() => {
     if (addressRef.current && walletAddress) {
@@ -135,59 +196,19 @@ export function CreateShip() {
     }
   }, [walletAddress]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-    const shipNumber = formData.get('shipNumber') as string;
-    const playerAddress = formData.get('playerAddress') as string;
-
-    const errors: Record<string, string> = {};
-
-    if (!shipNumber) errors.shipNumber = 'Ship number is required';
-    if (!playerAddress) errors.playerAddress = 'Player address is required';
-
-    if (Object.keys(errors).length > 0) {
-      return setErrors(errors);
-    }
-
-    // 83_176_681 <- Get this number from blockfrost using latest epoch from a latest block.
-    try {
-      const lastBlock = await (await fetch(`${process.env.BLOCKFROST_URL}/blocks/latest`)).json();
-      const result = await protocol.createShipTx({
-        initialFuel: 480, // From SpaceTime datum
-        pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
-        player: playerAddress,
-        pPosX: 20,
-        pPosY: 20,
-        shipMintLovelaceFee: 1_000_000,
-        txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
-        shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
-      });
-      return setDataTx(result.tx);
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        console.log('Cause', e.cause);
-        console.log('Message', e.message);
-        return setErrors({
-          global: (typeof e.cause === 'string' ? e.cause : e.message) || 'Unknown error',
-        });
-      }
-    }
-  }
-
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Tx Form">
-        <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-8 justify-between h-full" action={formAction}>
           <div>
             <Input
               name="shipNumber"
               type="number"
               placeholder="Enter ship number"
               label="Ship Number"
-              error={errors.shipNumber}
+              error={state?.errors?.shipNumber}
               defaultValue={10}
+              disabled={submitting}
               required
             />
 
@@ -196,26 +217,54 @@ export function CreateShip() {
               name="playerAddress"
               placeholder="Enter player address"
               label="Player Address"
-              error={errors.playerAddress}
+              error={state?.errors?.playerAddress}
               defaultValue={walletAddress ?? ''}
+              disabled={submitting}
               required
             />
+
+            <div className="w-full flex flex-row gap-x-4">
+              <Input
+                name="positionX"
+                type="number"
+                placeholder="Enter position X"
+                label="Position X"
+                error={state?.errors?.positionX}
+                defaultValue={20}
+                disabled={submitting}
+                required
+                containerClassName="flex-1"
+              />
+
+              <Input
+                name="positionY"
+                type="number"
+                placeholder="Enter position Y"
+                label="Position Y"
+                error={state?.errors?.positionY}
+                defaultValue={20}
+                disabled={submitting}
+                required
+                containerClassName="flex-1"
+              />
+            </div>
           </div>
 
-          {dataTx && (
+          {state?.tx && (
             <Alert type="success" title="Response">
-              {dataTx}
+              {state.tx}
             </Alert>
           )}
 
-          {errors.global && <Alert type="error">{errors.global}</Alert>}
+          {state?.errors?.global && <Alert type="error">{state?.errors?.global}</Alert>}
 
           <div className="flex flex-row">
             <button
               type="submit"
               className="basis-1/2 font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md"
+              disabled={submitting}
             >
-              Submit
+              {submitting ? 'Submitting...' : 'Submit'}
             </button>
           </div>
         </form>

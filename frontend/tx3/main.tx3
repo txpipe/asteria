@@ -87,12 +87,16 @@ type ShipActions {
 tx createShip(
     p_pos_x: Int, // Ship Position X
     p_pos_y: Int, // Ship Position Y
-    initial_fuel: Int, // Initial Fuel
     tx_latest_posix_time: Int,
-    ship_mint_lovelace_fee: Int, // Lovelace fee for minting ship
     ship_name: Bytes, // Name of the ship
     pilot_name: Bytes, // Name of the pilot
 ) {
+    locals {
+        shipshard_policy_hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
+        initial_fuel: 480, // Should be taken from spaceTime datum
+        ship_mint_lovelace_fee: 1000000, // Should be taken from asteria script datum
+    }
+
     validity {
         until_slot: tx_latest_posix_time,
     }
@@ -134,13 +138,13 @@ tx createShip(
 
     // Optional mint/burn blocks
     // mint {
-    //     amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, "PILOT" + asteria.ship_counter + 1, 1)
-    //         + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, "SHIP" + asteria.ship_counter + 1, 1),
+    //     amount: AnyAsset(shipshard_policy_hash, "PILOT" + asteria.ship_counter + 1, 1)
+    //         + AnyAsset(shipshard_policy_hash, "SHIP" + asteria.ship_counter + 1, 1),
     //     redeemer: (),
     // }
     mint {
-        amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1)
-            + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+        amount: AnyAsset(shipshard_policy_hash, pilot_name, 1)
+            + AnyAsset(shipshard_policy_hash, ship_name, 1),
         redeemer: (),
     }
 
@@ -153,7 +157,7 @@ tx createShip(
     // Output blocks
     output {
         to: Player,
-        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1),
+        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(shipshard_policy_hash, pilot_name, 1),
     }
 
     // Output - Pay to Contract
@@ -171,8 +175,8 @@ tx createShip(
         // SpaceTime Contract
         to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
         // to: ShipShardPolicy,
-        // amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(spaceTime.initial_fuel),
-        amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(initial_fuel),
+        // amount: AnyAsset(shipshard_policy_hash, ship_name, 1) + Fuel(spaceTime.initial_fuel),
+        amount: AnyAsset(shipshard_policy_hash, ship_name, 1) + Fuel(initial_fuel),
         datum: ShipDatum {
             pos_x: p_pos_x,
             pos_y: p_pos_y,

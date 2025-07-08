@@ -13,9 +13,39 @@ import { useScrollSnap } from '~/hooks/useScrollSnap';
 
 // Types
 import type { Route } from './+types/_index';
+import { decode } from 'cbor2';
 
 export function meta(_: Route.MetaArgs) {
   return [{ title: 'Asteria Joystick' }, { name: 'description', content: 'Asteria controls using TX3' }];
+}
+
+interface LoaderData {
+  shipCounter?: number;
+}
+
+export async function loader() {
+  const asteriaAddress = 'addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg';
+  const policyId = '5ffc30389bee5838f5f25d015642f8d291769168145a80a686556e8a';
+  const assetName = '46696e616c2041646d696e'; // "Final Admin" in hex
+
+  const path = `addresses/${asteriaAddress}/utxos/${policyId}${assetName}`;
+
+  const loaderOutput: LoaderData = {};
+  
+  try {
+    const utxos = await (await fetch(`${process.env.BLOCKFROST_URL}/${path}`)).json();
+    if (utxos.length === 1) {
+      const inlineDatum = utxos[0].inline_datum;
+      if (inlineDatum) {
+        const decodedDataum = decode<any>(inlineDatum);
+        if (decodedDataum.contents && typeof decodedDataum.contents[0] === 'number') {
+          loaderOutput.shipCounter = decodedDataum.contents[0];
+        }
+      }
+    }
+  } catch { }
+
+  return loaderOutput;
 }
 
 export async function action({ request }: Route.ActionArgs) {

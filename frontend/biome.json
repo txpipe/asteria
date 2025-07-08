@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/*.tx3", "!public/**"]
+    "includes": ["**", "!tx3/**", "!public/**"]
   },
   "formatter": {
     "enabled": true,

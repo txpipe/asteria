@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useChallengeStore, Challenge } from '@/stores/challenge';
+import { useChallengeStore } from '@/stores/challenge';
 import { useScrollSnap } from '@/hooks/useScrollSnap';
 
 import { ConnectWallet } from '@/components/ui/ConnectWallet';

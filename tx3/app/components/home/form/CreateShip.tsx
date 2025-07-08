@@ -1,7 +1,8 @@
 import { protocol } from '@tx3/protocol';
 import { useEffect, useRef } from 'react';
-import { data, useFetcher } from 'react-router';
+import { data, useFetcher, useLoaderData } from 'react-router';
 import type { TxEnvelope } from 'tx3-sdk/trp';
+import { decode } from 'cbor2';
 
 // Components
 import { Code } from '~/components/ui/Code';
@@ -16,11 +17,21 @@ import { useWallet } from '~/store/wallet';
 export async function createShipAction(formData: FormData) {
   const shipNumber = formData.get('shipNumber') as string;
   const playerAddress = formData.get('playerAddress') as string;
+  const positionXValue = formData.get('positionX') as string;
+  const positionYValue = formData.get('positionY') as string;
 
   const errors: Record<string, string> = {};
 
   if (!shipNumber) errors.shipNumber = 'Ship number is required';
   if (!playerAddress) errors.playerAddress = 'Player address is required';
+
+  if (!positionXValue) errors.positionX = 'Position X is required';
+  const positionX = Number(positionXValue);
+  if (Number.isNaN(positionX)) errors.positionX = 'Position X is not a number';
+
+  if (!positionYValue) errors.positionY = 'Position Y is required';
+  const positionY = Number(positionYValue);
+  if (Number.isNaN(positionY)) errors.positionY = 'Position Y is not a number';
 
   if (Object.keys(errors).length > 0) {
     return data({ errors }, { status: 400 });
@@ -30,13 +41,11 @@ export async function createShipAction(formData: FormData) {
   try {
     const lastBlock = await (await fetch(`${process.env.BLOCKFROST_URL}/blocks/latest`)).json();
     const result = await protocol.createShipTx({
-      initialFuel: 480, // From SpaceTime datum
-      pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
       player: playerAddress,
-      pPosX: 20,
-      pPosY: 20,
-      shipMintLovelaceFee: 1_000_000,
+      pPosX: positionX,
+      pPosY: positionY,
       txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+      pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
       shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
     });
     return data({ data: result }, { status: 200 });
@@ -160,6 +169,7 @@ const jsFile = `const result = await protocol.createShipTx({
 });`;
 
 export function CreateShip() {
+  const { shipCounter } = useLoaderData();
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
   const addressRef = useRef<HTMLInputElement>(null);
@@ -201,7 +211,7 @@ export function CreateShip() {
               label="Ship Number"
               disabled={isSubmitting}
               error={errors.shipNumber}
-              defaultValue={10}
+              defaultValue={shipCounter ? shipCounter.toString() : ''}
               required
             />
 
@@ -215,6 +225,32 @@ export function CreateShip() {
               defaultValue={walletAddress ?? ''}
               required
             />
+
+            <div className="w-full flex flex-row gap-x-4">
+              <Input
+                name="positionX"
+                type="number"
+                placeholder="Enter position X"
+                label="Position X"
+                disabled={isSubmitting}
+                error={errors.positionX}
+                defaultValue={20}
+                required
+                containerClassName="flex-1"
+              />
+
+              <Input
+                name="positionY"
+                type="number"
+                placeholder="Enter position Y"
+                label="Position Y"
+                disabled={isSubmitting}
+                error={errors.positionY}
+                defaultValue={20}
+                required
+                containerClassName="flex-1"
+              />
+            </div>
           </div>
 
           {dataTx && (

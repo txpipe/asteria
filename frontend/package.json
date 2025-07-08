@@ -27,7 +27,6 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tx3-sdk": "^0.3.0",
-    "tx3-trp": "^0.2.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {

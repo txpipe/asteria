@@ -19,6 +19,7 @@
     "@react-router/serve": "^7.5.3",
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",
+    "cbor2": "^2.0.1",
     "clsx": "^2.1.1",
     "isbot": "^5.1.27",
     "react": "^19.1.0",
@@ -38,7 +39,7 @@
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
-    "vite-plugin-tx3": "link:../../../Library/pnpm/global/5/node_modules/vite-plugin-tx3",
+    "vite-plugin-tx3": "file:/Users/mduthey/Documents/Work/txpipe/tx3/sdks/web-sdk/packages/vite-plugin-tx3",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "packageManager": "pnpm@10.12.2+sha512.a32540185b964ee30bb4e979e405adc6af59226b438ee4cc19f9e8773667a66d302f5bfee60a39d3cac69e35e4b96e708a71dd002b7e9359c4112a1722ac323f"
