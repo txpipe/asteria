@@ -1,0 +1,25 @@
+[[wallets]]
+name = "alice"
+public_key = "587f9419febf42fed053a5b04c08823cbda7a2780711d6de7d82e90ea813c790f4d69dce14bc68742d96a86ebd3b9d5f3e9a161d1eb618d49449a71420bb9361"
+private_key = "284e2e5cb24f93852d482ba64362e6a98e273674322cb95347bd0a80837a8d4e7cffdb45d9d20e6d70c2a70b899e1120f91bab596a473a4e5071dcd69fb4a5e4"
+created = "2025-06-05T12:27:51.043380720-06:00"
+modified = "2025-06-05T12:27:51.043407128-06:00"
+is_default = true
+is_unsafe = true
+
+[[wallets]]
+name = "bob"
+public_key = "62e89cbdacd68f5982121e067fd41e0e5b1f9a432620a96156ef278fc35861cca3fa871a3b15d384312e396adf584026527eed08bd4a11e587fea4ec73979b04"
+private_key = "6047b6a67dfe013d0c8b594453615fbcc8c53ba8204b3248500f475dbc7ba35590678c7d788964aacffe4cc16146e3aeb68ed4bd3334f4e1a41d55faaffcbddf"
+created = "2025-06-05T12:27:51.061764793-06:00"
+modified = "2025-06-05T12:27:51.061767208-06:00"
+is_default = false
+is_unsafe = true
+
+[[providers]]
+type = "Provider"
+name = "local"
+url = "http://localhost:5164"
+is_default = true
+is_testnet = true
+trp_url = "http://localhost:8164"

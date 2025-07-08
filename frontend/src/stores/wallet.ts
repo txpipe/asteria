@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { decodeHexAddress } from '~/utils/cardano';
+import { decodeHexAddress } from '@/utils/cardano';
 
 export type WalletDetails = {
   api: CardanoWalletAPI | null;
@@ -10,6 +10,7 @@ export type WalletDetails = {
 
 export type WalletAction = {
   update: (api: WalletDetails['api'], info: WalletDetails['info']) => void;
+  disconnect: () => void;
 };
 
 export const useWallet = create<WalletDetails & WalletAction>((set) => ({
@@ -35,4 +36,10 @@ export const useWallet = create<WalletDetails & WalletAction>((set) => ({
         .catch(() => null),
     });
   },
+
+  disconnect: () => set({
+    api: null,
+    info: null,
+    changeAddress: null,
+  }),
 }));

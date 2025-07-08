@@ -1,0 +1,352 @@
+party Admin;
+party Player;
+
+// SpaceTime Address => addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6
+// policy ShipShardPolicyId = 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20;
+// SpaceTime Transaction Reference => 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921 Index #0
+policy ShipShardPolicy {
+    hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
+    ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+}
+
+// Asteria Addresss => addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg
+// Asteria Policy ID => 1b0e10be9cb2915223b5db566baab70167edb4d8e652e888766c3690
+// Asteria Transaction Reference => 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277 Index #0
+policy AsteriaPolicy {
+    hash: 0x1b0e10be9cb2915223b5db566baab70167edb4d8e652e888766c3690,
+    ref: 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277#0,
+}
+
+// Pellet Addresss => addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63
+// Pellet Policy ID => fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd
+// Pellet Transaction Reference => 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3 Index #0
+policy PelletPolicy {
+    hash: 0xfc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd,
+    ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+}
+
+// policy FuelPolicyId = 0xfc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd;
+
+asset Fuel = 0xfc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd."FUEL";
+asset AdminToken = 0x5ffc30389bee5838f5f25d015642f8d291769168145a80a686556e8a."Final Admin";
+
+// Records
+type AssetRecord {
+    policy_id: Bytes,
+    asset_name: Bytes,
+}
+
+type MaxSpeedRecord {
+    distance: Int,
+    time: Int,
+}
+
+// Datums
+type ShipDatum {
+    pos_x: Int,
+    pos_y: Int,
+    ship_token_name: Bytes,
+    pilot_token_name: Bytes,
+    last_move_latest_time: Int,
+}
+
+// Asteria
+type AsteriaDatum {
+    ship_counter: Int,
+    shipyard_policy: Bytes, // Is possible to define a maxLength?
+}
+
+type SpaceTimeDatum {
+    pellet_validator_address: Bytes,
+    asteria_validator_address: Bytes,
+    admin_token: AssetRecord,
+    max_speed: MaxSpeedRecord,
+    max_ship_fuel: Int,
+    fuel_per_step: Int,
+    initial_fuel: Int,
+    min_asteria_distance: Int,
+}
+
+type PelletDatum {
+    pos_x: Int,
+    pos_y: Int,
+    shipyard_policy: Bytes,
+}
+
+// Actions
+type ShipActions {
+    MoveShip {
+        delta_x: Int,
+        delta_y: Int,
+    },
+    GatherFuel {
+        gather_amount: Int,
+    },
+}
+
+tx createShip(
+    p_pos_x: Int, // Ship Position X
+    p_pos_y: Int, // Ship Position Y
+    initial_fuel: Int, // Initial Fuel
+    tx_latest_posix_time: Int,
+    ship_mint_lovelace_fee: Int, // Lovelace fee for minting ship
+    ship_name: Bytes, // Name of the ship
+    pilot_name: Bytes, // Name of the pilot
+) {
+    validity {
+        until_slot: tx_latest_posix_time,
+    }
+
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    }
+
+    // Asteria
+    reference AsteriaRef {
+        ref: 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277#0,
+    }
+
+    // Input blocks
+    // Ensure that the Player has the required assets
+    input source {
+        from: Player,
+        min_amount: fees + Ada(ship_mint_lovelace_fee),
+    }
+
+    input spaceTime {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+        datum_is: SpaceTimeDatum,
+    }
+
+    input asteria {
+        // Asteria Contract
+        from: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
+        min_amount: AdminToken(1),
+        datum_is: AsteriaDatum,
+    }
+
+    // Optional mint/burn blocks
+    // mint {
+    //     amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, "PILOT" + asteria.ship_counter + 1, 1)
+    //         + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, "SHIP" + asteria.ship_counter + 1, 1),
+    //     redeemer: (),
+    // }
+    mint {
+        amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1)
+            + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+        redeemer: (),
+    }
+
+    mint {
+        // amount: Fuel(spaceTime.initial_fuel),
+        amount: Fuel(initial_fuel),
+        redeemer: (),
+    }
+
+    // Output blocks
+    output {
+        to: Player,
+        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1),
+    }
+
+    // Output - Pay to Contract
+    output {
+        // Asteria Contract
+        to: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
+        amount: asteria + Ada(ship_mint_lovelace_fee),
+        datum: AsteriaDatum {
+            ship_counter: asteria.ship_counter + 1,
+            shipyard_policy: asteria.shipyard_policy,
+        },
+    }
+
+    output {
+        // SpaceTime Contract
+        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        // to: ShipShardPolicy,
+        // amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(spaceTime.initial_fuel),
+        amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(initial_fuel),
+        datum: ShipDatum {
+            pos_x: p_pos_x,
+            pos_y: p_pos_y,
+            ship_token_name: ship_name,
+            pilot_token_name: pilot_name,
+            last_move_latest_time: tx_latest_posix_time,
+        },
+    }
+}
+
+// Move Ship
+tx moveShip(
+    p_delta_x: Int,
+    p_delta_y: Int,
+    tx_latest_posix_time: Int,
+    // ship_tx_hash: Bytes,
+    ship_name: Bytes,
+    pilot_name: Bytes,
+    // distance: Int,
+    required_fuel: Int,
+) {
+    validity {
+        until_slot: tx_latest_posix_time,
+    }
+
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    input spaceTime {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+        datum_is: SpaceTimeDatum,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        from: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        datum_is: ShipDatum,
+        // Ideally
+        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(distance * fuel_per_step),
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+
+        // Is this correct?
+        redeemer: ShipActions::MoveShip { 
+            delta_x: p_delta_x,
+            delta_y: p_delta_y,
+        },
+    }
+
+    input pilot {
+        from: Player,
+        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship.pilot_token_name, 1),
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1),
+    }
+
+    // Burn
+    burn {
+        // amount: Fuel(distance * fuel_per_step),
+        amount: Fuel(required_fuel),
+        redeemer: (),
+    }
+
+    // Outputs
+    output {
+        // SpaceTime Contract
+        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        // amount: ship - Fuel(distance * fuel_per_step),
+        amount: ship - Fuel(required_fuel),
+        datum: ShipDatum {
+            pos_x: ship.pos_x + p_delta_x,
+            pos_y: ship.pos_y + p_delta_y,
+            last_move_latest_time: tx_latest_posix_time,
+            ...ship
+        },
+    }
+
+    output {
+        to: Player,
+        amount: source - fees + pilot,
+    }
+}
+
+tx gatherFuel (
+    p_gather_amount: Int,
+    ship_name: Bytes,
+    // pellet_addr: Bytes,
+    // pellet_tx_hash: Bytes,
+    // pellet_tx_index: Int,
+    tx_earliest_posix_time: Int,
+) {
+    validity {
+        since_slot: tx_earliest_posix_time,
+    }
+    // References
+    // SpaceTime
+    reference SpaceTimeRef {
+        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    }
+
+    // Pellet
+    reference PelletRef {
+        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    }
+
+    // Inputs
+    input source {
+        from: Player,
+        min_amount: fees,
+    }
+
+    // Is possible to get the SHIP token name using the txhash?
+    input ship {
+        // SpaceTime Contract
+        from: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        datum_is: ShipDatum,
+        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(1, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: p_gather_amount,
+        },
+    }
+
+    input pellet {
+        from: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        datum_is: PelletDatum,
+        min_amount: Fuel(p_gather_amount),
+
+        // From Lucid Data.to(new Constr(1, [new Constr(0, [gather_amount])]))
+        // Is this correct?
+        redeemer: ShipActions::GatherFuel { 
+            gather_amount: p_gather_amount,
+        },
+    }
+
+    // Outputs
+    output {
+        to: Player,
+        // I need to output pilot token to Player?
+        amount: source - fees,
+    }
+
+    output {
+        // SpaceTime Contract
+        // TODO: Should I create a input for this? To complete on amount as input + AnyAsset + Fuel?
+        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        amount: ship + Fuel(p_gather_amount),
+        datum: ShipDatum {
+            ...ship
+        },
+    }
+
+    output {
+        // Pellet Contract
+        to: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        amount: pellet - Fuel(p_gather_amount),
+        datum: PelletDatum {
+            pos_x: pellet.pos_x,
+            pos_y: pellet.pos_y,
+            shipyard_policy: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
+        },
+    }
+}

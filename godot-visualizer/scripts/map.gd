@@ -27,7 +27,7 @@ var placeholder_ship = null
 
 var initial_position = Vector2(0, 0)
 
-func _on_main_dataset_updated() -> void:
+func _on_main_dataset_updated() -> void:	
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
 	

@@ -30,9 +30,6 @@
 [ext_resource type="Texture2D" uid="uid://j1rgnsv8l1ne" path="res://resources/icons/icon_zoom_out.svg" id="28_kl1su"]
 [ext_resource type="Texture2D" uid="uid://dqpu7ll4k1fs1" path="res://resources/loader.png" id="28_wxhmh"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gt7hn"]
-bg_color = Color(1, 1, 1, 1)
-
 [sub_resource type="LabelSettings" id="LabelSettings_jrdxu"]
 font = ExtResource("4_r2c3r")
 font_size = 64
@@ -52,6 +49,9 @@ bg_color = Color(0, 0, 0, 0)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_iitb5"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gt7hn"]
+bg_color = Color(1, 1, 1, 1)
+
 [node name="Main" type="Node"]
 script = ExtResource("1_4dsde")
 
@@ -65,74 +65,30 @@ follow_viewport_enabled = true
 [node name="GUICanvasLayer" type="CanvasLayer" parent="."]
 layer = 2
 
-[node name="Tooltip" type="Panel" parent="GUICanvasLayer"]
-custom_minimum_size = Vector2(560, 392)
-offset_right = 560.0
-offset_bottom = 392.0
-theme_override_styles/panel = ExtResource("25_q05r4")
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/Tooltip"]
-layout_mode = 1
+[node name="HBoxContainerLoader" type="HBoxContainer" parent="GUICanvasLayer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 40
+alignment = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/Tooltip/MarginContainer"]
+[node name="BoxContainer" type="BoxContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
+visible = false
 layout_mode = 2
-theme_override_constants/separation = 20
+size_flags_horizontal = 3
 
-[node name="Title" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("26_btrf2")
-theme_override_font_sizes/font_size = 36
-text = "TITLE"
-horizontal_alignment = 1
-text_overrun_behavior = 3
-uppercase = true
+size_flags_horizontal = 3
+mouse_filter = 2
 
-[node name="Panel" type="Panel" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 1)
+[node name="Loader" type="TextureRect" parent="GUICanvasLayer/HBoxContainerLoader/CenterContainer"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_gt7hn")
-
-[node name="Label1" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("27_u6i6b")
-theme_override_font_sizes/font_size = 32
-text = "LABEL1"
-text_overrun_behavior = 3
-
-[node name="Label2" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("27_u6i6b")
-theme_override_font_sizes/font_size = 32
-text = "LABEL2"
-text_overrun_behavior = 3
-
-[node name="Label3" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("27_u6i6b")
-theme_override_font_sizes/font_size = 32
-text = "LABEL3"
-text_overrun_behavior = 3
-
-[node name="Label4" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
-theme_override_fonts/font = ExtResource("27_u6i6b")
-theme_override_font_sizes/font_size = 32
-text = "LABEL4"
-text_overrun_behavior = 3
+mouse_filter = 2
+texture = ExtResource("28_wxhmh")
+expand_mode = 1
+stretch_mode = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer"]
 anchors_preset = 15
@@ -463,30 +419,74 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
-[node name="HBoxContainerLoader" type="HBoxContainer" parent="GUICanvasLayer"]
+[node name="Tooltip" type="Panel" parent="GUICanvasLayer"]
+custom_minimum_size = Vector2(560, 392)
+offset_right = 560.0
+offset_bottom = 392.0
+theme_override_styles/panel = ExtResource("25_q05r4")
+
+[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/Tooltip"]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-alignment = 1
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
 
-[node name="BoxContainer" type="BoxContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
-visible = false
+[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/Tooltip/MarginContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/separation = 20
 
-[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainerLoader"]
+[node name="Title" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("26_btrf2")
+theme_override_font_sizes/font_size = 36
+text = "TITLE"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+uppercase = true
 
-[node name="Loader" type="TextureRect" parent="GUICanvasLayer/HBoxContainerLoader/CenterContainer"]
+[node name="Panel" type="Panel" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("28_wxhmh")
-expand_mode = 1
-stretch_mode = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_gt7hn")
+
+[node name="Label1" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("27_u6i6b")
+theme_override_font_sizes/font_size = 32
+text = "LABEL1"
+text_overrun_behavior = 3
+
+[node name="Label2" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("27_u6i6b")
+theme_override_font_sizes/font_size = 32
+text = "LABEL2"
+text_overrun_behavior = 3
+
+[node name="Label3" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("27_u6i6b")
+theme_override_font_sizes/font_size = 32
+text = "LABEL3"
+text_overrun_behavior = 3
+
+[node name="Label4" type="Label" parent="GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.694118, 0.694118, 0.694118, 1)
+theme_override_fonts/font = ExtResource("27_u6i6b")
+theme_override_font_sizes/font_size = 32
+text = "LABEL4"
+text_overrun_behavior = 3
 
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
 [connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
