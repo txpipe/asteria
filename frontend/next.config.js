@@ -8,6 +8,7 @@ const nextConfig = {
   transpilePackages: ['next-mdx-remote'],
   env: {
     API_URL: process.env.API_URL,
+    BLOCKFROST_URL: process.env.BLOCKFROST_URL,
   },
   experimental: {
     mdxRs: true,
