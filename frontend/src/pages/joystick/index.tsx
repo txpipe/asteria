@@ -46,7 +46,7 @@ export default function Joystick() {
           <MoveShip />
         </Section>
 
-        <Section id="actions" title="ACTIONS">
+        {/* <Section id="actions" title="ACTIONS">
           <button
             type="button"
             className="font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md"
@@ -91,7 +91,7 @@ export default function Joystick() {
           >
             Refresh asteria
           </button>
-        </Section>
+        </Section> */}
       </div>
 
       <SectionsMenu />
