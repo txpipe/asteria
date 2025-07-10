@@ -1,7 +1,6 @@
-import withPlugins from 'next-compose-plugins';
-import withMDX from '@next/mdx';
-import { withTX3 } from 'next-tx3';
- 
+const withMDX = require('@next/mdx')();
+const withTX3 = require('next-tx3').withTX3;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
@@ -13,12 +12,14 @@ const nextConfig = {
   experimental: {
     mdxRs: true,
   },
+}
+
+module.exports = withTX3({
+  ...withMDX(nextConfig),
   tx3: {
     tx3Path: './tx3',
-    autoWatch: true,
+    autoWatch: process.env.NODE_ENV === 'development',
     autoSetup: true,
-    verbose: true
+    verbose: process.env.NODE_ENV === 'development'
   },
-}
- 
-export default withPlugins([[withMDX], [withTX3]], nextConfig);
+});
