@@ -124,7 +124,7 @@ const jsFile = `const result = await protocol.createShipTx({
   player: playerAddress,
   pPosX: positionX,
   pPosY: positionY,
-  txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+  txLatestPosixTime: blockSlotValue + 300, // 5 minutes from last block
   pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
 });`;

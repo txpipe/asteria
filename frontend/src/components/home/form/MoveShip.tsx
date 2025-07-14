@@ -111,7 +111,7 @@ const result = await protocol.moveShipTx({
   requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
   pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
-  txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
+  txLatestPosixTime: blockSlotValue + 300, // 5 minutes from last block
 });`;
 
 type ActionState = {

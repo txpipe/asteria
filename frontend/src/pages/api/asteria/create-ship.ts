@@ -46,7 +46,6 @@ export default async function handler(
     });
   }
 
-  // 83_176_681 <- Get this number from blockfrost using latest epoch from a latest block.
   try {
     const result = await protocol.createShipTx({
       player: playerAddress,
