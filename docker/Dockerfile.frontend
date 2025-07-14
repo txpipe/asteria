@@ -51,7 +51,10 @@ RUN wget -qO- "https://github.com/tx3-lang/trix/releases/latest/download/trix-x8
     chmod +x /root/.tx3/default/bin/trix
 
 ENV API_URL=https://8000-skillful-employee-kb9ou6.us1.demeter.run
-ENV BLOCKFROST_URL=https://cardano-preprod.blockfrost.io/api/v0
+
+# From VSCode extension
+ENV TRP_URL=https://cardano-preview.trp-m1.demeter.run
+ENV TRP_API_KEY=trp1ffyf88ugcyg6j6n3yuh
 
 COPY --from=build /visualizer/build ./public/visualizer
 

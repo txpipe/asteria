@@ -1,5 +1,4 @@
-import { protocol } from '@tx3/protocol';
-import { useActionState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Components
 import { Input } from '@/components/ui/Input';
@@ -10,6 +9,9 @@ import { CopyButton } from '@/components/CopyButton';
 
 // Store
 import { useWallet } from '@/stores/wallet';
+
+// Pages
+import type { ResponseData } from '@/pages/api/asteria/move-ship';
 
 const tx3File = `// Asteria player
 party Player; // Sent by Form
@@ -119,77 +121,13 @@ type ActionState = {
   errors?: Record<string, string>;
 };
 
-async function moveShipAction(_initialState: ActionState, formData: FormData): Promise<ActionState> {
-  'use server';
-
-  const shipNumber = formData.get('shipNumber') as string;
-  const playerAddress = formData.get('playerAddress') as string;
-  const positionXValue = formData.get('positionX') as string;
-  const positionYValue = formData.get('positionY') as string;
-
-  const errors: Record<string, string> = {};
-
-  if (!shipNumber) errors.shipNumber = 'Ship number is required';
-  if (!playerAddress) errors.playerAddress = 'Player address is required';
-  if (!positionXValue) errors.positionX = 'Position X is required';
-
-  const positionX = Number(positionXValue);
-  if (Number.isNaN(positionX)) errors.positionX = 'Position X is not a number';
-
-  if (!positionYValue) errors.positionY = 'Position Y is required';
-  const positionY = Number(positionYValue);
-  if (Number.isNaN(positionY)) errors.positionY = 'Position Y is not a number';
-
-  if (Object.keys(errors).length > 0) {
-    return { errors };
-  }
-
-  // 83_176_681 <- Get this number from blockfrost using latest epoch from a latest block.
-  try {
-    const lastBlock = await (await fetch(`${process.env.BLOCKFROST_URL}/blocks/latest`)).json();
-
-    const distance = Math.abs(positionX) + Math.abs(positionY);
-
-    const result = await protocol.moveShipTx({
-      pDeltaX: positionX,
-      pDeltaY: positionY,
-      player: playerAddress,
-      // distance,
-      requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
-      shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
-      pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
-      txLatestPosixTime: lastBlock.slot + 300, // 5 minutes from last block
-    });
-
-    return {
-      data: {
-        tx: result.tx,
-      }
-    }
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      console.log('Cause', e.cause);
-      console.log('Message', e.message);
-      return {
-        errors: {
-          global: (typeof e.cause === 'string' ? e.cause : e.message) || 'Unknown error',
-        }
-      };
-    }
-  }
-
-  return {
-    errors: {
-      global: 'An unknown error occurred while creating the ship transaction.',
-    },
-  };
-}
 
 export function MoveShip() {
-  const [state, formAction, submitting] = useActionState(moveShipAction, {});
+  const [submitting, setSubmitting] = useState(false);
+  const [formState, setFormState] = useState<ResponseData>({});
 
-  const errors = state.errors || {};
-  const dataTx = state?.data?.tx;
+  const errors = formState.errors || {};
+  const dataTx = formState.data?.tx;
 
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
@@ -211,23 +149,32 @@ export function MoveShip() {
     }
   }, [walletAddress]);
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setFormState({});
+    const formData = new FormData(event.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    try {
+      const res = await fetch('/api/asteria/move-ship', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const jsonResponse = await res.json();
+      setFormState(jsonResponse);
+    } catch (error) {
+      console.log('Error submitting form:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Tx Form">
-        <form className="flex flex-col gap-8 justify-between h-full" action={formAction}>
+        <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
           <div>
-            <input type="hidden" name="ACTION" value="moveShip" />
-            <Input
-              name="shipNumber"
-              type="number"
-              placeholder="Enter ship number"
-              label="Ship Number"
-              error={errors.shipNumber}
-              defaultValue={10}
-              disabled={submitting}
-              required
-            />
-
             <Input
               ref={addressRef}
               name="playerAddress"
@@ -238,6 +185,31 @@ export function MoveShip() {
               disabled={submitting}
               required
             />
+
+            <div className="w-full flex flex-row gap-x-4">
+              <Input
+                name="shipNumber"
+                type="number"
+                placeholder="Enter ship number"
+                containerClassName="flex-1"
+                label="Ship Number"
+                error={errors.shipNumber}
+                defaultValue={10}
+                disabled={submitting}
+                required
+              />
+              <Input
+                name="blockSlot"
+                type="number"
+                placeholder="Latest block slot"
+                containerClassName="flex-1"
+                label="Latest block slot"
+                error={errors.shipNumber}
+                disabled={submitting}
+                required
+              />
+            </div>
+
 
             <div className="w-full flex flex-row gap-x-4">
               <Input

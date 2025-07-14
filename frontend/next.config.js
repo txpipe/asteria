@@ -7,7 +7,6 @@ const nextConfig = {
   transpilePackages: ['next-mdx-remote'],
   env: {
     API_URL: process.env.API_URL,
-    BLOCKFROST_URL: process.env.BLOCKFROST_URL,
   },
   experimental: {
     mdxRs: true,
@@ -20,6 +19,6 @@ module.exports = withTX3({
     tx3Path: './tx3',
     autoWatch: process.env.NODE_ENV === 'development',
     autoSetup: true,
-    verbose: process.env.NODE_ENV === 'development'
+    verbose: process.env.NODE_ENV === 'development',
   },
 });
