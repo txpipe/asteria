@@ -1,0 +1,39 @@
+[protocol]
+name = "asteria"
+scope = "txpipe"
+version = "0.1.0"
+description = ""
+main = "main.tx3"
+
+[registry]
+url = "https://registry.dgram.io"
+
+[profiles.devnet]
+chain = "CardanoDevnet"
+
+[[profiles.devnet.wallets]]
+name = "alice"
+random_key = true
+initial_balance = 1000000000000000000
+
+[[profiles.devnet.wallets]]
+name = "bob"
+random_key = true
+initial_balance = 1000000000000000000
+
+[profiles.preview]
+chain = "CardanoPreview"
+
+[profiles.preprod]
+chain = "CardanoPreprod"
+
+[profiles.mainnet]
+chain = "CardanoMainnet"
+
+[[bindings]]
+plugin = "typescript"
+output_dir = "./bindings"
+
+[profiles.devnet.trp]
+url= "http://localhost:8164"
+headers = {}

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dtec1i7ha2aui"]
 
-[ext_resource type="Texture2D" uid="uid://bwprdtwn2mjqm" path="res://resources/asteria.svg" id="1_mqc4j"]
+[ext_resource type="Texture2D" uid="uid://dn2bbnhfqljgs" path="res://resources/asteria.svg" id="1_mqc4j"]
 
 [node name="Asteria" type="Node2D"]
 

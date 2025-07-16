@@ -1,0 +1,2 @@
+overrides:
+  vite-plugin-tx3: link:../../../Library/pnpm/global/5/node_modules/vite-plugin-tx3

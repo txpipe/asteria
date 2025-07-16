@@ -7,6 +7,7 @@ extends Node2D
 signal camera_position_changed(position: Vector2)
 signal camera_zoom_changed(zoom: Vector2)
 signal minimap_position_changed(position: Vector2)
+signal selected_ship_position_changed(position: Vector2)
 signal mouse_hover_gui(is_hover: bool)
 signal hide_tooltip()
 signal show_ship_tooltip(ship: Global.ShipData)
@@ -20,19 +21,42 @@ var mouse_entered_modal = false
 
 var current_id = ""
 
+var tween_alpha = null
+var tween_position = null
+var placeholder_ship = null
 
-func _on_main_dataset_updated() -> void:
+var initial_position = Vector2(0, 0)
+
+func _on_main_dataset_updated() -> void:	
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
 	
 	for child in $Entities.get_children():
-		child.free()
+		if child != placeholder_ship:
+			child.free()
 	
-	for ship_data in Global.get_ships():
+	for ship_data in Global.get_ships():		
 		var ship = Ship.new_ship(ship_data)
 		ship.position = ship_data.position * cell_size
 		ship.rotation = ship.position.angle_to_point(center) + PI/2
 		$Entities.add_child(ship)
+		
+		if (
+			Global.get_selected_ship() != null and
+			Global.get_selected_ship().id == ship_data.id and
+			Global.get_selected_ship().position != ship_data.position
+		):
+			ship.position = Global.get_selected_ship().position * cell_size
+			ship.rotation = ship.position.angle_to_point(ship_data.position * cell_size) + PI/2
+			
+			var tween = get_tree().create_tween()
+			tween.tween_property(ship, "position", ship_data.position * cell_size, .5)
+			tween.tween_property(ship, "rotation", ship.position.angle_to_point(center) + PI/2, .5)
+			tween.play()
+			
+			Global.set_selected_ship(ship_data)
+			selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
+			_on_next_position_reset()
 	
 	for fuel_data in Global.get_fuels():
 		var fuel = fuel_scene.instantiate()
@@ -154,3 +178,63 @@ func _on_zoom_plus_button_pressed() -> void:
 	if $Camera.zoom < Vector2(1.5, 1.5):
 		$Camera.zoom += Vector2(.25, .25)
 		camera_zoom_changed.emit($Camera.zoom)
+
+
+func _on_follow_ship_reset() -> void:
+	selected_ship_position_changed.emit(initial_position)
+	Global.set_selected_ship(null)
+	_on_next_position_reset()
+
+
+func _on_follow_ship_selected(ship_id: String) -> void:
+	var data = Global.get_ships().filter(func(ship): return ship.id == ship_id)
+	if (len(data) > 0):
+		var ship_data = data[0]
+		selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
+		Global.set_selected_ship(ship_data)
+
+
+func _on_next_position_reset() -> void:
+	if tween_alpha != null:
+		tween_alpha.stop()
+		tween_position.stop()
+	
+	if placeholder_ship != null:
+		placeholder_ship.free()
+		placeholder_ship = null
+
+
+func _on_next_position_selected(position: Vector2) -> void:
+	if Global.get_selected_ship() != null:
+		var ship_data = Global.get_selected_ship()
+		
+		var old_position = ship_data.position * Global.get_cell_size()
+		var new_position = position * Global.get_cell_size()
+		
+		if placeholder_ship == null:
+			placeholder_ship = Ship.new_ship(ship_data)
+			$Entities.add_child(placeholder_ship)
+		
+		placeholder_ship.animation = str(ship_data.id.unicode_at(ship_data.id.length()-3) % 7)
+		placeholder_ship.position = old_position
+		placeholder_ship.rotation = old_position.angle_to_point(new_position) + PI/2
+		placeholder_ship.modulate.a = 0
+		
+		if tween_alpha != null:
+			tween_alpha.stop()
+			tween_position.stop()
+		
+		tween_alpha = get_tree().create_tween().set_loops()
+		tween_alpha.tween_property(placeholder_ship, "modulate:a", .75, 1).from(0)
+		tween_alpha.tween_property(placeholder_ship, "modulate:a", 0, 1).from(.75)
+		tween_alpha.play()
+		
+		tween_position = get_tree().create_tween().set_loops()
+		tween_position.tween_property(placeholder_ship, "position", new_position, 1).from(old_position)
+		tween_position.tween_property(placeholder_ship, "position", old_position, 1).from(new_position)
+		tween_position.play()
+
+
+func _on_init_joystick_mode() -> void:
+	initial_position = Vector2(-$Camera.get_viewport_rect().size.x/4, 0)
+	selected_ship_position_changed.emit(initial_position)

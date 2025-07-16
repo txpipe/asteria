@@ -7,7 +7,9 @@ var ships: Array[ShipData] = []
 var fuels: Array[FuelData] = []
 var asteria: AsteriaData = null
 
+var mode = ""
 var explorer_url = ""
+var selected_ship = null
 
 
 func init_data(data: Variant):
@@ -54,6 +56,18 @@ func set_explorer_url(_explorer_url: String):
 
 func get_explorer_url():
 	return explorer_url
+
+func set_mode(_mode: String):
+	mode = _mode
+
+func get_mode():
+	return mode
+
+func set_selected_ship(_selected_ship: ShipData):
+	selected_ship = _selected_ship
+
+func get_selected_ship():
+	return selected_ship
 
 
 class ShipData:

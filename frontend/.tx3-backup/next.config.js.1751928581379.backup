@@ -1,0 +1,23 @@
+import withPlugins from 'next-compose-plugins';
+import withMDX from '@next/mdx';
+import { withTX3 } from 'next-tx3';
+ 
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
+  transpilePackages: ['next-mdx-remote'],
+  env: {
+    API_URL: process.env.API_URL,
+  },
+  experimental: {
+    mdxRs: true,
+  },
+  tx3: {
+    tx3Path: './tx3',
+    autoWatch: true,
+    autoSetup: true,
+    verbose: true
+  },
+}
+ 
+export default withPlugins([[withMDX], [withTX3]], nextConfig);

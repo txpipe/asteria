@@ -63,3 +63,7 @@ func _on_map_minimap_position_changed(minimap_position: Vector2) -> void:
 
 func _on_map_mouse_hover_gui(is_hover: bool) -> void:
 	mouse_hover_gui = is_hover
+
+
+func _on_selected_ship_position_changed(position: Vector2) -> void:
+	next_camera_position = position

@@ -1,5 +1,6 @@
-const withMDX = require('@next/mdx')()
- 
+const withMDX = require('@next/mdx')();
+const withTX3 = require('next-tx3').withTX3;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
@@ -7,6 +8,17 @@ const nextConfig = {
   env: {
     API_URL: process.env.API_URL,
   },
+  experimental: {
+    mdxRs: true,
+  },
 }
- 
-module.exports = withMDX(nextConfig)
+
+module.exports = withTX3({
+  ...withMDX(nextConfig),
+  tx3: {
+    tx3Path: './tx3',
+    autoWatch: process.env.NODE_ENV === 'development',
+    autoSetup: true,
+    verbose: process.env.NODE_ENV === 'development',
+  },
+});

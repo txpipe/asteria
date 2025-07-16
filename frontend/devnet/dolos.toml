@@ -1,0 +1,39 @@
+[upstream]
+block_production_interval = 5
+
+[storage]
+version = "v1"
+max_wal_history = 129600
+
+[genesis]
+force_protocol = 9
+byron_path = "./byron.json"
+shelley_path = "./shelley.json"
+alonzo_path = "./alonzo.json"
+conway_path = "./conway.json"
+
+[sync]
+pull_batch_size = 100
+
+[submit]
+
+[serve.grpc]
+listen_address = "[::]:5164"
+permissive_cors = true
+
+[serve.minibf]
+listen_address = "[::]:3164"
+permissive_cors = true
+
+[serve.trp]
+listen_address = "[::]:8164"
+max_optimize_rounds = 10
+permissive_cors = true
+
+[logging]
+max_level = "INFO"
+include_tokio = false
+include_pallas = false
+include_grpc = true
+include_trp = false
+include_minibf = false
