@@ -64,6 +64,7 @@ impl Data {
                 position: Position { x: 0, y: 0 },
                 total_rewards: 1235431230,
                 class: "Asteria".to_string(),
+                datum: "{}".to_string(),
             },
         }
     }
@@ -113,6 +114,7 @@ pub struct Ship {
     ship_token_name: AssetName,
     pilot_token_name: AssetName,
     class: String,
+    datum: String,
 }
 
 impl Ship {
@@ -131,6 +133,7 @@ impl Ship {
                 name: uuid::Uuid::new_v4().to_string(),
             },
             class: "Ship".to_string(),
+            datum: "{}".to_string(),
         }
     }
 }
@@ -142,6 +145,7 @@ pub struct Fuel {
     position: Position,
     shipyard_policy: PolicyId,
     class: String,
+    datum: String,
 }
 
 impl Fuel {
@@ -154,6 +158,7 @@ impl Fuel {
                 id: ID::from(uuid::Uuid::new_v4().to_string()),
             },
             class: "Fuel".to_string(),
+            datum: "{}".to_string(),
         }
     }
 }
@@ -164,6 +169,7 @@ pub struct Asteria {
     position: Position,
     total_rewards: i64,
     class: String,
+    datum: String,
 }
 
 #[derive(Clone, SimpleObject)]
@@ -171,6 +177,17 @@ pub struct AsteriaState {
     ship_counter: i32,
     shipyard_policy: PolicyId,
     reward: i64,
+}
+
+#[derive(Clone, SimpleObject)]
+pub struct Token {
+    id: ID,
+    amount: i32,
+    position: Position,
+    shipyard_policy: PolicyId,
+    class: String,
+    name: String,
+    datum: String,
 }
 
 #[derive(Clone, SimpleObject)]
@@ -208,6 +225,13 @@ pub struct PositionInput {
     y: i32,
 }
 
+#[derive(InputObject, Clone)]
+pub struct TokenInput {
+    policy_id: String,
+    address: String,
+    name: String,
+}
+
 #[derive(SimpleObject, Clone)]
 pub struct ShipAction {
     action_id: ID,
@@ -237,6 +261,7 @@ pub struct LeaderboardRecord {
 pub enum MapObject {
     Ship(Ship),
     Fuel(Fuel),
+    Token(Token),
     Asteria(Asteria),
 }
 
@@ -248,6 +273,7 @@ pub enum MapObject {
 pub enum PositionalInterface {
     Ship(Ship),
     Fuel(Fuel),
+    Token(Token),
     Asteria(Asteria),
 }
 
@@ -309,6 +335,7 @@ impl QueryRoot {
         ship_address: String,
         fuel_address: String,
         asteria_address: String,
+        tokens: Option<Vec<TokenInput>>,
     ) -> Result<Vec<PositionalInterface>, Error> {
         // Access the connection pool from the GraphQL context
         let pool = ctx
@@ -328,14 +355,14 @@ impl QueryRoot {
                     $4::varchar AS shipyard_policy,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
-                    0 AS total_rewards
+                    0 AS total_rewards,
+                    utxo_plutus_data(era, cbor) as datum
                 FROM 
                     utxos
                 WHERE 
                     utxo_address(era, cbor) = from_bech32($6::varchar)
                     AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))
                     AND spent_slot IS NULL
-                
                 UNION ALL
                 
                 SELECT 
@@ -347,7 +374,8 @@ impl QueryRoot {
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
-                    0 AS total_rewards
+                    0 AS total_rewards,
+                    utxo_plutus_data(era, cbor) as datum
                 FROM 
                     utxos
                 WHERE 
@@ -365,7 +393,8 @@ impl QueryRoot {
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
-                    utxo_lovelace(era, cbor) as total_rewards
+                    utxo_lovelace(era, cbor) as total_rewards,
+                    utxo_plutus_data(era, cbor) as datum
                 FROM 
                     utxos
                 WHERE 
@@ -381,7 +410,8 @@ impl QueryRoot {
                 ship_token_name,
                 pilot_token_name,
                 class,
-                total_rewards
+                total_rewards,
+                datum
              FROM
                 data
              WHERE
@@ -401,7 +431,7 @@ impl QueryRoot {
         .await
         .map_err(|e| Error::new(e.to_string()))?;
 
-        let map_objects: Vec<PositionalInterface> = fetched_objects
+        let mut map_objects: Vec<PositionalInterface> = fetched_objects
             .into_iter()
             .map(|record| match record.class.as_deref() {
                 Some("Ship") => PositionalInterface::Ship(Ship {
@@ -421,6 +451,7 @@ impl QueryRoot {
                         name: record.pilot_token_name.unwrap_or_default(),
                     },
                     class: record.class.unwrap_or_default(),
+                    datum: record.datum.unwrap_or_default().to_string(),
                 }),
                 Some("Fuel") => PositionalInterface::Fuel(Fuel {
                     id: ID::from(record.id.unwrap_or_default()),
@@ -433,6 +464,7 @@ impl QueryRoot {
                         id: ID::from(record.shipyard_policy.unwrap_or_default()),
                     },
                     class: record.class.unwrap_or_default(),
+                    datum: record.datum.unwrap_or_default().to_string(),
                 }),
                 Some("Asteria") => PositionalInterface::Asteria(Asteria {
                     id: ID::from(record.id.unwrap_or_default()),
@@ -446,10 +478,61 @@ impl QueryRoot {
                         .to_i64()
                         .unwrap_or(0),
                     class: record.class.unwrap_or_default(),
+                    datum: record.datum.unwrap_or_default().to_string(),
                 }),
                 _ => panic!("Unknown class type or class not provided"),
             })
             .collect();
+
+        if tokens.is_some() {
+            for token in tokens.unwrap() {
+                let fetched_tokens = sqlx::query!(
+                    "
+                    SELECT 
+                        id,
+                        CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS amount,
+                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
+                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
+                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                        utxo_plutus_data(era, cbor) as datum
+                    FROM 
+                        utxos
+                    WHERE
+                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) - $1::int) +
+                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) - $2::int) < $3::int
+                        AND CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) = $4::text
+                        AND utxo_address(era, cbor) = from_bech32($6::varchar)
+                        AND spent_slot IS NULL
+                    ",
+                    center.x,
+                    center.y,
+                    radius,
+                    shipyard_policy_id,
+                    token.policy_id,
+                    token.address,
+                )
+                .fetch_all(pool)
+                .await
+                .map_err(|e| Error::new(e.to_string()))?;
+
+                for record in fetched_tokens {
+                    map_objects.push(PositionalInterface::Token(Token {
+                        id: ID::from(record.id),
+                        name: token.name.clone(),
+                        amount: record.amount.unwrap_or(0),
+                        position: Position {
+                            x: record.position_x.unwrap_or(0),
+                            y: record.position_y.unwrap_or(0),
+                        },
+                        shipyard_policy: PolicyId {
+                            id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                        },
+                        class: "Token".to_string(),
+                        datum: record.datum.unwrap_or_default().to_string(),
+                    }));
+                }
+            }
+        }
 
         Ok(map_objects)
     }

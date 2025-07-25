@@ -27,6 +27,10 @@ func _draw():
 		for fuel in Global.get_fuels():
 			draw_circle(fuel.position*map_scale+map_position, 2, Color("#7982FD"), true, -1, true)
 	
+	if minimap_mode == "token":
+		for token in Global.get_fuels():
+			draw_circle(token.position*map_scale+map_position, 2, Color("#FFF75D"), true, -1, true)
+	
 	draw_rect(Rect2(camera_position_scale+map_position-viewport_scale/2, viewport_scale), Color("#FE1562", .3), true, -1, true)
 
 

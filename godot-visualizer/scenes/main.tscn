@@ -488,6 +488,7 @@ theme_override_font_sizes/font_size = 32
 text = "LABEL4"
 text_overrun_behavior = 3
 
+[connection signal="current_position_selected" from="." to="MapCanvasLayer/Map" method="_on_current_position_selected"]
 [connection signal="dataset_updated" from="." to="MapCanvasLayer/Map" method="_on_main_dataset_updated"]
 [connection signal="dataset_updated" from="." to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_main_dataset_updated"]
 [connection signal="follow_ship_reset" from="." to="MapCanvasLayer/Map" method="_on_follow_ship_reset"]
@@ -495,12 +496,15 @@ text_overrun_behavior = 3
 [connection signal="init_joystick_mode" from="." to="MapCanvasLayer/Map" method="_on_init_joystick_mode"]
 [connection signal="next_position_reset" from="." to="MapCanvasLayer/Map" method="_on_next_position_reset"]
 [connection signal="next_position_selected" from="." to="MapCanvasLayer/Map" method="_on_next_position_selected"]
+[connection signal="placeholder_ship_created" from="." to="MapCanvasLayer/Map" method="_on_placeholder_ship_created"]
+[connection signal="placeholder_ship_reset" from="." to="MapCanvasLayer/Map" method="_on_placeholder_ship_reset"]
 [connection signal="camera_position_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_position_changed"]
 [connection signal="camera_zoom_changed" from="MapCanvasLayer/Map" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" method="_on_map_camera_zoom_changed"]
 [connection signal="hide_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_hide_tooltip"]
 [connection signal="show_asteria_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_asteria_tooltip"]
 [connection signal="show_fuel_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_fuel_tooltip"]
 [connection signal="show_ship_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_ship_tooltip"]
+[connection signal="show_token_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_token_tooltip"]
 [connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_entered"]
 [connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_exited"]
 [connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/CloseButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_close_button_pressed"]

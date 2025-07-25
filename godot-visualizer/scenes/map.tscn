@@ -58,11 +58,12 @@ texture = ExtResource("7_rre6e")
 [node name="Orbits" type="Sprite2D" parent="."]
 script = ExtResource("8_uc43w")
 
-[node name="Entities" type="Sprite2D" parent="."]
-
 [node name="Cell" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.501407, 0.501406, 0.501406, 1)
 sprite_frames = SubResource("SpriteFrames_73s6b")
 animation = &"filled"
+
+[node name="Entities" type="Sprite2D" parent="."]
 
 [connection signal="minimap_position_changed" from="." to="Camera" method="_on_map_minimap_position_changed"]
 [connection signal="mouse_hover_gui" from="." to="Camera" method="_on_map_mouse_hover_gui"]

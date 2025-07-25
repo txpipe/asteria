@@ -1,6 +1,9 @@
 extends Node
 
 signal dataset_updated
+signal current_position_selected(position: Vector2)
+signal placeholder_ship_created(position: Vector2)
+signal placeholder_ship_reset
 signal follow_ship_selected(ship_id: String)
 signal follow_ship_reset
 signal next_position_selected(position: Vector2)
@@ -16,7 +19,6 @@ var fuel_policy_id = ""
 var ship_address = ""
 var fuel_address = ""
 var asteria_address = ""
-var explorer_url = ""
 
 const headers = ["Content-Type: application/json"]
 const query = """
@@ -28,7 +30,20 @@ const query = """
 		fuelPolicyId: "%s",
 		shipAddress: "%s",
 		fuelAddress: "%s",
-		asteriaAddress: "%s"
+		asteriaAddress: "%s",
+		tokens: [{
+			name: "hosky",
+			policyId: "%s",
+			address: "%s"
+		},{
+			name: "stuff",
+			policyId: "%s",
+			address: "%s"
+		},{
+			name: "vyfi",
+			policyId: "%s",
+			address: "%s"
+		}]
 	) {
 		__typename,
 		position {
@@ -43,15 +58,24 @@ const query = """
 			},
 			pilotTokenName {
 				name
-			}
+			},
+			datum
 		},
 		... on Fuel {
 			id,
-			fuel
+			fuel,
+			datum
+		},
+		... on Token {
+			id,
+			name,
+			amount,
+			datum
 		},
 		... on Asteria {
 			id,
-			totalRewards
+			totalRewards,
+			datum
 		}
 	}
 }
@@ -68,7 +92,16 @@ func fetch_data():
 			fuel_policy_id,
 			ship_address,
 			fuel_address,
-			asteria_address
+			asteria_address,
+			
+			fuel_policy_id,
+			fuel_address,
+			
+			fuel_policy_id,
+			fuel_address,
+			
+			fuel_policy_id,
+			fuel_address
 		]
 	}))
 
@@ -85,10 +118,16 @@ func _ready():
 	ship_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipAddress')")
 	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
-	explorer_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('explorerUrl')")
+	
+	#mode = "map"
+	#api_url = "http://localhost:8000/graphql"
+	#shipyard_policy_id = "f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
+	#fuel_policy_id = "fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
+	#ship_address = "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6"
+	#fuel_address = "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
+	#asteria_address = "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
 	
 	Global.set_mode(mode)
-	Global.set_explorer_url(explorer_url)
 	
 	if Global.get_mode() == "joystick":
 		$GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom.visible = false
@@ -114,10 +153,21 @@ func _ready():
 			};
 		""", true)
 		parent.window.GODOT_BRIDGE.setCallback(callback)
+	
+	JavaScriptBridge.eval("parent.window.postMessage({ action: 'map_init' })")
 
 
 func on_message(args):
 	var data = JSON.parse_string(args[0])
+	
+	if data["action"] == "move_map":
+		current_position_selected.emit(Vector2(data["x"], data["y"]))
+	
+	if data["action"] == "create_placeholder":
+		placeholder_ship_created.emit(Vector2(data["x"], data["y"]))
+	
+	if data["action"] == "clear_placeholder":
+		placeholder_ship_reset.emit()
 	
 	if data["action"] == "select_ship":
 		follow_ship_selected.emit(data["id"])
@@ -218,3 +268,16 @@ func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label4.visible = false
 	update_tooltip_position(asteria.position)
+
+
+func _on_map_show_token_tooltip(token: Global.TokenData) -> void:
+	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "Token"
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [token.position.x, token.position.y]
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Name | %s" % token.name
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.text = "Amount | %s" % token.amount
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = true
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label4.visible = false
+	update_tooltip_position(token.position)
