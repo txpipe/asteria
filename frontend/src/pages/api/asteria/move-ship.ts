@@ -1,4 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { ArgValue } from "tx3-sdk/trp";
 
 // Utils
 import { protocol } from '@/utils/cli-protocol';
@@ -50,14 +51,14 @@ export default async function handler(
     const distance = Math.abs(positionX) + Math.abs(positionY);
 
     const result = await protocol.moveShipTx({
-      pDeltaX: positionX,
-      pDeltaY: positionY,
-      player: playerAddress,
+      pDeltaX: ArgValue.from(positionX),
+      pDeltaY: ArgValue.from(positionY),
+      player: ArgValue.from(playerAddress),
       // distance,
-      requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
-      shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
-      pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
-      txLatestPosixTime: blockSlotValue + 300, // 5 minutes from last block
+      requiredFuel: ArgValue.from(distance * 60), // fuel_per_step from SpaceTime datum
+      shipName: ArgValue.from(new TextEncoder().encode(`SHIP${shipNumber}`)),
+      pilotName: ArgValue.from(new TextEncoder().encode(`PILOT${shipNumber}`)),
+      txLatestPosixTime: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
     });
 
     return res.json({

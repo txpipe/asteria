@@ -3,8 +3,6 @@ name = "asteria-backend"
 version = "0.1.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 rocket = "0.5.1"
 async-graphql = "7.0.17"
