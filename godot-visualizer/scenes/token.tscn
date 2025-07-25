@@ -1,8 +1,78 @@
-[gd_scene load_steps=2 format=3 uid="uid://5y7v35p7p3lu"]
+[gd_scene load_steps=10 format=3 uid="uid://5y7v35p7p3lu"]
 
-[ext_resource type="Texture2D" uid="uid://cyy3qkjasf0tx" path="res://resources/token.svg" id="1_qkmv5"]
+[ext_resource type="Texture2D" uid="uid://d17kmn8xn27st" path="res://resources/token_hosky_active.png" id="1_5phyg"]
+[ext_resource type="Script" uid="uid://bw2uwnf5pgc7t" path="res://scripts/token.gd" id="1_xdvoi"]
+[ext_resource type="Texture2D" uid="uid://cuysxu0gqb1xx" path="res://resources/token_hosky_inactive.png" id="2_xdvoi"]
+[ext_resource type="Texture2D" uid="uid://e5qycvw6c1km" path="res://resources/token_stuff_active.png" id="3_smo0k"]
+[ext_resource type="Texture2D" uid="uid://cgixymi1kvc4o" path="res://resources/token_stuff_inactive.png" id="4_kgolw"]
+[ext_resource type="Texture2D" uid="uid://bxv4154qyfv4j" path="res://resources/token_vyfi_active.png" id="5_cwit4"]
+[ext_resource type="Texture2D" uid="uid://c1ruvft8cd6yw" path="res://resources/token_vyfi_inactive.png" id="6_hdi43"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5phyg"]
+size = Vector2(128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5i2ku"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_5phyg")
+}],
+"loop": true,
+"name": &"hosky_active",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_xdvoi")
+}],
+"loop": true,
+"name": &"hosky_inactive",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_smo0k")
+}],
+"loop": true,
+"name": &"stuff_active",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_kgolw")
+}],
+"loop": true,
+"name": &"stuff_inactive",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_cwit4")
+}],
+"loop": true,
+"name": &"vyfi_active",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_hdi43")
+}],
+"loop": true,
+"name": &"vyfi_inactive",
+"speed": 5.0
+}]
 
 [node name="Token" type="Node2D"]
+script = ExtResource("1_xdvoi")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("1_qkmv5")
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_5phyg")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_5i2ku")
+animation = &"hosky_active"
+
+[connection signal="mouse_entered" from="Area2D" to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="Area2D" to="." method="_on_mouse_exited"]

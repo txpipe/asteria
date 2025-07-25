@@ -12,5 +12,11 @@ static func new_ship(data: Global.ShipData) -> Ship:
 	return ship
 
 
+static func new_ship_with_frame_id(frame_id: String) -> Ship:
+	var ship: Ship = scene.instantiate()
+	ship.animation = frame_id
+	return ship
+
+
 func _ready() -> void:
 	$AnimatedSprite2D.play(animation)

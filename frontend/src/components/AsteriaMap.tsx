@@ -19,7 +19,6 @@ export function AsteriaMap({ mode, challenge, className }: AsteriaMapProps) {
       ['shipAddress', challenge.shipAddress],
       ['fuelAddress', challenge.fuelAddress],
       ['asteriaAddress', challenge.asteriaAddress],
-      ['explorerUrl', challenge.explorerUrl],
     ]);
     return `${baseURL}?${params.toString()}`;
   }, [mode, challenge]);
