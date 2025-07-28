@@ -8,6 +8,7 @@ import {
   SpacetimeSpacetimeSpend,
 } from "../../../onchain/src/plutus.ts";
 import { lucidBase } from "../src/utils.ts";
+import deployParams from "./deploy_params.json" with { type: "json" };
 
 console.log("DEPLOYING ASTERIA");
 
@@ -15,19 +16,19 @@ console.log("DEPLOYING ASTERIA");
 // CONFIGURATION
 //
 const admin_token: AsteriaTypesAssetClass = {
-  policy: "0d69753742e6e5fe5f545498708d61f3335adffd90686d41c8529a64",
-  name: "0014df105af4eb1811a74ad4e61c45362f84cf69835d2740f9f54019b1e13a07",
+  policy: deployParams.admin_token.policy,
+  name: deployParams.admin_token.name,
 };
-const ship_mint_lovelace_fee = 1_000_000n;
-const max_asteria_mining = 50n;
+const ship_mint_lovelace_fee = BigInt(deployParams.ship_mint_lovelace_fee);
+const max_asteria_mining = BigInt(deployParams.max_asteria_mining);
 const max_speed: AsteriaTypesSpeed = {
-  distance: 1n,
-  time: 30n * 1000n, // milliseconds (30 seconds)
+  distance: BigInt(deployParams.max_speed.distance),
+  time: BigInt(deployParams.max_speed.time),
 };
-const max_ship_fuel = 100n;
-const fuel_per_step = 1n;
-const initial_fuel = 30n;
-const min_asteria_distance = 10n;
+const max_ship_fuel = BigInt(deployParams.max_ship_fuel);
+const fuel_per_step = BigInt(deployParams.fuel_per_step);
+const initial_fuel = BigInt(deployParams.initial_fuel);
+const min_asteria_distance = BigInt(deployParams.min_asteria_distance);
 
 //
 // VALIDATORS INSTANTIATION
@@ -83,7 +84,7 @@ const asteriaDatum = {
 //
 // DEPLOYMENT TX (REFERENCE SCRIPTS AND ASTERIA)
 //
-const tx = await lucid
+const deployTx = await lucid
   .newTx()
   .payToContract(
     deployAddress,
@@ -118,8 +119,10 @@ const tx = await lucid
   )
   .commit();
 
-const signedTx = await tx.sign().commit();
-// console.log(signedTx.toString());
-// const txHash = await signedTx.submit();
-const txHash = "fee59afa92a0eff4d8b7532917ea514cee26fd22924c246072891ea741cdfb15";
-console.log("DEPLOYMENT TXHASH:", txHash);
+const signedDeployTx = await deployTx.sign().commit();
+console.log(signedDeployTx.toString());
+const deployTxHash = await signedDeployTx.submit();
+console.log("Waiting for deployment transaction to be confirmed...");
+await lucid.awaitTx(deployTxHash);
+console.log("DEPLOYMENT TXHASH:", deployTxHash);
+
