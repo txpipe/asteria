@@ -165,7 +165,7 @@ function getRingAreaSample(
 
 function writePelletsCSV(pellets: PelletParams, path: string) {
   const csv = stringify(pellets, {
-    columns: ["fuel", "pos_x", "pos_y"],
+    columns: ["fuel", "pos_x", "pos_y", "prize_policy", "prize_name", "prize_amount"],
   });
   Deno.writeTextFileSync(path, csv);
 }
@@ -174,13 +174,16 @@ async function readPelletsCSV(path: string) {
   const text = await Deno.readTextFile(path);
   const data = parse(text, {
     skipFirstRow: true,
-    columns: ["fuel", "pos_x", "pos_y"],
+    columns: ["fuel", "pos_x", "pos_y", "prize_policy", "prize_name", "prize_amount"],
   });
-  const params: { fuel: bigint; pos_x: bigint; pos_y: bigint }[] = data.map(
+  const params: { fuel: bigint; pos_x: bigint; pos_y: bigint; prize_policy: string | null; prize_name: string | null; prize_amount: bigint | null }[] = data.map(
     (p) => ({
       fuel: BigInt(p.fuel),
       pos_x: BigInt(p.pos_x),
       pos_y: BigInt(p.pos_y),
+      prize_policy: p.prize_policy || null,
+      prize_name: p.prize_name || null,
+      prize_amount: BigInt(p.prize_amount) || null,
     })
   );
   return params;
