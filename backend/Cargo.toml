@@ -1,14 +1,12 @@
 [package]
 name = "asteria-backend"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2024"
 
 [dependencies]
 rocket = "0.5.1"
-async-graphql = "7.0.11"
-async-graphql-rocket = "7.0.11"
+async-graphql = "7.0.17"
+async-graphql-rocket = "7.0.17"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "postgres", "bigdecimal"] }
 num-traits = "0.2"
 dotenv = "0.15"

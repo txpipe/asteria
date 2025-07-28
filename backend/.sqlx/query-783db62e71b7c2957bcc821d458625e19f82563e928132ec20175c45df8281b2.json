@@ -1,0 +1,57 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT \n                        id,\n                        CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS amount,\n                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,\n                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,\n                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,\n                        utxo_plutus_data(era, cbor) as datum\n                    FROM \n                        utxos\n                    WHERE\n                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) - $1::int) +\n                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) - $2::int) < $3::int\n                        AND CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) = $4::text\n                        AND utxo_address(era, cbor) = from_bech32($6::varchar)\n                        AND spent_slot IS NULL\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "amount",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "position_x",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "position_y",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "shipyard_policy",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "datum",
+        "type_info": "Json"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Int4",
+        "Text",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "783db62e71b7c2957bcc821d458625e19f82563e928132ec20175c45df8281b2"
+}

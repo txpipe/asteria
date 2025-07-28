@@ -1,7 +1,5 @@
 extends Node2D
 
-@export var fuel_scene: PackedScene
-@export var token_scene: PackedScene
 @export var asteria_scene: PackedScene
 
 signal camera_position_changed(position: Vector2)
@@ -11,6 +9,7 @@ signal selected_ship_position_changed(position: Vector2)
 signal mouse_hover_gui(is_hover: bool)
 signal hide_tooltip()
 signal show_ship_tooltip(ship: Global.ShipData)
+signal show_token_tooltip(token: Global.TokenData)
 signal show_fuel_tooltip(fuel: Global.FuelData)
 signal show_asteria_tooltip(asteria: Global.AsteriaData)
 
@@ -19,7 +18,8 @@ var mouse_entered_minimap = false
 var mouse_entered_minimap_control = false
 var mouse_entered_modal = false
 
-var current_id = ""
+var current = null
+var pressed_position = null
 
 var tween_alpha = null
 var tween_position = null
@@ -27,7 +27,7 @@ var placeholder_ship = null
 
 var initial_position = Vector2(0, 0)
 
-func _on_main_dataset_updated() -> void:	
+func _on_main_dataset_updated() -> void:
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
 	
@@ -35,7 +35,32 @@ func _on_main_dataset_updated() -> void:
 		if child != placeholder_ship:
 			child.free()
 	
-	for ship_data in Global.get_ships():		
+	var asteria = asteria_scene.instantiate()
+	asteria.position = Global.get_asteria().position * cell_size
+	$Entities.add_child(asteria)
+	
+	for fuel_data in Global.get_fuels():
+		if fuel_data.id.unicode_at(fuel_data.id.length()-1) % 2 == 0:
+			var fuel = Fuel.new_fuel()
+			fuel.position = fuel_data.position * cell_size
+			fuel.rotation = (7.5 - int(fuel_data.position.x * fuel_data.position.y) % 15) * PI/180
+			$Entities.add_child(fuel)
+	
+	for token_data in Global.get_tokens():
+		if token_data.name == "hosky" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 0:
+			var token = Token.new_token(token_data.name)
+			token.position = token_data.position * cell_size
+			$Entities.add_child(token)
+		if token_data.name == "stuff" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 1:
+			var token = Token.new_token(token_data.name)
+			token.position = token_data.position * cell_size
+			$Entities.add_child(token)
+		if token_data.name == "vyfi" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 2:
+			var token = Token.new_token(token_data.name)
+			token.position = token_data.position * cell_size
+			$Entities.add_child(token)
+	
+	for ship_data in Global.get_ships():
 		var ship = Ship.new_ship(ship_data)
 		ship.position = ship_data.position * cell_size
 		ship.rotation = ship.position.angle_to_point(center) + PI/2
@@ -57,22 +82,29 @@ func _on_main_dataset_updated() -> void:
 			Global.set_selected_ship(ship_data)
 			selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
 			_on_next_position_reset()
-	
-	for fuel_data in Global.get_fuels():
-		var fuel = fuel_scene.instantiate()
-		fuel.position = fuel_data.position * cell_size
-		$Entities.add_child(fuel)
-	
-	var asteria = asteria_scene.instantiate()
-	asteria.position = Global.get_asteria().position * cell_size
-	$Entities.add_child(asteria)
 
+
+func get_current_position() -> Variant:
+	var cell_size = Global.get_cell_size()
+	var mouse_position = get_viewport().get_mouse_position() / $Camera.zoom
+	var viewport_rect = Rect2(Vector2(0,0), get_viewport_rect().size / $Camera.zoom)
+	
+	if viewport_rect.has_point(mouse_position) && !is_mouse_hover_gui():
+		return round((mouse_position - Vector2(get_viewport_rect().size / $Camera.zoom) / 2 + $Camera.position) / cell_size)
+	else:
+		return null
 
 func _input(event):
-	if event is InputEventMouseButton and event.pressed and current_id != "":
-		JavaScriptBridge.eval("window.open('%s%s', '_blank')" % [
-			Global.get_explorer_url(), current_id.split("#")[0]
-		])
+	if event is InputEventMouseButton and event.pressed:
+		pressed_position = get_current_position()
+	
+	if event is InputEventMouseButton and !event.pressed:
+		var current_position = get_current_position()
+		if pressed_position == current_position and pressed_position != null:
+			JavaScriptBridge.eval(
+				"parent.window.postMessage({ action: 'map_click', position: { x: %s, y: %s }, payload: %s })"
+				% [pressed_position.x, pressed_position.y, current.json() if current != null else "null"]
+			)
 
 
 func _process(delta: float) -> void:
@@ -86,27 +118,32 @@ func _process(delta: float) -> void:
 		
 		var asteria = Global.get_asteria()
 		var ships = Global.get_ships().filter(func(ship): return ship.position == cell_position)
+		var tokens = Global.get_tokens().filter(func(token): return token.position == cell_position)
 		var fuels = Global.get_fuels().filter(func(fuel): return fuel.position == cell_position)
 		
 		if asteria and asteria.position == cell_position:
 			$Cell.animation = "filled"
 			show_asteria_tooltip.emit(asteria)
-			current_id = asteria.id
+			current = asteria
 		elif ships.size() > 0:
 			$Cell.animation = "filled"
 			show_ship_tooltip.emit(ships[0])
-			current_id = ships[0].id
+			current = ships[0]
+		elif tokens.size() > 0:
+			$Cell.animation = "filled"
+			show_token_tooltip.emit(tokens[0])
+			current = tokens[0]
 		elif fuels.size() > 0:
 			$Cell.animation = "filled"
 			show_fuel_tooltip.emit(fuels[0])
-			current_id = fuels[0].id
+			current = fuels[0]
 		else:
 			$Cell.animation = "empty"
 			hide_tooltip.emit()
-			current_id = ""
+			current = null
 	else:
 		hide_tooltip.emit()
-		current_id = ""
+		current = null
 
 
 func is_mouse_hover_gui() -> bool:
@@ -238,3 +275,21 @@ func _on_next_position_selected(position: Vector2) -> void:
 func _on_init_joystick_mode() -> void:
 	initial_position = Vector2(-$Camera.get_viewport_rect().size.x/4, 0)
 	selected_ship_position_changed.emit(initial_position)
+
+
+func _on_current_position_selected(position: Vector2) -> void:
+	selected_ship_position_changed.emit(position * Global.get_cell_size() + initial_position)
+
+
+func _on_placeholder_ship_reset() -> void:
+	pass # Replace with function body.
+
+
+func _on_placeholder_ship_created(position: Vector2) -> void:
+	if placeholder_ship == null:
+		placeholder_ship = Ship.new_ship_with_frame_id("0")
+		$Entities.add_child(placeholder_ship)
+	
+	placeholder_ship.position = position * Global.get_cell_size()
+	placeholder_ship.rotation = placeholder_ship.position.angle_to_point(Vector2(0, 0)) + PI/2
+	placeholder_ship.modulate.a = 1

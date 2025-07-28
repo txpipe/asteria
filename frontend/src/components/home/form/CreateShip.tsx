@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Components
 import { Code } from '@/components/ui/Code';
@@ -130,8 +131,10 @@ const jsFile = `const result = await protocol.createShipTx({
 });`;
 
 export function CreateShip() {
+  const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
+  const [position, setPosition] = useState<{ x: number; y: number }|null>(null);
 
   const errors = formState.errors || {};
   const dataTx = formState.data?.tx;
@@ -156,6 +159,35 @@ export function CreateShip() {
     }
   }, [walletAddress]);
 
+  useEffect(() => {
+    window.addEventListener('message', (event) => {
+      if (pathname.includes('how-to-play')) {
+        if (event.data.action == 'map_click') {
+          updatePosition(event.data.position.x, event.data.position.y);
+        }
+      }
+    });
+  }, []);
+
+  const updatePositionX = (event: ChangeEvent<HTMLInputElement>) => {
+    updatePosition(parseInt(event.target.value), position ? position.y : 0);
+  }
+
+  const updatePositionY = (event: ChangeEvent<HTMLInputElement>) => {
+    updatePosition(position ? position.x : 0, parseInt(event.target.value));
+  }
+  
+  const updatePosition = (x: number, y: number) => {
+    setPosition({ x, y });
+    window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
+  }
+
+  const handlePreview = () => {
+    const { x, y } = position || { x: 0, y: 0 };
+    window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
+    window.GODOT_BRIDGE?.send({ action: 'create_placeholder', x, y });
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -179,6 +211,12 @@ export function CreateShip() {
 
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
+      <Tab label="Description">
+        <p className="mt-6 text-md text-[#F1E9D9] font-dmsans-regular leading-7">
+          Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
+        </p>
+      </Tab>
+
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
           <div>
@@ -225,10 +263,12 @@ export function CreateShip() {
                 placeholder="Enter position X"
                 label="Position X"
                 error={errors.positionX}
-                defaultValue={20}
+                defaultValue={0}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
+                value={position?.x ?? '0'}
+                onChange={updatePositionX}
               />
 
               <Input
@@ -237,10 +277,12 @@ export function CreateShip() {
                 placeholder="Enter position Y"
                 label="Position Y"
                 error={errors.positionY}
-                defaultValue={20}
+                defaultValue={0}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
+                value={position?.y ?? '0'}
+                onChange={updatePositionY}
               />
             </div>
           </div>
@@ -260,6 +302,14 @@ export function CreateShip() {
               disabled={submitting}
             >
               {submitting ? 'Submitting...' : 'Submit'}
+            </button>
+
+            <button
+              type="button"
+              className="basis-1/2 font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] py-2 px-4 rounded-full text-md"
+              onClick={handlePreview}
+            >
+              Preview
             </button>
           </div>
         </form>
