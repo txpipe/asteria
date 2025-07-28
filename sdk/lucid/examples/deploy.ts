@@ -4,10 +4,12 @@ import {
   AsteriaTypesAssetClass,
   AsteriaTypesSpeed,
   DeployDeploySpend,
+  PelletPelletMint,
   PelletPelletSpend,
   SpacetimeSpacetimeSpend,
 } from "../../../onchain/src/plutus.ts";
 import { lucidBase } from "../src/utils.ts";
+import { readPelletsCSV } from "../../../offchain/tests/admin/pellets/utils.ts";
 import deployParams from "./deploy_params.json" with { type: "json" };
 
 console.log("DEPLOYING ASTERIA");
@@ -126,3 +128,61 @@ console.log("Waiting for deployment transaction to be confirmed...");
 await lucid.awaitTx(deployTxHash);
 console.log("DEPLOYMENT TXHASH:", deployTxHash);
 
+// This is a workaround to ensure the wallet UTxOs are updated after the deployment transaction.
+// The wallet UTxOs may not be updated immediately after the transaction is submitted.
+// This way we avoid errors like trying to use inputs that were already spent.
+const delay = ms => new Promise(res => setTimeout(res, ms));
+let wereWalletUTxOsUpdated = false;
+while (!wereWalletUTxOsUpdated) {
+  console.log("Waiting for wallet UTXOs to be updated...");
+  await delay(5000);
+  const walletUTXOs = await lucid.wallet.getUtxos();
+  wereWalletUTxOsUpdated = walletUTXOs.some(utxo => utxo.txHash === deployTxHash);
+}
+
+//
+// CREATE PELLETS
+//
+console.log("\nCREATING PELLETS");
+
+const pelletRefs = await lucid.utxosByOutRef([{
+  txHash: deployTxHash,
+  outputIndex: 2,
+}]);
+
+const pellets = await readPelletsCSV("../../../offchain/tests/admin/pellets/pellets.csv");
+const fuelToken = pelletHash + fromText("FUEL");
+
+let pelletsTx = await lucid.newTx().readFrom(pelletRefs);
+for (const pellet of pellets) {
+  const pelletDatum = {
+    posX: pellet.pos_x,
+    posY: pellet.pos_y,
+    shipyardPolicy: spacetimeHash,
+  };
+  const prizeToken = (pellet.prize_policy && pellet.prize_name)
+    ? pellet.prize_policy + fromText(pellet.prize_name)
+    : "";
+  pelletsTx = pelletsTx
+    .mint(
+      {
+        [fuelToken]: pellet.fuel,
+      },
+      Data.to("MintFuel", PelletPelletMint.redeemer)
+    )
+    .payToContract(
+      pelletAddress,
+      { Inline: Data.to(pelletDatum, PelletPelletSpend.datum) },
+      {
+        [fuelToken]: pellet.fuel,
+        [adminToken]: 1n,
+        [prizeToken]: pellet.prize_amount && pellet.prize_amount > 0 ? pellet.prize_amount : 0n,
+      }
+    );
+}
+const committedPelletsTx = await pelletsTx.commit();
+const signedPelletsTx = await committedPelletsTx.sign().commit();
+console.log(signedPelletsTx.toString());
+const pelletsTxHash = await signedPelletsTx.submit();
+await lucid.awaitTx(deployTxHash);
+console.log("PELLETS TXHASH:", pelletsTxHash);
