@@ -150,7 +150,7 @@ const pelletRefs = await lucid.utxosByOutRef([{
   outputIndex: 2,
 }]);
 
-const pellets = await readPelletsCSV("../../../offchain/tests/admin/pellets/pellets.csv");
+const pellets = await readPelletsCSV("./pellets.csv");
 const fuelToken = pelletHash + fromText("FUEL");
 
 let pelletsTx = await lucid.newTx().readFrom(pelletRefs);
