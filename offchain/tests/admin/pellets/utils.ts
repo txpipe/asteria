@@ -137,11 +137,11 @@ function getRingAreaCoordinates(inner_r: number, outer_r: number): Coordinates {
 /**
  * Returns an array with a random sample of pellet parameters over the area
  * between two circles with radii inner_r and outer_r respectively.
- * @param inner_r Inner diamond diagonal. Must be greater than or equal to 0.
- * @param outer_r Outer diamond diagonal. Must be greater than or equal to inner_r.
+ * @param inner_r Inner circle radius. Must be greater than or equal to 0.
+ * @param outer_r Outer circle radius. Must be greater than or equal to inner_r.
  * @param min_fuel Minimum fuel held by the sample pellets. Must be greater than or equal to 0.
  * @param max_fuel Maximum fuel held by the sample pellets. Must be greater than or equal to min_fuel.
- * @param density Density of the sample: equals 1 if every diamond point is taken. Must be in the range 0 - 1, inclusive.
+ * @param density Density of the sample: equals 1 if every ring area point is taken. Must be in the range 0 - 1, inclusive.
  */
 function getRingAreaSample(
   inner_r: number,
