@@ -1,4 +1,4 @@
-import { fromText, Data } from "https://deno.land/x/lucid@0.20.5/mod.ts";
+import { fromText, Data, Utxo } from "https://deno.land/x/lucid@0.20.5/mod.ts";
 import {
   AsteriaAsteriaSpend,
   AsteriaTypesAssetClass,
@@ -36,6 +36,7 @@ const min_asteria_distance = BigInt(deployParams.min_asteria_distance);
 // VALIDATORS INSTANTIATION
 //
 const lucid = await lucidBase();
+const initialWalletUTXOs = await lucid.wallet.getUtxos();
 
 const deployValidator = new DeployDeploySpend(
   admin_token,
@@ -128,16 +129,15 @@ console.log("Waiting for deployment transaction to be confirmed...");
 await lucid.awaitTx(deployTxHash);
 console.log("DEPLOYMENT TXHASH:", deployTxHash);
 
-// This is a workaround to ensure the wallet UTxOs are updated after the deployment transaction.
-// The wallet UTxOs may not be updated immediately after the transaction is submitted.
+// This is a workaround to wait for the wallet UTxOs to be updated after the deployment transaction.
 // This way we avoid errors like trying to use inputs that were already spent.
 const delay = ms => new Promise(res => setTimeout(res, ms));
-let wereWalletUTxOsUpdated = false;
-while (!wereWalletUTxOsUpdated) {
+let wereUTxOsUpdated = false;
+while (!wereUTxOsUpdated) {
   console.log("Waiting for wallet UTXOs to be updated...");
   await delay(5000);
   const walletUTXOs = await lucid.wallet.getUtxos();
-  wereWalletUTxOsUpdated = walletUTXOs.some(utxo => utxo.txHash === deployTxHash);
+  wereUTxOsUpdated = !haveSameUTxOs(walletUTXOs, initialWalletUTXOs);
 }
 
 //
@@ -195,3 +195,24 @@ console.log(signedPelletsTx.toString());
 const pelletsTxHash = await signedPelletsTx.submit();
 await lucid.awaitTx(deployTxHash);
 console.log("PELLETS TXHASH:", pelletsTxHash);
+
+// We need to wait for the wallet UTxOs to be updated after the deployment transaction.
+function haveSameUTxOs(utxos_1: Utxo[], utxos_2: Utxo[]): boolean {
+  if (utxos_1.length !== utxos_2.length) {
+    return false;
+  }
+
+  const refs_1 = new Set(utxos_1.map(utxo => utxo.txHash + "#" + utxo.outputIndex));
+  const refs_2 = new Set(utxos_2.map(utxo => utxo.txHash + "#" + utxo.outputIndex));
+
+  if (refs_1.size !== refs_2.size) { // Check if the number of unique refs is the same
+    return false;
+  }
+
+  for (const ref of refs_1) {
+    if (!refs_2.has(ref)) {
+      return false;
+    }
+  }
+  return true;
+}
