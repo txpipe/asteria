@@ -12,3 +12,4 @@ num-traits = "0.2"
 dotenv = "0.15"
 uuid = { version = "1.10.0", features = ["v4"] }
 rand = "0.8.5"
+hex = "0.4.3"

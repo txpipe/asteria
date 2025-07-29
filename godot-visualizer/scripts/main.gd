@@ -59,23 +59,43 @@ const query = """
 			pilotTokenName {
 				name
 			},
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Fuel {
 			id,
 			fuel,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Token {
 			id,
 			name,
 			amount,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Asteria {
 			id,
 			totalRewards,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		}
 	}
 }

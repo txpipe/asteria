@@ -40,25 +40,15 @@ func _on_main_dataset_updated() -> void:
 	$Entities.add_child(asteria)
 	
 	for fuel_data in Global.get_fuels():
-		if fuel_data.id.unicode_at(fuel_data.id.length()-1) % 2 == 0:
-			var fuel = Fuel.new_fuel()
-			fuel.position = fuel_data.position * cell_size
-			fuel.rotation = (7.5 - int(fuel_data.position.x * fuel_data.position.y) % 15) * PI/180
-			$Entities.add_child(fuel)
+		var fuel = Fuel.new_fuel()
+		fuel.position = fuel_data.position * cell_size
+		fuel.rotation = (7.5 - int(fuel_data.position.x * fuel_data.position.y) % 15) * PI/180
+		$Entities.add_child(fuel)
 	
 	for token_data in Global.get_tokens():
-		if token_data.name == "hosky" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 0:
-			var token = Token.new_token(token_data.name)
-			token.position = token_data.position * cell_size
-			$Entities.add_child(token)
-		if token_data.name == "stuff" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 1:
-			var token = Token.new_token(token_data.name)
-			token.position = token_data.position * cell_size
-			$Entities.add_child(token)
-		if token_data.name == "vyfi" and token_data.id.unicode_at(token_data.id.length()-1) % 2 == 1 and token_data.id.unicode_at(token_data.id.length()-1) % 3 == 2:
-			var token = Token.new_token(token_data.name)
-			token.position = token_data.position * cell_size
-			$Entities.add_child(token)
+		var token = Token.new_token(token_data.name)
+		token.position = token_data.position * cell_size
+		$Entities.add_child(token)
 	
 	for ship_data in Global.get_ships():
 		var ship = Ship.new_ship(ship_data)
@@ -282,7 +272,9 @@ func _on_current_position_selected(position: Vector2) -> void:
 
 
 func _on_placeholder_ship_reset() -> void:
-	pass # Replace with function body.
+	if placeholder_ship != null:
+		placeholder_ship.free()
+		placeholder_ship = null
 
 
 func _on_placeholder_ship_created(position: Vector2) -> void:

@@ -7,6 +7,8 @@ import { Code } from '@/components/ui/Code';
 import { Tab, Tabs } from '@/components/Tabs';
 import { CopyButton } from '@/components/CopyButton';
 
+import MoveShipDescription from '@/components/how-to-play/MoveShip.mdx';
+
 // Store
 import { useWallet } from '@/stores/wallet';
 
@@ -121,8 +123,11 @@ type ActionState = {
   errors?: Record<string, string>;
 };
 
+interface MoveShipProps {
+  isActive: boolean;
+}
 
-export function MoveShip() {
+export function MoveShip(props: MoveShipProps) {
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
 
@@ -149,6 +154,12 @@ export function MoveShip() {
     }
   }, [walletAddress]);
 
+  useEffect(() => {
+    if (props.isActive) {
+      window.GODOT_BRIDGE?.send({ action: 'clear_placeholder' });
+    }
+  }, [props.isActive]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -172,6 +183,10 @@ export function MoveShip() {
 
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
+      <Tab label="Description">
+        <MoveShipDescription />
+      </Tab>
+
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
           <div>

@@ -8,6 +8,8 @@ import { Alert } from '@/components/ui/Alert';
 import { CopyButton } from '@/components/CopyButton';
 import { Tab, Tabs } from '@/components/Tabs';
 
+import CreateShipDescription from '@/components/how-to-play/CreateShip.mdx';
+
 // Pages
 import type { ResponseData } from '@/pages/api/asteria/create-ship';
 
@@ -130,7 +132,11 @@ const jsFile = `const result = await protocol.createShipTx({
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
 });`;
 
-export function CreateShip() {
+interface CreateShipProps {
+  isActive: boolean;
+}
+
+export function CreateShip(props: CreateShipProps) {
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
@@ -142,6 +148,12 @@ export function CreateShip() {
   const walletApi = useWallet((s) => s.api);
   const walletAddress = useWallet((s) => s.changeAddress);
   const addressRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (props.isActive) {
+      window.GODOT_BRIDGE?.send({ action: 'clear_move_ship' });
+    }
+  }, [props.isActive]);
 
   useEffect(() => {
     if (dataTx && walletApi) {
@@ -161,7 +173,7 @@ export function CreateShip() {
 
   useEffect(() => {
     window.addEventListener('message', (event) => {
-      if (pathname.includes('how-to-play')) {
+      if (pathname.includes('how-to-play') && window.location.hash === '#create-ship') {
         if (event.data.action == 'map_click') {
           updatePosition(event.data.position.x, event.data.position.y);
         }
@@ -179,11 +191,6 @@ export function CreateShip() {
   
   const updatePosition = (x: number, y: number) => {
     setPosition({ x, y });
-    window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
-  }
-
-  const handlePreview = () => {
-    const { x, y } = position || { x: 0, y: 0 };
     window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
     window.GODOT_BRIDGE?.send({ action: 'create_placeholder', x, y });
   }
@@ -212,9 +219,7 @@ export function CreateShip() {
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Description">
-        <p className="mt-6 text-md text-[#F1E9D9] font-dmsans-regular leading-7">
-          Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
-        </p>
+        <CreateShipDescription />
       </Tab>
 
       <Tab label="Tx Form">
@@ -302,14 +307,6 @@ export function CreateShip() {
               disabled={submitting}
             >
               {submitting ? 'Submitting...' : 'Submit'}
-            </button>
-
-            <button
-              type="button"
-              className="basis-1/2 font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] py-2 px-4 rounded-full text-md"
-              onClick={handlePreview}
-            >
-              Preview
             </button>
           </div>
         </form>

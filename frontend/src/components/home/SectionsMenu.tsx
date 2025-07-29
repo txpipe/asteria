@@ -23,15 +23,15 @@ function MenuItem({ href, isActive, label }: { href: string; isActive: boolean; 
 }
 
 export function SectionsMenu({ className }: SectionsMenuProps) {
-  const [activeHash, setActiveHash] = useState('#create-ship');
+  const [activeHash, setActiveHash] = useState<string|null>(null);
 
   useEffect(() => {
     // Set initial hash
-    setActiveHash(window.location.hash || '#create-ship');
+    setActiveHash(window.location.hash || null);
 
     // Listen for hash changes
     const handleHashChange = () => {
-      setActiveHash(window.location.hash || '#create-ship');
+      setActiveHash(window.location.hash || null);
     };
 
     window.addEventListener('hashchange', handleHashChange);

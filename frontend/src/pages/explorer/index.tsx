@@ -5,18 +5,11 @@ import { LinkIcon } from '@/components/icons/LinkIcon';
 import { CloseIcon } from '@/components/icons/CloseIcon';
 import CodeBlock from '@/components/CodeBlock';
 
-import type { Challenge } from '@/stores/challenge';
-
 interface AssetsTableProps {
-  challenge: Challenge;
-  payload: any;
+  assets: any[];
 }
 
-const hexToAscii = (hex: string): string => {
-  return Buffer.from(hex, 'hex').toString();
-}
-
-const AssetsTable: React.FC<AssetsTableProps> = ({ payload, challenge }) => {
+const AssetsTable: React.FC<AssetsTableProps> = ({ assets }) => {
   return (
     <table className="w-full table-fixed border-collapse mt-4 border border-[#F1E9D9]/15 font-dmsans-regular text-md text-[#A0A0A0]">
       <thead>
@@ -27,32 +20,13 @@ const AssetsTable: React.FC<AssetsTableProps> = ({ payload, challenge }) => {
         </tr>
       </thead>
       <tbody>
-        {payload.type == 'ship' &&
-          <>
-            <tr>
-              <td className="border border-[#F1E9D9]/15 p-2 whitespace-nowrap text-ellipsis overflow-hidden">{challenge.fuelPolicyId}</td>
-              <td className="border border-[#F1E9D9]/15 p-2">Fuel</td>
-              <td className="border border-[#F1E9D9]/15 p-2 text-right">{payload.fuel}</td>
-            </tr>
-            <tr>
-              <td className="border border-[#F1E9D9]/15 p-2 whitespace-nowrap text-ellipsis overflow-hidden">{challenge.shipyardPolicyId}</td>
-              <td className="border border-[#F1E9D9]/15 p-2">{hexToAscii(payload.pilotTokenName)}</td>
-              <td className="border border-[#F1E9D9]/15 p-2 text-right">1</td>
-            </tr>
-            <tr>
-              <td className="border border-[#F1E9D9]/15 p-2 whitespace-nowrap text-ellipsis overflow-hidden">{challenge.shipyardPolicyId}</td>
-              <td className="border border-[#F1E9D9]/15 p-2">{hexToAscii(payload.shipTokenName)}</td>
-              <td className="border border-[#F1E9D9]/15 p-2 text-right">1</td>
-            </tr>
-          </>
-        }
-        {payload.type == 'token' &&
-          <tr>
-            <td className="border border-[#F1E9D9]/15 p-2 whitespace-nowrap text-ellipsis overflow-hidden">{challenge.fuelPolicyId}</td>
-            <td className="border border-[#F1E9D9]/15 p-2">{payload.name}</td>
-            <td className="border border-[#F1E9D9]/15 p-2 text-right">{payload.amount}</td>
+        {assets.map((asset: any, index: number) => (
+          <tr key={index}>
+            <td className="border border-[#F1E9D9]/15 p-2 whitespace-nowrap text-ellipsis overflow-hidden">{asset.policyId}</td>
+            <td className="border border-[#F1E9D9]/15 p-2">{asset.name}</td>
+            <td className="border border-[#F1E9D9]/15 p-2 text-right">{asset.amount}</td>
           </tr>
-        }
+        ))}
       </tbody>
     </table>
   );
@@ -107,10 +81,13 @@ export default function Explorer() {
                 <CodeBlock lang="json" content={JSON.stringify(JSON.parse(payload.datum), null, 2)} />
               </div>
               
-              <hr className="my-4 border-t-[#F1E9D9]/15" />
-              
-              <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Assets</p>
-              <AssetsTable payload={payload} challenge={current()} />
+              {payload.assets && payload.assets.length > 0 && (
+                <>
+                  <hr className="my-4 border-t-[#F1E9D9]/15" />
+                  <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Assets</p>
+                  <AssetsTable assets={payload.assets} />
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -12,7 +12,7 @@ import { SectionsMenu } from '@/components/home/SectionsMenu';
 export default function HowToPlay() {
   const { current } = useChallengeStore();
 
-  useScrollSnap('main');
+  const activeSection = useScrollSnap('main');
 
    // Handle initial scroll to hash position
   useEffect(() => {
@@ -38,12 +38,22 @@ export default function HowToPlay() {
       />
       
       <div className="relative z-1 w-fit">
-        <Section className="gap-4" title="CREATE SHIP" id="create-ship">
-          <ConnectWallet />
-          <CreateShip />
+        <section className="relative h-[calc(100dvh-64px)] snap-start flex" id="connect-wallet">
+          <div className="m-16 w-[50dvw]">
+            <h3 className="font-dmsans-regular text-3xl text-left text-[#F1E9D9] mb-8">
+              Explore a web implementation to execute transactions for the Asteria challenge, built with the Tx3 toolkit.
+            </h3>
+            <ConnectWallet />
+          </div>
+          <div className="absolute h-full w-[100dvw] bg-[url(/board.png)] bg-bottom bg-no-repeat bg-contain" />
+        </section>
+
+        <Section title="CREATE SHIP" id="create-ship">
+          <CreateShip isActive={activeSection === 'create-ship'} />
         </Section>
+
         <Section title="MOVE SHIP" id="move-ship">
-          <MoveShip />
+          <MoveShip isActive={activeSection === 'move-ship'} />
         </Section>
 
         {/* <Section id="actions" title="ACTIONS">
