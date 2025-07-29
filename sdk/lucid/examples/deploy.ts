@@ -160,9 +160,21 @@ for (const pellet of pellets) {
     posY: pellet.pos_y,
     shipyardPolicy: spacetimeHash,
   };
-  const prizeToken = (pellet.prize_policy && pellet.prize_name)
-    ? pellet.prize_policy + fromText(pellet.prize_name)
-    : "";
+
+  let assets = {};
+  if (pellet.prize_policy && pellet.prize_name && pellet.prize_amount && pellet.prize_amount > 0) {
+    assets = {
+      [fuelToken]: pellet.fuel,
+      [adminToken]: 1n,
+      [pellet.prize_policy + fromText(pellet.prize_name)]: pellet.prize_amount,
+    };
+  } else {
+    assets = {
+      [fuelToken]: pellet.fuel,
+      [adminToken]: 1n,
+    };
+  }
+
   pelletsTx = pelletsTx
     .mint(
       {
@@ -173,13 +185,10 @@ for (const pellet of pellets) {
     .payToContract(
       pelletAddress,
       { Inline: Data.to(pelletDatum, PelletPelletSpend.datum) },
-      {
-        [fuelToken]: pellet.fuel,
-        [adminToken]: 1n,
-        [prizeToken]: pellet.prize_amount && pellet.prize_amount > 0 ? pellet.prize_amount : 0n,
-      }
+      assets
     );
 }
+
 const committedPelletsTx = await pelletsTx.commit();
 const signedPelletsTx = await committedPelletsTx.sign().commit();
 console.log(signedPelletsTx.toString());
