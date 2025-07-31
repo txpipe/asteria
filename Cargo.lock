@@ -68,6 +68,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-rocket",
  "dotenv",
+ "hex",
  "num-traits",
  "rand",
  "rocket",

@@ -1,0 +1,6 @@
+import Layout from "../mdx/Layout";
+export default ({ children }) => <Layout>{children}</Layout>;
+
+Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by adding the `delta_x` and `delta_y` values specified in the redeemer, and subtracting the fuel amount needed for the displacement.
+
+![moveShip diagram](/txs/move-ship.png)

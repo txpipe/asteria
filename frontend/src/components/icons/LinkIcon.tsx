@@ -3,7 +3,7 @@ interface LinkIconProps {
 }
 
 // Tabler Icon
-export function LinkIcon({ className }: LinkIconProps) {
+export default function LinkIcon({ className }: LinkIconProps) {
   return (
     <svg
       className={className}

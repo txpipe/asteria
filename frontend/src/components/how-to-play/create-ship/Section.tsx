@@ -1,18 +1,17 @@
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-// Components
-import { Code } from '@/components/ui/Code';
-import { Input } from '@/components/ui/Input';
-import { Alert } from '@/components/ui/Alert';
-import { CopyButton } from '@/components/CopyButton';
-import { Tab, Tabs } from '@/components/Tabs';
+import CodeBlock from '@/components/ui/CodeBlock';
+import Input from '@/components/ui/Input';
+import Alert from '@/components/ui/Alert';
+import CopyButton from '@/components/ui/CopyButton';
+import ConnectWallet from '@/components/ui/ConnectWallet';
 
-// Pages
+import Tabs, { Tab } from '@/components/how-to-play/Tabs';
+import CreateShipDescription from '@/components/how-to-play/create-ship/Description.mdx';
+
 import type { ResponseData } from '@/pages/api/asteria/create-ship';
-
-// Store
-import { useWallet } from '@/stores/wallet';
+import type { ConnectedWallet } from '@/hooks/useCardano';
 
 const tx3File = `// Asteria player
 party Player; // Sent by Form
@@ -130,38 +129,30 @@ const jsFile = `const result = await protocol.createShipTx({
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
 });`;
 
-export function CreateShip() {
+interface CreateShipProps {
+  isActive: boolean;
+}
+
+export default function CreateShip(props: CreateShipProps) {
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
   const [position, setPosition] = useState<{ x: number; y: number }|null>(null);
+  const [wallet, setWallet] = useState<ConnectedWallet|null>(null);
+  const [address, setAddress] = useState<string>('');
 
   const errors = formState.errors || {};
   const dataTx = formState.data?.tx;
 
-  const walletApi = useWallet((s) => s.api);
-  const walletAddress = useWallet((s) => s.changeAddress);
-  const addressRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
-    if (dataTx && walletApi) {
-      walletApi.signTx(dataTx, true).then((signedTx) => {
-        console.log('Signed transaction:', signedTx);
-      }).catch((error) => {
-        console.log('Error signing transaction:', error)
-      });
+    if (props.isActive) {
+      window.GODOT_BRIDGE?.send({ action: 'clear_ship' });
     }
-  }, [dataTx, walletApi]);
-
-  useEffect(() => {
-    if (addressRef.current && walletAddress) {
-      addressRef.current.value = walletAddress;
-    }
-  }, [walletAddress]);
+  }, [props.isActive]);
 
   useEffect(() => {
     window.addEventListener('message', (event) => {
-      if (pathname.includes('how-to-play')) {
+      if (pathname.includes('how-to-play') && window.location.hash === '#create-ship') {
         if (event.data.action == 'map_click') {
           updatePosition(event.data.position.x, event.data.position.y);
         }
@@ -180,12 +171,12 @@ export function CreateShip() {
   const updatePosition = (x: number, y: number) => {
     setPosition({ x, y });
     window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
+    window.GODOT_BRIDGE?.send({ action: 'create_placeholder', x, y });
   }
 
-  const handlePreview = () => {
-    const { x, y } = position || { x: 0, y: 0 };
-    window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
-    window.GODOT_BRIDGE?.send({ action: 'create_placeholder', x, y });
+  const handleWallet = (connectedWallet: ConnectedWallet|null) => {
+    setWallet(connectedWallet);
+    setAddress(connectedWallet?.changeAddress || '');
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -212,24 +203,24 @@ export function CreateShip() {
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Description">
-        <p className="mt-6 text-md text-[#F1E9D9] font-dmsans-regular leading-7">
-          Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
-        </p>
+        <CreateShipDescription />
       </Tab>
 
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
           <div>
             <Input
-              ref={addressRef}
               name="playerAddress"
               placeholder="Enter player address"
               label="Player Address"
               error={errors.playerAddress}
-              defaultValue={walletAddress ?? ''}
               disabled={submitting}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               required
             />
+
+            <ConnectWallet onWalletConnected={handleWallet} />
 
             <div className="w-full flex flex-row gap-x-4">
               <Input
@@ -239,7 +230,6 @@ export function CreateShip() {
                 containerClassName="flex-1"
                 label="Ship Number"
                 error={errors.shipNumber}
-                defaultValue={10}
                 disabled={submitting}
                 required
               />
@@ -255,7 +245,6 @@ export function CreateShip() {
               />
             </div>
 
-
             <div className="w-full flex flex-row gap-x-4">
               <Input
                 name="positionX"
@@ -263,11 +252,10 @@ export function CreateShip() {
                 placeholder="Enter position X"
                 label="Position X"
                 error={errors.positionX}
-                defaultValue={0}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
-                value={position?.x ?? '0'}
+                value={position?.x ?? ''}
                 onChange={updatePositionX}
               />
 
@@ -277,11 +265,10 @@ export function CreateShip() {
                 placeholder="Enter position Y"
                 label="Position Y"
                 error={errors.positionY}
-                defaultValue={0}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
-                value={position?.y ?? '0'}
+                value={position?.y ?? ''}
                 onChange={updatePositionY}
               />
             </div>
@@ -301,26 +288,22 @@ export function CreateShip() {
               className="basis-1/2 font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md"
               disabled={submitting}
             >
-              {submitting ? 'Submitting...' : 'Submit'}
-            </button>
-
-            <button
-              type="button"
-              className="basis-1/2 font-monocraft-regular text-[#07F3E6] border border-[#07F3E6] py-2 px-4 rounded-full text-md"
-              onClick={handlePreview}
-            >
-              Preview
+              {submitting ? 'Resolving...' : 'Resolve'}
             </button>
           </div>
         </form>
       </Tab>
 
       <Tab label="Tx3 File" rightAction={<CopyButton text={tx3File} />}>
-        <Code code={tx3File} lang="tx3" />
+        <div className="bg-[#272A36] p-4 text-sm overflow-scroll">
+          <CodeBlock code={tx3File} lang="tx3" />
+        </div>
       </Tab>
 
       <Tab label="JS Code" rightAction={<CopyButton text={jsFile} />}>
-        <Code code={jsFile} lang="js" />
+        <div className="bg-[#272A36] p-4 text-sm overflow-scroll">
+          <CodeBlock code={jsFile} lang="js" />
+        </div>
       </Tab>
     </Tabs>
   );

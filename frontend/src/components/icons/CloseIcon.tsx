@@ -3,7 +3,7 @@ interface CloseIconProps {
 }
 
 // Tabler Icon
-export function CloseIcon({ className }: CloseIconProps) {
+export default function CloseIcon({ className }: CloseIconProps) {
   return (
     <svg
       className={className}

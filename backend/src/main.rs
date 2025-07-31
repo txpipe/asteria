@@ -45,6 +45,14 @@ pub struct Data {
     pub asteria: Asteria,
 }
 
+#[derive(Clone, SimpleObject)]
+pub struct Asset {
+    pub policy_id: String,
+    pub name: String,
+    pub amount: i32,
+}
+
+
 impl Data {
     pub fn new(amount_of_ships: usize, amount_of_fuels: usize) -> Self {
         let mut ships = Vec::new();
@@ -65,6 +73,7 @@ impl Data {
                 total_rewards: 1235431230,
                 class: "Asteria".to_string(),
                 datum: "{}".to_string(),
+                assets: vec![],
             },
         }
     }
@@ -115,6 +124,7 @@ pub struct Ship {
     pilot_token_name: AssetName,
     class: String,
     datum: String,
+    assets: Vec<Asset>,
 }
 
 impl Ship {
@@ -134,6 +144,7 @@ impl Ship {
             },
             class: "Ship".to_string(),
             datum: "{}".to_string(),
+            assets: vec![],
         }
     }
 }
@@ -146,6 +157,7 @@ pub struct Fuel {
     shipyard_policy: PolicyId,
     class: String,
     datum: String,
+    assets: Vec<Asset>,
 }
 
 impl Fuel {
@@ -159,6 +171,7 @@ impl Fuel {
             },
             class: "Fuel".to_string(),
             datum: "{}".to_string(),
+            assets: vec![],
         }
     }
 }
@@ -170,6 +183,7 @@ pub struct Asteria {
     total_rewards: i64,
     class: String,
     datum: String,
+    assets: Vec<Asset>,
 }
 
 #[derive(Clone, SimpleObject)]
@@ -188,6 +202,7 @@ pub struct Token {
     class: String,
     name: String,
     datum: String,
+    assets: Vec<Asset>,
 }
 
 #[derive(Clone, SimpleObject)]
@@ -355,6 +370,8 @@ impl QueryRoot {
                     $4::varchar AS shipyard_policy,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
+                    CAST(utxo_subject_amount(era, cbor, decode(CONCAT($4::varchar, CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT)), 'hex')) AS INTEGER) AS ship_asset_amount,
+                    CAST(utxo_subject_amount(era, cbor, decode(CONCAT($4::varchar, CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT)), 'hex')) AS INTEGER) AS pilot_asset_amount,
                     0 AS total_rewards,
                     utxo_plutus_data(era, cbor) as datum
                 FROM 
@@ -374,6 +391,8 @@ impl QueryRoot {
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
+                    NULL AS ship_asset_amount,
+                    NULL AS pilot_asset_amount,
                     0 AS total_rewards,
                     utxo_plutus_data(era, cbor) as datum
                 FROM 
@@ -393,6 +412,8 @@ impl QueryRoot {
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
+                    NULL AS ship_asset_amount,
+                    NULL AS pilot_asset_amount,
                     utxo_lovelace(era, cbor) as total_rewards,
                     utxo_plutus_data(era, cbor) as datum
                 FROM 
@@ -411,7 +432,9 @@ impl QueryRoot {
                 pilot_token_name,
                 class,
                 total_rewards,
-                datum
+                datum,
+                ship_asset_amount,
+                pilot_asset_amount
              FROM
                 data
              WHERE
@@ -442,16 +465,33 @@ impl QueryRoot {
                         y: record.position_y.unwrap_or(0),
                     },
                     shipyard_policy: PolicyId {
-                        id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                        id: ID::from(record.shipyard_policy.clone().unwrap_or_default()),
                     },
                     ship_token_name: AssetName {
-                        name: record.ship_token_name.unwrap_or_default(),
+                        name: record.ship_token_name.clone().unwrap_or_default(),
                     },
                     pilot_token_name: AssetName {
-                        name: record.pilot_token_name.unwrap_or_default(),
+                        name: record.pilot_token_name.clone().unwrap_or_default(),
                     },
                     class: record.class.unwrap_or_default(),
                     datum: record.datum.unwrap_or_default().to_string(),
+                    assets: vec![
+                        Asset {
+                            policy_id: fuel_policy_id.clone(),
+                            name: "FUEL".to_string(),
+                            amount: record.fuel.unwrap_or(0),
+                        },
+                        Asset {
+                            policy_id: format!("{}{}", record.shipyard_policy.clone().unwrap_or_default(), record.ship_token_name.clone().unwrap_or_default()),
+                            name: String::from_utf8(hex::decode(record.ship_token_name.clone().unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
+                            amount: record.ship_asset_amount.unwrap_or(0),
+                        },
+                        Asset {
+                            policy_id: format!("{}{}", record.shipyard_policy.clone().unwrap_or_default(), record.pilot_token_name.clone().unwrap_or_default()),
+                            name: String::from_utf8(hex::decode(record.pilot_token_name.unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
+                            amount: record.pilot_asset_amount.unwrap_or(0),
+                        },
+                    ],
                 }),
                 Some("Fuel") => PositionalInterface::Fuel(Fuel {
                     id: ID::from(record.id.unwrap_or_default()),
@@ -465,6 +505,13 @@ impl QueryRoot {
                     },
                     class: record.class.unwrap_or_default(),
                     datum: record.datum.unwrap_or_default().to_string(),
+                    assets: vec![
+                        Asset {
+                            policy_id: fuel_policy_id.clone(),
+                            name: "FUEL".to_string(),
+                            amount: record.fuel.unwrap_or(0),
+                        },
+                    ],
                 }),
                 Some("Asteria") => PositionalInterface::Asteria(Asteria {
                     id: ID::from(record.id.unwrap_or_default()),
@@ -479,6 +526,7 @@ impl QueryRoot {
                         .unwrap_or(0),
                     class: record.class.unwrap_or_default(),
                     datum: record.datum.unwrap_or_default().to_string(),
+                    assets: vec![],
                 }),
                 _ => panic!("Unknown class type or class not provided"),
             })
@@ -529,6 +577,13 @@ impl QueryRoot {
                         },
                         class: "Token".to_string(),
                         datum: record.datum.unwrap_or_default().to_string(),
+                        assets: vec![
+                            Asset {
+                                policy_id: token.policy_id.clone(),
+                                name: format!("${}", token.name).to_uppercase(),
+                                amount: record.amount.unwrap_or(0),
+                            },
+                        ],
                     }));
                 }
             }

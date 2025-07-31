@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 
-import NavBar from "@/components/NavBar";
+import NavBar from "@/components/ui/NavBar";
 
 import "./globals.css";
  
