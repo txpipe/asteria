@@ -22,7 +22,7 @@ export default function ConnectWallet({ onWalletConnected }: Props) {
         <ChevronDownIcon className="inline mt-[-2px] ml-[2px] size-4" />
       </MenuButton>
       <MenuItems
-        className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50"
+        className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50 z-10"
         anchor="bottom start"
       >
         {walletList.map((wallet) => (

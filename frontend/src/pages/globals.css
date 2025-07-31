@@ -1,6 +1,90 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin "@tailwindcss/forms" {
+  strategy: "class"; /* only generate classes */
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --background-image-starfield: url('/starfield.svg');
+  --background-image-challenge: url('/challenge.png');
+
+  --font-inter-regular: Inter-Regular;
+  --font-monocraft-regular: Monocraft-Regular;
+  --font-dmsans-regular: DMSans-Regular;
+  --font-dmsans-bold: DMSans-Bold;
+  --font-dmsans-semibold: DMSans-SemiBold;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility landing-challenge {
+  box-shadow:
+    0 0 4px 0 rgb(255 255 255 / 0.05),
+    0 0 4px 2px rgb(255 255 255 / 0.04);
+}
+
+@utility floating-grid {
+  position: absolute;
+  right: 0;
+  width: 30vw;
+  height: auto;
+  margin-top: -8rem;
+  pointer-events: none;
+}
+
+@utility floating-ship-1 {
+  position: absolute;
+  left: -4.5vw;
+  bottom: -4.5vw;
+  width: 10vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-ship-2 {
+  position: absolute;
+  right: -3.5vw;
+  top: -3.5vw;
+  width: 8vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-fuel-1 {
+  position: absolute;
+  left: -2.5vw;
+  bottom: -2.5vw;
+  width: 5vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-fuel-2 {
+  position: absolute;
+  right: -1.5vw;
+  top: -3vw;
+  width: 4vw;
+  height: auto;
+  pointer-events: none;
+}
 
 @layer base {
   @font-face {
@@ -40,66 +124,22 @@
   }
 }
 
-:root {
-  --background: #171717;
-  --foreground: #FFFFFF;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer utilities {
   :root {
     --background: #171717;
-    --foreground: #FFFFFF;
+    --foreground: #ffffff;
   }
-}
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #171717;
+      --foreground: #ffffff;
+    }
+  }
 
-@layer utilities {
-  .landing-challenge {
-    box-shadow: 0 0 4px 0 rgb(255 255 255 / 0.05), 0 0 4px 2px rgb(255 255 255 / 0.04);
-  }
-  .floating-grid {
-    position: absolute;
-    right: 0;
-    width: 30vw;
-    height: auto;
-    margin-top: -8rem;
-    pointer-events: none;
-  }
-  .floating-ship-1 {
-    position: absolute;
-    left: -4.5vw;
-    bottom: -4.5vw;
-    width: 10vw;
-    height: auto;
-    pointer-events: none;
-  }
-  .floating-ship-2 {
-    position: absolute;
-    right: -3.5vw;
-    top: -3.5vw;
-    width: 8vw;
-    height: auto;
-    pointer-events: none;
-  }
-  .floating-fuel-1 {
-    position: absolute;
-    left: -2.5vw;
-    bottom: -2.5vw;
-    width: 5vw;
-    height: auto;
-    pointer-events: none;
-  }
-  .floating-fuel-2 {
-    position: absolute;
-    right: -1.5vw;
-    top: -3vw;
-    width: 4vw;
-    height: auto;
-    pointer-events: none;
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
   }
 }

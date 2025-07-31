@@ -30,7 +30,7 @@ export default function Landing() {
 
         <img src="/landing-grid.svg" className="floating-grid" />
 
-        <div className="p-20 rounded-[64px] backdrop-blur-sm bg-gradient-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6] mb-64">
+        <div className="p-20 rounded-[64px] backdrop-blur-xs bg-linear-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6] mb-64">
           <h3 className="font-monocraft-regular text-[#07F3E6] text-4xl mb-6">
             A 2D Space Game
           </h3>
@@ -46,7 +46,7 @@ export default function Landing() {
           <img src="/landing-ship-1.svg" className="floating-ship-1" />
           <img src="/landing-ship-2.svg" className="floating-ship-2" />
 
-          <div className="p-20 rounded-[64px] backdrop-blur-sm bg-gradient-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6] mb-64">
+          <div className="p-20 rounded-[64px] backdrop-blur-xs bg-linear-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6] mb-64">
             <h3 className="font-monocraft-regular text-[#07F3E6] text-4xl mb-6">
               Move your ship
             </h3>
@@ -64,7 +64,7 @@ export default function Landing() {
           <img src="/landing-fuel-1.svg" className="floating-fuel-1" />
           <img src="/landing-fuel-2.svg" className="floating-fuel-2" />
 
-          <div className="p-20 rounded-[64px] backdrop-blur-sm bg-gradient-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6]">
+          <div className="p-20 rounded-[64px] backdrop-blur-xs bg-linear-to-l from-[#FFFFFF0B] border-solid border-[3px] border-[#87FCF6]">
             <h3 className="font-monocraft-regular text-[#07F3E6] text-4xl mb-6">
               Gather fuel
             </h3>
@@ -84,9 +84,9 @@ export default function Landing() {
           <span className="font-monocraft-regular text-[#07F3E6] text-4xl">Available Challenges</span>
         </h3>
 
-        <div className="flex flex-row justify-center mx-[-1rem]">
+        <div className="flex flex-row justify-center -mx-4">
           {challenges.slice(0, 3).map((challenge, index) =>
-            <div key={index} className="mx-4 flex-initial basis-1/3 rounded-2xl backdrop-blur-sm bg-[#14141470] overflow-hidden landing-challenge">
+            <div key={index} className="mx-4 flex-initial basis-1/3 rounded-2xl backdrop-blur-xs bg-[#14141470] overflow-hidden landing-challenge">
               <div className="w-full h-[240px] bg-challenge bg-center bg-cover" />
               <div className="p-8">
                 <p className="mb-1 font-dmsans-regular text-[#6F6F6F] text-md truncate">

@@ -47,7 +47,7 @@ const getShipByAddress = (address: string): string => {
 
 const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
   <a href={`${props.challenge.explorerUrl}${props.record.address.replace('#0', '')}`} target="_blank">
-    <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-gradient-to-r from-[#46434312] to-[#FFFFFF12]">
+    <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-linear-to-r from-[#46434312] to-[#FFFFFF12]">
       <h1 className="flex-initial pb-1 mr-6 font-monocraft-regular text-5xl text-[#07F3E6]">
         {props.record.ranking}
       </h1>

@@ -22,7 +22,7 @@ function InputElem(
         ref={ref}
         id={props.name}
         className={clsx(
-          'border border-solid bg-black py-3 px-4 rounded-md font-inter-regular text-[#F1E9D9] bg-transparent focus:outline-none appearance-none text-md text-left w-full',
+          'border border-solid bg-black py-3 px-4 rounded-md font-inter-regular text-[#F1E9D9] bg-transparent focus:outline-hidden appearance-none text-md text-left w-full',
           {
             'border-red-500': error,
             'border-[#5B5B5B]': !error,

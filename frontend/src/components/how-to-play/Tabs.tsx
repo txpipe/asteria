@@ -77,7 +77,7 @@ export default function Tabs({
             disabled={tab.disabled}
             className={clsx(
               'px-4 py-2 font-medium text-sm border-b-4 transition-colors duration-200 font-inter-regular',
-              'focus:outline-none',
+              'focus:outline-hidden',
               'cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
               'border-transparent text-[#A0A0A0] hover:text-[#FFF75D]/50 hover:border-[#FFF75D]/50',
               'aria-selected:border-[#FFF75D] aria-selected:text-[#FFF75D]',
