@@ -23,6 +23,9 @@ var pressed_position = null
 
 var tween_alpha = null
 var tween_position = null
+var placeholder_move = null
+
+var placeholder_ship_position = null
 var placeholder_ship = null
 
 var initial_position = Vector2(0, 0)
@@ -30,9 +33,10 @@ var initial_position = Vector2(0, 0)
 func _on_main_dataset_updated() -> void:
 	const center = Vector2(0, 0)
 	var cell_size = Vector2(Global.get_cell_size(), Global.get_cell_size())
+	var alpha = 1 if Global.get_mode() == "map" else 0.5
 	
 	for child in $Entities.get_children():
-		if child != placeholder_ship:
+		if child != placeholder_move and child != placeholder_ship:
 			child.free()
 	
 	var asteria = asteria_scene.instantiate()
@@ -43,35 +47,37 @@ func _on_main_dataset_updated() -> void:
 		var fuel = Fuel.new_fuel()
 		fuel.position = fuel_data.position * cell_size
 		fuel.rotation = (7.5 - int(fuel_data.position.x * fuel_data.position.y) % 15) * PI/180
+		fuel.modulate.a = alpha
 		$Entities.add_child(fuel)
 	
 	for token_data in Global.get_tokens():
 		var token = Token.new_token(token_data.name)
 		token.position = token_data.position * cell_size
+		token.modulate.a = alpha
 		$Entities.add_child(token)
 	
 	for ship_data in Global.get_ships():
 		var ship = Ship.new_ship(ship_data)
 		ship.position = ship_data.position * cell_size
 		ship.rotation = ship.position.angle_to_point(center) + PI/2
+		ship.modulate.a = alpha
 		$Entities.add_child(ship)
 		
-		if (
-			Global.get_selected_ship() != null and
-			Global.get_selected_ship().id == ship_data.id and
-			Global.get_selected_ship().position != ship_data.position
-		):
-			ship.position = Global.get_selected_ship().position * cell_size
-			ship.rotation = ship.position.angle_to_point(ship_data.position * cell_size) + PI/2
+		if Global.get_selected_ship() != null and Global.get_selected_ship().id == ship_data.id:
+			ship.modulate.a = 1
 			
-			var tween = get_tree().create_tween()
-			tween.tween_property(ship, "position", ship_data.position * cell_size, .5)
-			tween.tween_property(ship, "rotation", ship.position.angle_to_point(center) + PI/2, .5)
-			tween.play()
-			
-			Global.set_selected_ship(ship_data)
-			selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
-			_on_next_position_reset()
+			if Global.get_selected_ship().position != ship_data.position:
+				ship.position = Global.get_selected_ship().position * cell_size
+				ship.rotation = ship.position.angle_to_point(ship_data.position * cell_size) + PI/2
+				
+				var tween = get_tree().create_tween()
+				tween.tween_property(ship, "position", ship_data.position * cell_size, .5)
+				tween.tween_property(ship, "rotation", ship.position.angle_to_point(center) + PI/2, .5)
+				tween.play()
+				
+				Global.set_selected_ship(ship_data)
+				selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
+				_on_next_position_reset()
 
 
 func get_current_position() -> Variant:
@@ -211,14 +217,16 @@ func _on_follow_ship_reset() -> void:
 	selected_ship_position_changed.emit(initial_position)
 	Global.set_selected_ship(null)
 	_on_next_position_reset()
+	_on_main_dataset_updated()
 
 
-func _on_follow_ship_selected(ship_id: String) -> void:
-	var data = Global.get_ships().filter(func(ship): return ship.id == ship_id)
+func _on_follow_ship_selected(ship_number: String) -> void:
+	var data = Global.get_ships().filter(func(ship): return ship.shipTokenName.hex_decode().get_string_from_utf8() == "SHIP%s" % ship_number)
 	if (len(data) > 0):
 		var ship_data = data[0]
 		selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
 		Global.set_selected_ship(ship_data)
+		_on_main_dataset_updated()
 
 
 func _on_next_position_reset() -> void:
@@ -226,9 +234,9 @@ func _on_next_position_reset() -> void:
 		tween_alpha.stop()
 		tween_position.stop()
 	
-	if placeholder_ship != null:
-		placeholder_ship.free()
-		placeholder_ship = null
+	if placeholder_move != null:
+		placeholder_move.free()
+		placeholder_move = null
 
 
 func _on_next_position_selected(position: Vector2) -> void:
@@ -238,27 +246,29 @@ func _on_next_position_selected(position: Vector2) -> void:
 		var old_position = ship_data.position * Global.get_cell_size()
 		var new_position = position * Global.get_cell_size()
 		
-		if placeholder_ship == null:
-			placeholder_ship = Ship.new_ship(ship_data)
-			$Entities.add_child(placeholder_ship)
+		if placeholder_move != null:
+			placeholder_move.free()
 		
-		placeholder_ship.animation = str(ship_data.id.unicode_at(ship_data.id.length()-3) % 7)
-		placeholder_ship.position = old_position
-		placeholder_ship.rotation = old_position.angle_to_point(new_position) + PI/2
-		placeholder_ship.modulate.a = 0
+		placeholder_move = Ship.new_ship(ship_data)
+		$Entities.add_child(placeholder_move)
+		
+		placeholder_move.animation = str(ship_data.id.unicode_at(ship_data.id.length()-3) % 7)
+		placeholder_move.position = old_position
+		placeholder_move.rotation = old_position.angle_to_point(new_position) + PI/2
+		placeholder_move.modulate.a = 0
 		
 		if tween_alpha != null:
 			tween_alpha.stop()
 			tween_position.stop()
 		
 		tween_alpha = get_tree().create_tween().set_loops()
-		tween_alpha.tween_property(placeholder_ship, "modulate:a", .75, 1).from(0)
-		tween_alpha.tween_property(placeholder_ship, "modulate:a", 0, 1).from(.75)
+		tween_alpha.tween_property(placeholder_move, "modulate:a", .75, 1).from(0)
+		tween_alpha.tween_property(placeholder_move, "modulate:a", 0, 1).from(.75)
 		tween_alpha.play()
 		
 		tween_position = get_tree().create_tween().set_loops()
-		tween_position.tween_property(placeholder_ship, "position", new_position, 1).from(old_position)
-		tween_position.tween_property(placeholder_ship, "position", old_position, 1).from(new_position)
+		tween_position.tween_property(placeholder_move, "position", new_position, 1).from(old_position)
+		tween_position.tween_property(placeholder_move, "position", old_position, 1).from(new_position)
 		tween_position.play()
 
 
@@ -272,16 +282,19 @@ func _on_current_position_selected(position: Vector2) -> void:
 
 
 func _on_placeholder_ship_reset() -> void:
+	placeholder_ship_position = null
+	
 	if placeholder_ship != null:
 		placeholder_ship.free()
 		placeholder_ship = null
 
 
 func _on_placeholder_ship_created(position: Vector2) -> void:
+	placeholder_ship_position = position
+	
 	if placeholder_ship == null:
 		placeholder_ship = Ship.new_ship_with_frame_id("0")
 		$Entities.add_child(placeholder_ship)
 	
 	placeholder_ship.position = position * Global.get_cell_size()
 	placeholder_ship.rotation = placeholder_ship.position.angle_to_point(Vector2(0, 0)) + PI/2
-	placeholder_ship.modulate.a = 1

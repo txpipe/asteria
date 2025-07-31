@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useChallengeStore } from '@/stores/challenge';
-import { AsteriaMap } from '@/components/AsteriaMap';
-import { LinkIcon } from '@/components/icons/LinkIcon';
-import { CloseIcon } from '@/components/icons/CloseIcon';
-import CodeBlock from '@/components/CodeBlock';
+
+import AsteriaMap from '@/components/ui/AsteriaMap';
+import CodeBlock from '@/components/ui/CodeBlock';
+import LinkIcon from '@/components/icons/LinkIcon';
+import CloseIcon from '@/components/icons/CloseIcon';
 
 interface AssetsTableProps {
   assets: any[];
@@ -77,8 +78,8 @@ export default function Explorer() {
               <hr className="my-4 border-t-[#F1E9D9]/15" />
               
               <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Datum</p>
-              <div className="bg-[#1E1E1E] mt-2 p-4 text-sm overflow-x-scroll">
-                <CodeBlock lang="json" content={JSON.stringify(JSON.parse(payload.datum), null, 2)} />
+              <div className="bg-[#272A36] mt-2 p-4 text-sm overflow-x-scroll">
+                <CodeBlock lang="json" code={JSON.stringify(JSON.parse(payload.datum), null, 2)} />
               </div>
               
               {payload.assets && payload.assets.length > 0 && (

@@ -22,7 +22,7 @@ export function Tab({ children }: TabProps) {
   return <>{children}</>;
 }
 
-export function Tabs({
+export default function Tabs({
   children,
   defaultActiveTab = 0,
   onTabChange,

@@ -7,7 +7,7 @@ interface SectionProps {
   id: string;
 }
 
-export function Section({ children, title, className, id }: PropsWithChildren<SectionProps>) {
+export default function Section({ children, title, className, id }: PropsWithChildren<SectionProps>) {
   return (
     <section
       id={id}

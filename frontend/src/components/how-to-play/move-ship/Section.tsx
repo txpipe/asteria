@@ -1,19 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
-// Components
-import { Input } from '@/components/ui/Input';
-import { Alert } from '@/components/ui/Alert';
-import { Code } from '@/components/ui/Code';
-import { Tab, Tabs } from '@/components/Tabs';
-import { CopyButton } from '@/components/CopyButton';
+import Input from '@/components/ui/Input';
+import Alert from '@/components/ui/Alert';
+import CodeBlock from '@/components/ui/CodeBlock';
+import CopyButton from '@/components/ui/CopyButton';
+import ConnectWallet from '@/components/ui/ConnectWallet';
 
-import MoveShipDescription from '@/components/how-to-play/MoveShip.mdx';
+import Tabs, { Tab } from '@/components/how-to-play/Tabs';
+import MoveShipDescription from '@/components/how-to-play/move-ship/Description.mdx';
 
-// Store
-import { useWallet } from '@/stores/wallet';
-
-// Pages
 import type { ResponseData } from '@/pages/api/asteria/move-ship';
+import type { ConnectedWallet } from '@/hooks/useCardano';
 
 const tx3File = `// Asteria player
 party Player; // Sent by Form
@@ -127,38 +125,58 @@ interface MoveShipProps {
   isActive: boolean;
 }
 
-export function MoveShip(props: MoveShipProps) {
+export default function MoveShip(props: MoveShipProps) {
+  const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
+  const [position, setPosition] = useState<{ x: number; y: number }|null>(null);
+  const [wallet, setWallet] = useState<ConnectedWallet|null>(null);
+  const [address, setAddress] = useState<string>('');
+  const [shipNumber, setShipNumber] = useState<string>('');
 
   const errors = formState.errors || {};
   const dataTx = formState.data?.tx;
-
-  const walletApi = useWallet((s) => s.api);
-  const walletAddress = useWallet((s) => s.changeAddress);
-  const addressRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (dataTx && walletApi) {
-      walletApi.signTx(dataTx, true).then((signedTx) => {
-        console.log('Signed transaction:', signedTx);
-      }).catch((error) => {
-        console.log('Error signing transaction:', error)
-      });
-    }
-  }, [dataTx, walletApi]);
-
-  useEffect(() => {
-    if (addressRef.current && walletAddress) {
-      addressRef.current.value = walletAddress;
-    }
-  }, [walletAddress]);
 
   useEffect(() => {
     if (props.isActive) {
       window.GODOT_BRIDGE?.send({ action: 'clear_placeholder' });
     }
   }, [props.isActive]);
+
+  useEffect(() => {
+    window.addEventListener('message', (event) => {
+      if (pathname.includes('how-to-play') && window.location.hash === '#move-ship') {
+        if (event.data.action == 'map_click') {
+          updatePosition(event.data.position.x, event.data.position.y);
+        }
+      }
+    });
+  }, []);
+
+  const updatePositionX = (event: ChangeEvent<HTMLInputElement>) => {
+    updatePosition(parseInt(event.target.value), position ? position.y : 0);
+  }
+
+  const updatePositionY = (event: ChangeEvent<HTMLInputElement>) => {
+    updatePosition(position ? position.x : 0, parseInt(event.target.value));
+  }
+  
+  const updatePosition = (x: number, y: number) => {
+    setPosition({ x, y });
+    console.log({ x, y, shipNumber });
+    window.GODOT_BRIDGE?.send({ action: 'select_ship', shipNumber });
+    window.GODOT_BRIDGE?.send({ action: 'move_ship', x, y });
+  }
+
+  const updateShipNumber = (event: ChangeEvent<HTMLInputElement>) => {
+    setShipNumber(event.target.value);
+    window.GODOT_BRIDGE?.send({ action: 'select_ship', shipNumber: event.target.value });
+  }
+
+  const handleWallet = (connectedWallet: ConnectedWallet|null) => {
+    setWallet(connectedWallet);
+    setAddress(connectedWallet?.changeAddress || '');
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -191,15 +209,17 @@ export function MoveShip(props: MoveShipProps) {
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>
           <div>
             <Input
-              ref={addressRef}
               name="playerAddress"
               placeholder="Enter player address"
               label="Player Address"
               error={errors.playerAddress}
-              defaultValue={walletAddress ?? ''}
               disabled={submitting}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               required
             />
+
+            <ConnectWallet onWalletConnected={handleWallet} />
 
             <div className="w-full flex flex-row gap-x-4">
               <Input
@@ -209,8 +229,9 @@ export function MoveShip(props: MoveShipProps) {
                 containerClassName="flex-1"
                 label="Ship Number"
                 error={errors.shipNumber}
-                defaultValue={10}
                 disabled={submitting}
+                value={shipNumber}
+                onChange={updateShipNumber}
                 required
               />
               <Input
@@ -225,7 +246,6 @@ export function MoveShip(props: MoveShipProps) {
               />
             </div>
 
-
             <div className="w-full flex flex-row gap-x-4">
               <Input
                 name="positionX"
@@ -233,10 +253,11 @@ export function MoveShip(props: MoveShipProps) {
                 placeholder="Enter position X"
                 label="Position X"
                 error={errors.positionX}
-                defaultValue={20}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
+                value={position?.x ?? ''}
+                onChange={updatePositionX}
               />
 
               <Input
@@ -245,10 +266,11 @@ export function MoveShip(props: MoveShipProps) {
                 placeholder="Enter position Y"
                 label="Position Y"
                 error={errors.positionY}
-                defaultValue={20}
                 disabled={submitting}
                 required
                 containerClassName="flex-1"
+                value={position?.y ?? ''}
+                onChange={updatePositionY}
               />
             </div>
           </div>
@@ -267,18 +289,22 @@ export function MoveShip(props: MoveShipProps) {
               className="basis-1/2 font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md"
               disabled={submitting}
             >
-              {submitting ? 'Moving ship...' : 'Move ship'}
+              {submitting ? 'Resolving...' : 'Resolve'}
             </button>
           </div>
         </form>
       </Tab>
 
       <Tab label="Tx3 File" rightAction={<CopyButton text={tx3File} />}>
-        <Code code={tx3File} lang="tx3" />
+        <div className="bg-[#272A36] p-4 text-sm overflow-scroll">
+          <CodeBlock code={tx3File} lang="tx3" />
+        </div>
       </Tab>
 
       <Tab label="JS Code" rightAction={<CopyButton text={jsFile} />}>
-        <Code code={jsFile} lang="js" />
+        <div className="bg-[#272A36] p-4 text-sm overflow-scroll">
+          <CodeBlock code={jsFile} lang="js" />
+        </div>
       </Tab>
     </Tabs>
   );

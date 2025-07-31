@@ -68,11 +68,9 @@ export default async function handler(
     });
   } catch (e: unknown) {
     if (e instanceof Error) {
-      console.log('Cause', e.cause);
-      console.log('Message', e.message);
       return res.status(400).json({
         errors: {
-          global: (typeof e.cause === 'string' ? e.cause : e.message) || 'Unknown error',
+          global: `${e.message}\nCause: ${e.cause}` || 'Unknown error',
         }
       });
     }

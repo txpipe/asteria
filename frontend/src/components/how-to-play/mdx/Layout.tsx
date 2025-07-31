@@ -1,6 +1,6 @@
 import "./markdown.css";
 
-export default function HowToPlayLayout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode;

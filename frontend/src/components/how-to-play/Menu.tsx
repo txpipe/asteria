@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
-interface SectionsMenuProps {
+interface MenuProps {
   className?: string;
 }
 
@@ -22,7 +22,7 @@ function MenuItem({ href, isActive, label }: { href: string; isActive: boolean; 
   );
 }
 
-export function SectionsMenu({ className }: SectionsMenuProps) {
+export default function Menu({ className }: MenuProps) {
   const [activeHash, setActiveHash] = useState<string|null>(null);
 
   useEffect(() => {

@@ -1,20 +1,14 @@
 import { useEffect } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-
-// Hooks
-import { useCardano } from '@/hooks/useCardano';
-
-// Utils
-import { reduceString } from '@/utils/string';
-
-import type { WalletDetails } from '@/stores/wallet';
+import { useCardano, type ConnectedWallet } from '@/hooks/useCardano';
+import { ChevronDownIcon } from '@heroicons/react/16/solid';
 
 interface Props {
-  onWalletConnected?: (wallet: WalletDetails | null) => void;
+  onWalletConnected?: (wallet: ConnectedWallet | null) => void;
 }
 
-export function ConnectWallet({ onWalletConnected }: Props) {
-  const { walletList, isConnected, loading, connectToWallet, walletDetails } = useCardano();
+export default function ConnectWallet({ onWalletConnected }: Props) {
+  const { walletList, walletDetails, connectToWallet } = useCardano();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Ignore onWalletConnected
   useEffect(() => {
@@ -23,57 +17,28 @@ export function ConnectWallet({ onWalletConnected }: Props) {
 
   return (
     <Menu>
-      <MenuButton
-        className="flex flex-row gap-2 items-center font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md outline-none cursor-pointer disabled:cursor-not-allowed"
-        disabled={loading || !!walletDetails}
-      >
-        {loading && (
-          <span aria-disabled="true" className="flex items-center gap-2">
-            Connecting
-            <span className="animate-spin inline-block w-4 h-4 border-2 border-t-transparent border-black rounded-full" />
-          </span>
-        )}
-        {!loading && (
-          <span>
-            {isConnected && walletDetails ? (
-              <span className="flex items-center gap-2">
-                {walletDetails.info?.icon && (
-                  <img
-                    src={walletDetails.info.icon}
-                    alt={`${walletDetails.info.name} icon`}
-                    className="inline-block w-6 h-6"
-                  />
-                )}
-                {reduceString(walletDetails.changeAddress || '', 12, 8) ||
-                  walletDetails.info?.name ||
-                  'Wallet connected'}
-              </span>
-            ) : (
-              'Connect wallet'
-            )}
-          </span>
-        )}
+      <MenuButton className="font-dmsans-regular text-sm px-1 py-2 text-white/60 hover:text-[#07F3E6]">
+        Select wallet
+        <ChevronDownIcon className="inline mt-[-2px] ml-[2px] size-4" />
       </MenuButton>
       <MenuItems
-        className="bg-black rounded-xl flex flex-col gap-2 text-white/90 mt-2 outline-none border border-white/50"
-        anchor="bottom"
+        className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50"
+        anchor="bottom start"
       >
-        {loading && <MenuItem disabled>Loading...</MenuItem>}
-        {!loading &&
-          walletList.map((wallet) => (
-            <MenuItem key={wallet.key}>
-              <button
-                type="button"
-                className="flex items-center cursor-pointer min-w-20 px-4 py-2 hover:bg-white/10"
-                onClick={() => connectToWallet(wallet.key)}
-              >
-                {wallet.icon && (
-                  <img src={wallet.icon} alt={`${wallet.name} icon`} className="inline-block w-6 h-6 mr-2" />
-                )}
-                <span>{wallet.name}</span>
-              </button>
-            </MenuItem>
-          ))}
+        {walletList.map((wallet) => (
+          <MenuItem key={wallet.key}>
+            <button
+              type="button"
+              className="flex items-center cursor-pointer min-w-32 px-4 py-4 hover:bg-white/10"
+              onClick={() => connectToWallet(wallet.key)}
+            >
+              {wallet.icon && (
+                <img src={wallet.icon} alt={`${wallet.name} icon`} className="inline-block w-6 h-6 mr-4" />
+              )}
+              <span>{wallet.name}</span>
+            </button>
+          </MenuItem>
+        ))}
       </MenuItems>
     </Menu>
   );
