@@ -1,5 +1,10 @@
 import Link from "next/link";
+
+// Store
 import { useChallengeStore } from '@/stores/challenge';
+
+// Challenge Icon
+import ChallengeIcon from '@/components/icons/ChallengeIcon';
 
 export default function Landing() {
   const { challenges, selected, select } = useChallengeStore();
@@ -80,7 +85,7 @@ export default function Landing() {
       </div>
       <div className="container mx-auto sm flex flex-col pt-16 pb-32 px-32">
         <h3 className="flex flex-row items-center justify-center mb-20">
-          <img src="/challenge-icon.svg" className="h-12 w-12 inline mr-5" />
+          <ChallengeIcon className="size-12 inline mr-5" />
           <span className="font-monocraft text-[#07F3E6] text-4xl">Available Challenges</span>
         </h3>
 

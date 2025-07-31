@@ -1,25 +1,27 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useChallengeStore } from '@/stores/challenge';
 
+// Icons
+import ChallengeIcon from '@/components/icons/ChallengeIcon';
+import SwitchIcon from '@/components/icons/SwitchIcon';
+
+// Tootips
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 const NavBar: React.FunctionComponent = () => {
-  const { challenges, selected, select } = useChallengeStore();
+  const { current } = useChallengeStore();
   const pathname = usePathname() || '';
   const isActive = (route: string) => pathname.includes(route) || undefined;
 
-  const handleSelect = (event: React.FormEvent<HTMLSelectElement>) => {
-    select(parseInt(event.currentTarget.value));
-  }
+  const challenge = current();
   
   return (
     <div className="sticky top-0 w-full px-14 py-[11.5px] flex flex-row items-center bg-[#171717]">
       <div className="flex flex-row items-end flex-auto basis-1/4 gap-3">
         <Link href="/">
-          <Image src="/logo.svg" alt="Asteria Logo" width={145} height={49} className="w-[145px] h-[49px]" />
+          <Image src="/images/logo.svg" alt="Asteria Logo" width={145} height={49} className="w-[145px] h-[49px]" />
         </Link>
         <span className="font-inter text-[#606060] pointer-events-none">
           By TxPipe
@@ -38,24 +40,20 @@ const NavBar: React.FunctionComponent = () => {
           Leaderboard
         </Link>
       </div>
-      <div className="flex flex-row justify-end flex-auto basis-1/4">
-        <button
-          className="border border-solid border-[#5B5B5B] bg-black py-3 px-4 rounded-full mx-2 flex flex-row items-center"
-        >
-          <img src="/challenge-icon.svg" className="w-6 h-6 mr-3 pointer-events-none" />
-          <select
-            value={selected}
-            onChange={handleSelect}
-            className="font-inter text-[#F1E9D9] bg-transparent focus:outline-hidden appearance-none text-left min-w-36"
-          >
-            { challenges.map((challenge, index) =>
-              <option key={index} value={index}>
-                { challenge.label }
-              </option>
-            )}
-          </select>
-          <img src="/chevron.svg" className="w-5 h-5 ml-3 pointer-events-none" />
-        </button>
+      <div className="flex flex-row justify-end items-center gap-2.5 flex-auto basis-1/4 font-inter text-base">
+        <Link href="#" className="flex gap-2.5 items-center">
+          <ChallengeIcon className="size-5" />
+          <span className="text-[#F1E9D9] hover:text-primary-50">{challenge.label}</span>
+        </Link>
+        <span className="text-[#F1E9D9]/50">|</span>
+        <Tooltip placement="bottom-end">
+          <TooltipTrigger>
+            <Link href="#" className="text-[#F1E9D9] opacity-50 hover:opacity-100">
+              <SwitchIcon className="size-6" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Change challenge</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
