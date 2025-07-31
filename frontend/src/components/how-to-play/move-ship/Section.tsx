@@ -286,7 +286,7 @@ export default function MoveShip(props: MoveShipProps) {
           <div className="flex flex-1 flex-row items-end w-full gap-x-4">
             <button
               type="submit"
-              className="basis-1/2 font-monocraft-regular text-black bg-[#07F3E6] py-2 px-4 rounded-full text-md"
+              className="basis-1/2 font-monocraft text-black bg-[#07F3E6] py-2 px-4 rounded-full text-base"
               disabled={submitting}
             >
               {submitting ? 'Resolving...' : 'Resolve'}

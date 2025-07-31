@@ -11,7 +11,7 @@ function MenuItem({ href, isActive, label }: { href: string; isActive: boolean; 
       <a
         href={href}
         className={clsx(
-          "py-1 block transition-all duration-300 font-monocraft-regular",
+          "py-1 block transition-all duration-300 font-monocraft",
           { 'pl-4 border-l-8 border-[#07F3E6] text-[#07F3E6]': isActive },
           { 'pl-2': !isActive },
         )}

@@ -10,11 +10,9 @@
   --background-image-starfield: url('/starfield.svg');
   --background-image-challenge: url('/challenge.png');
 
-  --font-inter-regular: Inter-Regular;
-  --font-monocraft-regular: Monocraft-Regular;
-  --font-dmsans-regular: DMSans-Regular;
-  --font-dmsans-bold: DMSans-Bold;
-  --font-dmsans-semibold: DMSans-SemiBold;
+  --font-inter: Inter, sans-serif;
+  --font-monocraft: Monocraft, monospace;
+  --font-dmsans: 'DM Sans', sans-serif;
 }
 
 /*
@@ -88,39 +86,51 @@
 
 @layer base {
   @font-face {
-    font-family: 'Inter-Regular';
+    font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/Inter-Regular.ttf') format('truetype');
+    src: url('/fonts/Inter-Regular.woff2') format('woff2');
   }
+
   @font-face {
-    font-family: 'Monocraft-Regular';
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/Inter-Medium.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Monocraft';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/Monocraft-Regular.ttf') format('truetype');
+    src: url('/fonts/Monocraft-Regular.woff2') format('woff2');
   }
+
   @font-face {
-    font-family: 'DMSans-Regular';
+    font-family: 'DM Sans';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/DMSans-Regular.ttf') format('truetype');
+    src: url('/fonts/DMSans-Regular.woff2') format('woff2');
   }
+
   @font-face {
-    font-family: 'DMSans-Bold';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('/fonts/DMSans-Bold.ttf') format('truetype');
-  }
-  @font-face {
-    font-family: 'DMSans-SemiBold';
+    font-family: 'DM Sans';
     font-style: normal;
     font-weight: 600;
     font-display: swap;
-    src: url('/fonts/DMSans-SemiBold.ttf') format('truetype');
+    src: url('/fonts/DMSans-SemiBold.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/DMSans-Bold.woff2') format('woff2');
   }
 }
 
