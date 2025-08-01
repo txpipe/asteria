@@ -23,11 +23,16 @@ export default function HeroSection() {
           <h2 className="mt-14 text-[22px]">
             Compete by coding smart bots that explore, strategize, and earn rewards in a persistent universe—powered by Cardano's eUTxO model.
           </h2>
-          <p className="mt-14 opacity-60">
+          {/* <p className="mt-14 opacity-60">
             A competitive playground for developers to build autonomous bots—off-chain agents that interact directly with the Cardano blockchain. Each bot controls its own UTxOs, constrained by on-chain validators, and competes in a persistent universe for resources and rewards. Push the boundaries of decentralized automation and showcase your skills.
-          </p>
+          </p> */}
           <div className="flex flex-row gap-8 items-center mt-8">
-            <Link href="/#build-your-own-bot" className="btn btn-primary w-fit">
+            <Link
+              href="https://github.com/txpipe/asteria-starter-kit"
+              className="btn btn-primary w-fit"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <span>Build your own bot</span>
               <BotIcon />
             </Link>
@@ -38,9 +43,9 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <Link href="/#" className="font-mono text-[#F1E9D9] text-base mt-8 block w-fit">
+        {/* <Link href="/#" className="font-mono text-[#F1E9D9] text-base mt-8 block w-fit">
           Get started in GitHub
-        </Link>
+        </Link> */}
       </div>
 
     </div>
