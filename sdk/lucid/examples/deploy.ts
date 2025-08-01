@@ -9,6 +9,7 @@ import {
   SpacetimeSpacetimeSpend,
 } from "../../../onchain/src/plutus.ts";
 import { lucidBase } from "../src/utils.ts";
+import { chunkArray, delay, haveSameUTxOs } from "./utils.ts";
 import { readPelletsCSV } from "../../../offchain/tests/admin/pellets/utils.ts";
 import deployParams from "./deploy_params.json" with { type: "json" };
 
@@ -123,15 +124,14 @@ const deployTx = await lucid
   .commit();
 
 const signedDeployTx = await deployTx.sign().commit();
-console.log(signedDeployTx.toString());
+// console.log(signedDeployTx.toString());
 const deployTxHash = await signedDeployTx.submit();
+console.log("\nDEPLOYMENT TXHASH:", deployTxHash);
 console.log("Waiting for deployment transaction to be confirmed...");
 await lucid.awaitTx(deployTxHash);
-console.log("DEPLOYMENT TXHASH:", deployTxHash);
 
 // This is a workaround to wait for the wallet UTxOs to be updated after the deployment transaction.
 // This way we avoid errors like trying to use inputs that were already spent.
-const delay = ms => new Promise(res => setTimeout(res, ms));
 let wereUTxOsUpdated = false;
 while (!wereUTxOsUpdated) {
   console.log("Waiting for wallet UTXOs to be updated...");
@@ -153,66 +153,67 @@ const pelletRefs = await lucid.utxosByOutRef([{
 const pellets = await readPelletsCSV("./pellets.csv");
 const fuelToken = pelletHash + fromText("FUEL");
 
-let pelletsTx = await lucid.newTx().readFrom(pelletRefs);
-for (const pellet of pellets) {
-  const pelletDatum = {
-    posX: pellet.pos_x,
-    posY: pellet.pos_y,
-    shipyardPolicy: spacetimeHash,
-  };
+const chunkLength = 80;
+const chunkedPellets: Utxo[][] = chunkArray(pellets, chunkLength);
 
-  let assets = {};
-  if (pellet.prize_policy && pellet.prize_name && pellet.prize_amount && pellet.prize_amount > 0) {
-    assets = {
-      [fuelToken]: pellet.fuel,
-      [adminToken]: 1n,
-      [pellet.prize_policy + fromText(pellet.prize_name)]: pellet.prize_amount,
-    };
-  } else {
-    assets = {
-      [fuelToken]: pellet.fuel,
-      [adminToken]: 1n,
-    };
-  }
+let totalCreated = 0;
+for (const chunk of chunkedPellets) {
+  const initialWalletUTXOs = await lucid.wallet.getUtxos();
 
-  pelletsTx = pelletsTx
-    .mint(
-      {
+  let pelletsTx = await lucid.newTx().readFrom(pelletRefs);
+  for (const pellet of chunk) {
+    const pelletDatum = {
+      posX: pellet.pos_x,
+      posY: pellet.pos_y,
+      shipyardPolicy: spacetimeHash,
+    };
+  
+    let assets = {};
+    if (pellet.prize_policy && pellet.prize_name && pellet.prize_amount && pellet.prize_amount > 0) {
+      assets = {
         [fuelToken]: pellet.fuel,
-      },
-      Data.to("MintFuel", PelletPelletMint.redeemer)
-    )
-    .payToContract(
-      pelletAddress,
-      { Inline: Data.to(pelletDatum, PelletPelletSpend.datum) },
-      assets
-    );
-}
-
-const committedPelletsTx = await pelletsTx.commit();
-const signedPelletsTx = await committedPelletsTx.sign().commit();
-console.log(signedPelletsTx.toString());
-const pelletsTxHash = await signedPelletsTx.submit();
-await lucid.awaitTx(deployTxHash);
-console.log("PELLETS TXHASH:", pelletsTxHash);
-
-// We need to wait for the wallet UTxOs to be updated after the deployment transaction.
-function haveSameUTxOs(utxos_1: Utxo[], utxos_2: Utxo[]): boolean {
-  if (utxos_1.length !== utxos_2.length) {
-    return false;
-  }
-
-  const refs_1 = new Set(utxos_1.map(utxo => utxo.txHash + "#" + utxo.outputIndex));
-  const refs_2 = new Set(utxos_2.map(utxo => utxo.txHash + "#" + utxo.outputIndex));
-
-  if (refs_1.size !== refs_2.size) { // Check if the number of unique refs is the same
-    return false;
-  }
-
-  for (const ref of refs_1) {
-    if (!refs_2.has(ref)) {
-      return false;
+        [adminToken]: 1n,
+        [pellet.prize_policy + pellet.prize_name]: pellet.prize_amount,
+      };
+    } else {
+      assets = {
+        [fuelToken]: pellet.fuel,
+        [adminToken]: 1n,
+      };
     }
+  
+    pelletsTx = pelletsTx
+      .mint(
+        {
+          [fuelToken]: pellet.fuel,
+        },
+        Data.to("MintFuel", PelletPelletMint.redeemer)
+      )
+      .payToContract(
+        pelletAddress,
+        { Inline: Data.to(pelletDatum, PelletPelletSpend.datum) },
+        assets
+      );
   }
-  return true;
+
+  const committedPelletsTx = await pelletsTx.commit();
+  const signedPelletsTx = await committedPelletsTx.sign().commit();
+  // console.log(signedPelletsTx.toString());
+  const pelletsTxHash = await signedPelletsTx.submit();
+  
+  totalCreated += chunk.length;  
+  console.log("\nPELLETS TXHASH:", pelletsTxHash);
+  console.log(`Created ${chunk.length} pellets`);
+  console.log(`Total created: ${totalCreated} of ${pellets.length}`);
+  console.log(`Waiting for transaction to be confirmed...`);
+  await lucid.awaitTx(pelletsTxHash);
+
+  // Wait for wallet UTxOs to be updated.
+  let wereUTxOsUpdated = false;
+  while (!wereUTxOsUpdated) {
+    console.log("Waiting for wallet UTXOs to be updated...");
+    await delay(5000);
+    const walletUTXOs = await lucid.wallet.getUtxos();
+    wereUTxOsUpdated = !haveSameUTxOs(walletUTXOs, initialWalletUTXOs);
+  }
 }
