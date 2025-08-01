@@ -59,7 +59,7 @@ export default function Alert({ type, children, className, title }: AlertProps) 
     >
       {title && (
         <h3
-          className={clsx('font-monocraft font-semibold mb-4', {
+          className={clsx('font-mono font-semibold mb-4', {
             'text-[#4ADE80]': type === 'success',
             'text-[#F87171]': type === 'error',
           })}
@@ -68,7 +68,7 @@ export default function Alert({ type, children, className, title }: AlertProps) 
         </h3>
       )}
       <div className="relative min-h-0">
-        <div ref={contentRef} className="font-dmsans h-full overflow-auto pr-2">{children}</div>
+        <div ref={contentRef} className="h-full overflow-auto pr-2">{children}</div>
         {showGradient && (
           <div className="absolute bottom-0 left-0 right-2 top-0 pointer-events-none bg-gradient-to-t from-[#151B17] to-transparent to-45%" />
         )}

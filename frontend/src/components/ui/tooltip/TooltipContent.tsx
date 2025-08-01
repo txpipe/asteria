@@ -21,7 +21,7 @@ export const TooltipContent = forwardRef<
           ...context.floatingStyles,
           ...style
         }}
-        className="bg-[#0E0E0E] rounded-md border border-white/12 p-3 text-base text-[#F1E9D9]/80 font-dmsans"
+        className="bg-[#0E0E0E] rounded-md border border-white/12 p-3 text-base text-[#F1E9D9]/80"
         {...context.getFloatingProps(props)}
       />
     </FloatingPortal>

@@ -10,11 +10,12 @@
   --background-image-starfield: url('/starfield.svg');
   --background-image-challenge: url('/challenge.png');
 
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'Monocraft', monospace;
   --font-inter: Inter, sans-serif;
-  --font-monocraft: Monocraft, monospace;
-  --font-dmsans: 'DM Sans', sans-serif;
 
   --color-primary-50: #07F3E6;
+  --color-secondary-80: #252954;
 }
 
 /*
@@ -94,15 +95,6 @@
     font-display: swap;
     src: url('/fonts/Inter-Regular.woff2') format('woff2');
   }
-
-  @font-face {
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-    src: url('/fonts/Inter-Medium.woff2') format('woff2');
-  }
-
   @font-face {
     font-family: 'Monocraft';
     font-style: normal;
@@ -152,6 +144,17 @@
   body {
     color: var(--foreground);
     background: var(--background);
-    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .btn {
+    @apply flex font-mono text-base items-center px-5 py-3 rounded-full border gap-2.5;
+  }
+
+  .btn-primary {
+    @apply bg-primary-50 border-primary-50 text-secondary-80;
+  }
+
+  .btn-primary-outline {
+    @apply border-primary-50 text-primary-50;
   }
 }
