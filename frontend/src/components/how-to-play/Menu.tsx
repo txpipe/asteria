@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
-interface SectionsMenuProps {
+interface MenuProps {
   className?: string;
 }
 
@@ -22,16 +22,16 @@ function MenuItem({ href, isActive, label }: { href: string; isActive: boolean; 
   );
 }
 
-export function SectionsMenu({ className }: SectionsMenuProps) {
-  const [activeHash, setActiveHash] = useState('#create-ship');
+export default function Menu({ className }: MenuProps) {
+  const [activeHash, setActiveHash] = useState<string|null>(null);
 
   useEffect(() => {
     // Set initial hash
-    setActiveHash(window.location.hash || '#create-ship');
+    setActiveHash(window.location.hash || null);
 
     // Listen for hash changes
     const handleHashChange = () => {
-      setActiveHash(window.location.hash || '#create-ship');
+      setActiveHash(window.location.hash || null);
     };
 
     window.addEventListener('hashchange', handleHashChange);

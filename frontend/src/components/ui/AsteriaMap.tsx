@@ -9,7 +9,7 @@ interface AsteriaMapProps {
 
 const baseURL = '/visualizer/index.html';
 
-export function AsteriaMap({ mode, challenge, className }: AsteriaMapProps) {
+export default function AsteriaMap({ mode, challenge, className }: AsteriaMapProps) {
   const src = useMemo(() => {
     const params = new URLSearchParams([
       ['mode', mode],

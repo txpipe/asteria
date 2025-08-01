@@ -7,11 +7,11 @@ interface AlertProps extends PropsWithChildren {
   className?: string;
 }
 
-export function Alert({ type, children, className, title }: AlertProps) {
+export default function Alert({ type, children, className, title }: AlertProps) {
   return (
     <div
       className={clsx(
-        'w-full border-l px-4 py-3 rounded-2xl break-words text-[#F1E9D9]/60 flex flex-col max-h-fit',
+        'w-full border px-4 py-3 rounded-lg break-words text-[#F1E9D9]/60 flex flex-col',
         {
           'bg-[#4ADE80]/4 border-[#4ADE80]': type === 'success',
           'bg-[#F87171]/4 border-[#F87171] text-[#F87171]/60': type === 'error',
@@ -31,7 +31,7 @@ export function Alert({ type, children, className, title }: AlertProps) {
           {title}
         </h3>
       )}
-      <div className="overflow-y-scroll max-h-fit pr-2">{children}</div>
+      <div className="pr-2">{children}</div>
     </div>
   );
 }

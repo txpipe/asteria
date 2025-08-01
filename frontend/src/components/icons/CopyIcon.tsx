@@ -3,7 +3,7 @@ interface CopyIconProps {
 }
 
 // Tabler Icon
-export function CopyIcon({ className }: CopyIconProps) {
+export default function CopyIcon({ className }: CopyIconProps) {
   return (
     <svg
       className={className}

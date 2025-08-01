@@ -1,6 +1,6 @@
-import { CopyIcon } from './icons/CopyIcon';
+import CopyIcon from '@/components/icons/CopyIcon';
 
-export function CopyButton({ text }: { text: string }) {
+export default function CopyButton({ text }: { text: string }) {
   const handleCopy = () => {
     navigator.clipboard
       .writeText(text)

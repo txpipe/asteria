@@ -29,17 +29,25 @@ func init_data(data: Variant):
 				position,
 				item["shipTokenName"]["name"],
 				item["pilotTokenName"]["name"],
-				item["datum"]
+				item["datum"],
+				item["assets"]
 			))
 		
 		if item["__typename"] == "Fuel":
-			fuels.append(FuelData.new(item["id"], item["fuel"], position, item["datum"]))
+			if item["id"].unicode_at(item["id"].length()-1) % 2 == 0:
+				fuels.append(FuelData.new(item["id"], item["fuel"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Token":
-			tokens.append(TokenData.new(item["id"], item["name"], item["amount"], position, item["datum"]))
+			if (
+				item["id"].unicode_at(item["id"].length()-1) % 2 == 1 and (
+				(item["name"] == "hosky" and item["id"].unicode_at(item["id"].length()-1) % 3 == 0) or
+				(item["name"] == "stuff" and item["id"].unicode_at(item["id"].length()-1) % 3 == 1) or
+				(item["name"] == "vyfi" and item["id"].unicode_at(item["id"].length()-1) % 3 == 2))
+			):
+				tokens.append(TokenData.new(item["id"], item["name"], item["amount"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Asteria":
-			asteria = AsteriaData.new(item["id"], item["totalRewards"], position, item["datum"])
+			asteria = AsteriaData.new(item["id"], item["totalRewards"], position, item["datum"], item["assets"])
 
 func get_ships():
 	return ships
@@ -79,14 +87,16 @@ class ShipData:
 	var shipTokenName: String = ""
 	var pilotTokenName: String = ""
 	var datum: String = ""
+	var assets: Variant = []
 	
-	func _init(_id: String, _fuel: int, _position: Vector2, _shipTokenName: String, _pilotTokenName: String, _datum: String):
+	func _init(_id: String, _fuel: int, _position: Vector2, _shipTokenName: String, _pilotTokenName: String, _datum: String, _assets: Variant):
 		id = _id
 		fuel = _fuel
 		position = _position
 		shipTokenName = _shipTokenName
 		pilotTokenName = _pilotTokenName
 		datum = _datum
+		assets = _assets
 	
 	func json() -> String:
 		return JSON.stringify({
@@ -99,7 +109,8 @@ class ShipData:
 			},
 			"shipTokenName": shipTokenName,
 			"pilotTokenName": pilotTokenName,
-			"datum": datum
+			"datum": datum,
+			"assets": assets
 		})
 
 
@@ -108,12 +119,14 @@ class FuelData:
 	var fuel: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	var datum: String = ""
+	var assets: Variant = []
 	
-	func _init(_id: String, _fuel: int, _position: Vector2, _datum: String):
+	func _init(_id: String, _fuel: int, _position: Vector2, _datum: String, _assets: Variant):
 		id = _id
 		fuel = _fuel
 		position = _position
 		datum = _datum
+		assets = _assets
 	
 	func json() -> String:
 		return JSON.stringify({
@@ -124,7 +137,8 @@ class FuelData:
 				"x": position.x,
 				"y": position.y
 			},
-			"datum": datum
+			"datum": datum,
+			"assets": assets
 		})
 
 
@@ -134,13 +148,15 @@ class TokenData:
 	var amount: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	var datum: String = ""
+	var assets: Variant = []
 	
-	func _init(_id: String, _name: String, _amount: int, _position: Vector2, _datum: String):
+	func _init(_id: String, _name: String, _amount: int, _position: Vector2, _datum: String, _assets: Variant):
 		id = _id
 		name = _name
 		amount = _amount
 		position = _position
 		datum = _datum
+		assets = _assets
 	
 	func json() -> String:
 		return JSON.stringify({
@@ -152,7 +168,8 @@ class TokenData:
 				"x": position.x,
 				"y": position.y
 			},
-			"datum": datum
+			"datum": datum,
+			"assets": assets
 		})
 
 
@@ -161,12 +178,14 @@ class AsteriaData:
 	var totalRewards: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	var datum: String = ""
+	var assets: Variant = []
 	
-	func _init(_id: String, _totalRewards: int, _position: Vector2, _datum: String):
+	func _init(_id: String, _totalRewards: int, _position: Vector2, _datum: String, _assets: Variant):
 		id = _id
 		totalRewards = _totalRewards
 		position = _position
 		datum = _datum
+		assets = _assets
 	
 	func json() -> String:
 		return JSON.stringify({
@@ -177,5 +196,6 @@ class AsteriaData:
 				"x": position.x,
 				"y": position.y
 			},
-			"datum": datum
+			"datum": datum,
+			"assets": assets
 		})

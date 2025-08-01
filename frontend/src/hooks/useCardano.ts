@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-
-// Store
-import { useWallet } from '@/stores/wallet';
+import { decodeHexAddress } from '@/utils/cardano';
 
 interface WalletInfo {
   key: string;
@@ -9,6 +7,12 @@ interface WalletInfo {
   enabled: boolean;
   icon: string | null;
 }
+
+export interface ConnectedWallet {
+  api: CardanoWalletAPI;
+  info: CardanoWalletInfo;
+  changeAddress: string | null;
+};
 
 async function fetchWallets(): Promise<[WalletInfo[], CardanoWalletAPI | null, CardanoWalletInfo | null]> {
   const wallets: WalletInfo[] = [];
@@ -19,7 +23,6 @@ async function fetchWallets(): Promise<[WalletInfo[], CardanoWalletAPI | null, C
   }
 
   const keys = Object.keys(window.cardano);
-  const lastWallet = localStorage.getItem('aj-active-wallet');
 
   for (const key of keys) {
     const wallet = window.cardano[key];
@@ -31,17 +34,6 @@ async function fetchWallets(): Promise<[WalletInfo[], CardanoWalletAPI | null, C
       enabled,
       icon: wallet.icon ?? null,
     });
-
-    if (lastWallet === key) {
-      try {
-        currentWallet = await wallet.enable();
-        walletInfo = wallet;
-        localStorage.setItem('aj-active-wallet', key);
-      } catch {
-        localStorage.removeItem('aj-active-wallet');
-        currentWallet = null;
-      }
-    }
   }
 
   return [wallets, currentWallet, walletInfo];
@@ -52,25 +44,22 @@ function connectToWallet(walletKey: string): Promise<[CardanoWalletAPI, CardanoW
   if (!wallet) {
     return Promise.reject(new Error(`Wallet with key ${walletKey} not found`));
   }
-
   return wallet.enable().then((enabledWallet) => {
-    localStorage.setItem('aj-active-wallet', walletKey);
     return [enabledWallet, wallet];
   });
 }
 
 export function useCardano() {
-  const wallet = useWallet();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [walletList, setWalletList] = useState<WalletInfo[]>([]);
+  const [connectedWallet, setConnectedWallet] = useState<ConnectedWallet | null>(null);
 
   useEffect(() => {
     setLoading(true);
     fetchWallets()
       .then(async ([wallets, currentWallet, walletInfo]) => {
         setWalletList(wallets);
-        wallet?.update(currentWallet, walletInfo);
       })
       .catch((err) => {
         setError(err.message);
@@ -78,37 +67,35 @@ export function useCardano() {
       .finally(() => {
         setLoading(false);
       });
-  }, [wallet?.update]);
+  }, []);
 
-  const connectToWalletHandler = useCallback(
-    async (walletKey: string) => {
-      setLoading(true);
-      try {
-        const [connectedWallet, walletInfo] = await connectToWallet(walletKey);
-        wallet?.update(connectedWallet, walletInfo);
-        setError(null);
-      } catch (err) {
-        // biome-ignore lint/suspicious/noExplicitAny: allow any
-        setError((err as unknown as any).message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [wallet?.update],
-  );
+  const connectToWalletHandler = useCallback(async (walletKey: string) => {
+    setLoading(true);
+    try {
+      const [connectedWallet, walletInfo] = await connectToWallet(walletKey);
+      setError(null);
+      setConnectedWallet({
+        api: connectedWallet,
+        info: walletInfo,
+        changeAddress: await connectedWallet
+          ?.getChangeAddress()
+          .then(decodeHexAddress)
+          .catch(() => null),
+      });
+    } catch (err) {
+      // biome-ignore lint/suspicious/noExplicitAny: allow any
+      setError((err as unknown as any).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
+    error,
     loading,
     walletList,
-    isConnected: !!wallet.api,
     connectToWallet: connectToWalletHandler,
-    error,
-    walletDetails: wallet.api
-      ? {
-          api: wallet.api,
-          info: wallet.info,
-          changeAddress: wallet.changeAddress,
-        }
-      : null,
+    isConnected: !!connectedWallet,
+    walletDetails: connectedWallet
   };
 }

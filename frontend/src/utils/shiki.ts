@@ -18,7 +18,7 @@ export async function getHighlighter(): Promise<HighlighterCore> {
   // Create new highlighter instance
   highlighterPromise = createHighlighterCore({
     themes: [import('shiki/themes/dracula.mjs')],
-    langs: [import('shiki/langs/js.mjs'), import('./tx3.tmLanguage.json')],
+    langs: [import('shiki/langs/js.mjs'), import('./tx3.tmLanguage.json'), import('shiki/langs/json.mjs')],
     // `shiki/wasm` contains the wasm binary inlined as base64 string.
     engine: createOnigurumaEngine(import('shiki/wasm')),
   });

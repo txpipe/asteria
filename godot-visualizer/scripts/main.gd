@@ -11,6 +11,7 @@ signal next_position_reset
 signal init_joystick_mode
 
 const radius = 1000
+var loading = true
 
 var mode = ""
 var api_url = ""
@@ -59,23 +60,43 @@ const query = """
 			pilotTokenName {
 				name
 			},
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Fuel {
 			id,
 			fuel,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Token {
 			id,
 			name,
 			amount,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		},
 		... on Asteria {
 			id,
 			totalRewards,
-			datum
+			datum,
+			assets {
+				policyId,
+				name,
+				amount
+			}
 		}
 	}
 }
@@ -119,7 +140,7 @@ func _ready():
 	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
 	
-	#mode = "map"
+	#mode = "joystick"
 	#api_url = "http://localhost:8000/graphql"
 	#shipyard_policy_id = "f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
 	#fuel_policy_id = "fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
@@ -158,37 +179,42 @@ func _ready():
 
 
 func on_message(args):
-	var data = JSON.parse_string(args[0])
-	
-	if data["action"] == "move_map":
-		current_position_selected.emit(Vector2(data["x"], data["y"]))
-	
-	if data["action"] == "create_placeholder":
-		placeholder_ship_created.emit(Vector2(data["x"], data["y"]))
-	
-	if data["action"] == "clear_placeholder":
-		placeholder_ship_reset.emit()
-	
-	if data["action"] == "select_ship":
-		follow_ship_selected.emit(data["id"])
-	
-	if data["action"] == "clear_ship":
-		follow_ship_reset.emit()
-	
-	if data["action"] == "move_ship":
-		next_position_selected.emit(Vector2(data["x"], data["y"]))
-	
-	if data["action"] == "clear_move_ship":
-		next_position_reset.emit()
-	
-	if data["action"] == "refresh_data":
-		fetch_data()
+	if Global.get_mode() == "joystick":
+		var data = JSON.parse_string(args[0])
+		
+		if data["action"] == "move_map":
+			current_position_selected.emit(Vector2(data["x"], data["y"]))
+		
+		if data["action"] == "create_placeholder":
+			placeholder_ship_created.emit(Vector2(data["x"], data["y"]))
+		
+		if data["action"] == "clear_placeholder":
+			placeholder_ship_reset.emit()
+		
+		if data["action"] == "select_ship":
+			follow_ship_selected.emit(data["shipNumber"])
+		
+		if data["action"] == "clear_ship":
+			follow_ship_reset.emit()
+		
+		if data["action"] == "move_ship":
+			next_position_selected.emit(Vector2(data["x"], data["y"]))
+		
+		if data["action"] == "clear_move_ship":
+			next_position_reset.emit()
+		
+		if data["action"] == "refresh_data":
+			if !loading:
+				loading = true
+				$GUICanvasLayer/HBoxContainerLoader/CenterContainer/Loader.visible = true
+				fetch_data()
 
 
 func _on_request_completed(result, response_code, headers, body):
 	var json = JSON.parse_string(body.get_string_from_utf8())
 	Global.init_data(json)
 	dataset_updated.emit()
+	loading = false
 	$GUICanvasLayer/HBoxContainerLoader/CenterContainer/Loader.visible = false
 
 

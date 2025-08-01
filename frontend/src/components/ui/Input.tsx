@@ -36,4 +36,4 @@ function InputElem(
   );
 }
 
-export const Input = forwardRef<HTMLInputElement, Props>(InputElem);
+export default forwardRef<HTMLInputElement, Props>(InputElem);
