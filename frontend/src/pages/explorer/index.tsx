@@ -12,7 +12,7 @@ interface AssetsTableProps {
 
 const AssetsTable: React.FC<AssetsTableProps> = ({ assets }) => {
   return (
-    <table className="w-full table-fixed border-collapse mt-4 border border-[#F1E9D9]/15 font-dmsans-regular text-md text-[#A0A0A0]">
+    <table className="w-full table-fixed border-collapse mt-4 border border-[#F1E9D9]/15 text-base text-[#A0A0A0]">
       <thead>
         <tr>
           <th className="border border-[#F1E9D9]/15 p-2 text-left">Policy</th>
@@ -57,7 +57,7 @@ export default function Explorer() {
         <div className="fixed w-[30dvw] h-[calc(100dvh-64px)] left-0 top-[64px] py-12 pl-12">
           <div className="p-4 w-full h-full bg-[#0A0A0A]/80 rounded-[20px] border border-[#07F3E6] flex flex-col">
             <div className="p-4 mb-4 flex-0 flex flex-row ">
-              <h2 className="flex-1 font-monocraft-regular text-xl text-white">
+              <h2 className="flex-1 font-mono text-xl text-white">
                 {payload.type.toLocaleUpperCase()}
               </h2>
               <span className="flex-0 cursor-pointer" onClick={() => setPayload(null)}>
@@ -66,18 +66,18 @@ export default function Explorer() {
             </div>
             <div className="p-4 flex-1 bg-[#131313] rounded-[10px] overflow-y-scroll overflow-x-hidden">
               <div className="text-right">
-                <a href={`${current().explorerUrl}${payload.tx}`} target="_blank" className="font-dmsans-regular text-lg text-[#A0A0A0] hover:text-[#07F3E6B2]">
+                <a href={`${current().explorerUrl}${payload.tx}`} target="_blank" className="text-lg text-[#A0A0A0] hover:text-[#07F3E6B2]">
                   <LinkIcon className="inline-block mr-2 h-[24px] w-[24px] mt-[-4px]" />
                   <span>View on public explorer</span>
                 </a>
               </div>
               
-              <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Tx</p>
-              <p className="font-dmsans-regular text-lg text-[#A0A0A0] whitespace-pre-wrap break-words">{payload.tx}</p>
+              <p className="text-lg text-[#07F3E6B2]">Tx</p>
+              <p className="text-lg text-[#A0A0A0] whitespace-pre-wrap break-words">{payload.tx}</p>
               
               <hr className="my-4 border-t-[#F1E9D9]/15" />
               
-              <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Datum</p>
+              <p className="text-lg text-[#07F3E6B2]">Datum</p>
               <div className="bg-[#272A36] mt-2 p-4 text-sm overflow-x-scroll">
                 <CodeBlock lang="json" code={JSON.stringify(JSON.parse(payload.datum), null, 2)} />
               </div>
@@ -85,7 +85,7 @@ export default function Explorer() {
               {payload.assets && payload.assets.length > 0 && (
                 <>
                   <hr className="my-4 border-t-[#F1E9D9]/15" />
-                  <p className="font-dmsans-regular text-lg text-[#07F3E6B2]">Assets</p>
+                  <p className="text-lg text-[#07F3E6B2]">Assets</p>
                   <AssetsTable assets={payload.assets} />
                 </>
               )}

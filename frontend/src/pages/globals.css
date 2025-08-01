@@ -1,105 +1,160 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin "@tailwindcss/forms" {
+  strategy: "class"; /* only generate classes */
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --background-image-starfield: url('/starfield.svg');
+  --background-image-challenge: url('/challenge.png');
+
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'Monocraft', monospace;
+  --font-inter: Inter, sans-serif;
+
+  --color-primary-50: #07F3E6;
+  --color-secondary-80: #252954;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility landing-challenge {
+  box-shadow:
+    0 0 4px 0 rgb(255 255 255 / 0.05),
+    0 0 4px 2px rgb(255 255 255 / 0.04);
+}
+
+@utility floating-grid {
+  position: absolute;
+  right: 0;
+  width: 30vw;
+  height: auto;
+  margin-top: -8rem;
+  pointer-events: none;
+}
+
+@utility floating-ship-1 {
+  position: absolute;
+  left: -4.5vw;
+  bottom: -4.5vw;
+  width: 10vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-ship-2 {
+  position: absolute;
+  right: -3.5vw;
+  top: -3.5vw;
+  width: 8vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-fuel-1 {
+  position: absolute;
+  left: -2.5vw;
+  bottom: -2.5vw;
+  width: 5vw;
+  height: auto;
+  pointer-events: none;
+}
+
+@utility floating-fuel-2 {
+  position: absolute;
+  right: -1.5vw;
+  top: -3vw;
+  width: 4vw;
+  height: auto;
+  pointer-events: none;
+}
 
 @layer base {
   @font-face {
-    font-family: 'Inter-Regular';
+    font-family: 'Inter';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/Inter-Regular.ttf') format('truetype');
+    src: url('/fonts/Inter-Regular.woff2') format('woff2');
   }
   @font-face {
-    font-family: 'Monocraft-Regular';
+    font-family: 'Monocraft';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/Monocraft-Regular.ttf') format('truetype');
+    src: url('/fonts/Monocraft-Regular.woff2') format('woff2');
   }
+
   @font-face {
-    font-family: 'DMSans-Regular';
+    font-family: 'DM Sans';
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('/fonts/DMSans-Regular.ttf') format('truetype');
+    src: url('/fonts/DMSans-Regular.woff2') format('woff2');
   }
+
   @font-face {
-    font-family: 'DMSans-Bold';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('/fonts/DMSans-Bold.ttf') format('truetype');
-  }
-  @font-face {
-    font-family: 'DMSans-SemiBold';
+    font-family: 'DM Sans';
     font-style: normal;
     font-weight: 600;
     font-display: swap;
-    src: url('/fonts/DMSans-SemiBold.ttf') format('truetype');
+    src: url('/fonts/DMSans-SemiBold.woff2') format('woff2');
   }
-}
 
-:root {
-  --background: #171717;
-  --foreground: #FFFFFF;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #171717;
-    --foreground: #FFFFFF;
+  @font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('/fonts/DMSans-Bold.woff2') format('woff2');
   }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
-  .landing-challenge {
-    box-shadow: 0 0 4px 0 rgb(255 255 255 / 0.05), 0 0 4px 2px rgb(255 255 255 / 0.04);
+  :root {
+    --background: #171717;
+    --foreground: #ffffff;
   }
-  .floating-grid {
-    position: absolute;
-    right: 0;
-    width: 30vw;
-    height: auto;
-    margin-top: -8rem;
-    pointer-events: none;
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #171717;
+      --foreground: #ffffff;
+    }
   }
-  .floating-ship-1 {
-    position: absolute;
-    left: -4.5vw;
-    bottom: -4.5vw;
-    width: 10vw;
-    height: auto;
-    pointer-events: none;
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
   }
-  .floating-ship-2 {
-    position: absolute;
-    right: -3.5vw;
-    top: -3.5vw;
-    width: 8vw;
-    height: auto;
-    pointer-events: none;
+
+  .btn {
+    @apply flex font-mono text-base items-center px-5 py-3 rounded-full border gap-2.5;
   }
-  .floating-fuel-1 {
-    position: absolute;
-    left: -2.5vw;
-    bottom: -2.5vw;
-    width: 5vw;
-    height: auto;
-    pointer-events: none;
+
+  .btn-primary {
+    @apply bg-primary-50 border-primary-50 text-secondary-80;
   }
-  .floating-fuel-2 {
-    position: absolute;
-    right: -1.5vw;
-    top: -3vw;
-    width: 4vw;
-    height: auto;
-    pointer-events: none;
+
+  .btn-primary-outline {
+    @apply border-primary-50 text-primary-50;
   }
 }

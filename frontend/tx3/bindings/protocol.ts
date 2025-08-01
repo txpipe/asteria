@@ -18,12 +18,12 @@ export const DEFAULT_ENV_ARGS = {
 };
 
 export type CreateShipParams = {
-    pPosX: ArgValue;
-    pPosY: ArgValue;
-    pilotName: ArgValue;
-    player: ArgValue;
-    shipName: ArgValue;
-    txLatestPosixTime: ArgValue;
+    pPosX: ArgValue | bigint | number; // Int
+    pPosY: ArgValue | bigint | number; // Int
+    pilotName: ArgValue | Uint8Array; // Bytes
+    player: ArgValue | string; // Address
+    shipName: ArgValue | Uint8Array; // Bytes
+    txLatestPosixTime: ArgValue | bigint | number; // Int
 }
 
 export const CREATE_SHIP_IR = {
@@ -33,13 +33,13 @@ export const CREATE_SHIP_IR = {
 };
 
 export type MoveShipParams = {
-    pDeltaX: ArgValue;
-    pDeltaY: ArgValue;
-    pilotName: ArgValue;
-    player: ArgValue;
-    requiredFuel: ArgValue;
-    shipName: ArgValue;
-    txLatestPosixTime: ArgValue;
+    pDeltaX: ArgValue | bigint | number; // Int
+    pDeltaY: ArgValue | bigint | number; // Int
+    pilotName: ArgValue | Uint8Array; // Bytes
+    player: ArgValue | string; // Address
+    requiredFuel: ArgValue | bigint | number; // Int
+    shipName: ArgValue | Uint8Array; // Bytes
+    txLatestPosixTime: ArgValue | bigint | number; // Int
 }
 
 export const MOVE_SHIP_IR = {
@@ -49,10 +49,10 @@ export const MOVE_SHIP_IR = {
 };
 
 export type GatherFuelParams = {
-    pGatherAmount: ArgValue;
-    player: ArgValue;
-    shipName: ArgValue;
-    txEarliestPosixTime: ArgValue;
+    pGatherAmount: ArgValue | bigint | number; // Int
+    player: ArgValue | string; // Address
+    shipName: ArgValue | Uint8Array; // Bytes
+    txEarliestPosixTime: ArgValue | bigint | number; // Int
 }
 
 export const GATHER_FUEL_IR = {
@@ -74,19 +74,20 @@ export class Client {
             args,
         });
     }
+
     async moveShipTx(args: MoveShipParams): Promise<ResolveResponse> {
         return await this.#client.resolve({
             tir: MOVE_SHIP_IR,
             args,
         });
     }
+
     async gatherFuelTx(args: GatherFuelParams): Promise<ResolveResponse> {
         return await this.#client.resolve({
             tir: GATHER_FUEL_IR,
             args,
         });
     }
-
 
     async submit(params: SubmitParams): Promise<void> {
         await this.#client.submit(params);

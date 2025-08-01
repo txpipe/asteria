@@ -1,9 +1,9 @@
-interface CopyIconProps {
+interface SwitchIconProps {
   className?: string;
 }
 
 // Tabler Icon
-export default function CopyIcon({ className }: CopyIconProps) {
+export default function SwitchIcon({ className }: SwitchIconProps) {
   return (
     <svg
       role="graphics-symbol"
@@ -18,8 +18,9 @@ export default function CopyIcon({ className }: CopyIconProps) {
       viewBox="0 0 24 24"
     >
       <path stroke="none" d="M0 0h24v24H0z" />
-      <path d="M7 9.667A2.667 2.667 0 0 1 9.667 7h8.666A2.667 2.667 0 0 1 21 9.667v8.666A2.667 2.667 0 0 1 18.333 21H9.667A2.667 2.667 0 0 1 7 18.333z" />
-      <path d="M4.012 16.737A2.005 2.005 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.158.385 1.5 1" />
+      <path d="M3 17h5l1.67-2.386m3.66-5.227L15 7h6" />
+      <path d="m18 4 3 3-3 3M3 7h5l7 10h6" />
+      <path d="m18 20 3-3-3-3" />
     </svg>
   );
 }

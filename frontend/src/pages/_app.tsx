@@ -6,11 +6,12 @@ import type { AppProps } from 'next/app';
 import NavBar from "@/components/ui/NavBar";
 
 import "./globals.css";
- 
+import Head from 'next/head';
+
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode
 }
- 
+
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout
 }
@@ -19,12 +20,17 @@ const client = new ApolloClient({
   uri: `${process.env.API_URL}/graphql`,
   cache: new InMemoryCache(),
 });
- 
+
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   return (
-    <ApolloProvider client={client}>
-      <NavBar />
-      <Component {...pageProps} />
-    </ApolloProvider>
+    <>
+      <Head>
+        <title>Asteria</title>
+      </Head>
+      <ApolloProvider client={client}>
+        <NavBar />
+        <Component {...pageProps} />
+      </ApolloProvider>
+    </>
   );
 }
