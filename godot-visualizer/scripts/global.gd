@@ -1,10 +1,10 @@
 extends Node
 
-const grid_size = 80
+const grid_size = 100
 const cell_size = 128
 
 var ships: Array[ShipData] = []
-var fuels: Array[FuelData] = []
+var pellets: Array[PelletData] = []
 var tokens: Array[TokenData] = []
 var asteria: AsteriaData = null
 
@@ -14,7 +14,7 @@ var selected_ship = null
 
 func init_data(data: Variant):
 	ships = []
-	fuels = []
+	pellets = []
 	tokens = []
 	asteria = null
 	
@@ -33,18 +33,11 @@ func init_data(data: Variant):
 				item["assets"]
 			))
 		
-		if item["__typename"] == "Fuel":
-			if item["id"].unicode_at(item["id"].length()-1) % 2 == 0:
-				fuels.append(FuelData.new(item["id"], item["fuel"], position, item["datum"], item["assets"]))
+		if item["__typename"] == "Pellet":
+			pellets.append(PelletData.new(item["id"], item["fuel"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Token":
-			if (
-				item["id"].unicode_at(item["id"].length()-1) % 2 == 1 and (
-				(item["name"] == "hosky" and item["id"].unicode_at(item["id"].length()-1) % 3 == 0) or
-				(item["name"] == "stuff" and item["id"].unicode_at(item["id"].length()-1) % 3 == 1) or
-				(item["name"] == "vyfi" and item["id"].unicode_at(item["id"].length()-1) % 3 == 2))
-			):
-				tokens.append(TokenData.new(item["id"], item["name"], item["amount"], position, item["datum"], item["assets"]))
+			tokens.append(TokenData.new(item["id"], item["name"], item["amount"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Asteria":
 			asteria = AsteriaData.new(item["id"], item["totalRewards"], position, item["datum"], item["assets"])
@@ -52,8 +45,8 @@ func init_data(data: Variant):
 func get_ships():
 	return ships
 
-func get_fuels():
-	return fuels
+func get_pellets():
+	return pellets
 
 func get_tokens():
 	return tokens
@@ -114,7 +107,7 @@ class ShipData:
 		})
 
 
-class FuelData:
+class PelletData:
 	var id: String = ""
 	var fuel: int = 0
 	var position: Vector2 = Vector2(0, 0)

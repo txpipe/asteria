@@ -1,8 +1,6 @@
-[gd_scene load_steps=12 format=3 uid="uid://ch6xqejnd1rqf"]
+[gd_scene load_steps=10 format=3 uid="uid://ch6xqejnd1rqf"]
 
 [ext_resource type="Script" uid="uid://gbsoyi4wbdwd" path="res://scripts/map.gd" id="1_n1of1"]
-[ext_resource type="PackedScene" uid="uid://q0rcij55u7bg" path="res://scenes/fuel.tscn" id="3_ox4nu"]
-[ext_resource type="PackedScene" uid="uid://5y7v35p7p3lu" path="res://scenes/token.tscn" id="4_77b38"]
 [ext_resource type="PackedScene" uid="uid://dtec1i7ha2aui" path="res://scenes/asteria.tscn" id="5_66lng"]
 [ext_resource type="Script" uid="uid://cgkrpyyalyi5d" path="res://scripts/camera.gd" id="6_1ih2g"]
 [ext_resource type="Texture2D" uid="uid://cb1air8qyw14i" path="res://resources/starfield_front.png" id="6_cyois"]
@@ -32,8 +30,6 @@ animations = [{
 
 [node name="Map" type="Node2D"]
 script = ExtResource("1_n1of1")
-fuel_scene = ExtResource("3_ox4nu")
-token_scene = ExtResource("4_77b38")
 asteria_scene = ExtResource("5_66lng")
 
 [node name="Camera" type="Camera2D" parent="."]

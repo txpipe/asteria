@@ -41,7 +41,8 @@ struct QueryRoot;
 #[derive(Clone)]
 pub struct Data {
     pub ships: Vec<Ship>,
-    pub fuels: Vec<Fuel>,
+    pub pellets: Vec<Pellet>,
+    pub tokens: Vec<Token>,
     pub asteria: Asteria,
 }
 
@@ -54,63 +55,20 @@ pub struct Asset {
 
 
 impl Data {
-    pub fn new(amount_of_ships: usize, amount_of_fuels: usize) -> Self {
-        let mut ships = Vec::new();
-        for _ in 0..amount_of_ships {
-            ships.push(Ship::random())
-        }
-        let mut fuels = Vec::new();
-        for _ in 0..amount_of_fuels {
-            fuels.push(Fuel::random())
-        }
-
+    pub fn new() -> Self {
         Data {
-            ships,
-            fuels,
+            ships: Vec::new(),
+            pellets: Vec::new(),
+            tokens: Vec::new(),
             asteria: Asteria {
                 id: ID::from(uuid::Uuid::new_v4().to_string()),
                 position: Position { x: 0, y: 0 },
-                total_rewards: 1235431230,
+                total_rewards: 0,
                 class: "Asteria".to_string(),
                 datum: "{}".to_string(),
                 assets: vec![],
             },
         }
-    }
-    pub fn ship(self, name: &str) -> Option<Ship> {
-        self.ships
-            .into_iter()
-            .find(|ship| ship.ship_token_name.name == name)
-            .clone()
-    }
-
-    pub fn ships(self, limit: usize, offset: usize) -> Vec<Ship> {
-        self.ships.clone()[offset..offset + limit].to_vec()
-    }
-
-    pub fn fuel_pellets(self, limit: usize, offset: usize) -> Vec<Fuel> {
-        self.fuels.clone()[offset..offset + limit].to_vec()
-    }
-
-    pub fn objects_in_radius(self, center: Position, radius: i32, _shipyard_policy_id: String) -> Vec<PositionalInterface> {
-        let mut retval = Vec::new();
-
-        for ship in self.ships {
-            if (ship.position.x - center.x).abs() + (ship.position.y - center.y).abs() < radius {
-                retval.push(PositionalInterface::Ship(ship.clone()));
-            }
-        }
-        for fuel in self.fuels {
-            if (fuel.position.x - center.x).abs() + (fuel.position.y - center.y).abs() < radius {
-                retval.push(PositionalInterface::Fuel(fuel.clone()));
-            }
-        }
-        if (self.asteria.position.x - center.x).abs() + (self.asteria.position.y - center.y).abs()
-            < radius
-        {
-            retval.push(PositionalInterface::Asteria(self.asteria.clone()))
-        }
-        retval
     }
 }
 
@@ -119,7 +77,7 @@ pub struct Ship {
     id: ID,
     fuel: i32,
     position: Position,
-    shipyard_policy: PolicyId,
+    spacetime_policy: PolicyId,
     ship_token_name: AssetName,
     pilot_token_name: AssetName,
     class: String,
@@ -127,53 +85,15 @@ pub struct Ship {
     assets: Vec<Asset>,
 }
 
-impl Ship {
-    pub fn random() -> Self {
-        Self {
-            id: ID::from(uuid::Uuid::new_v4().to_string()),
-            fuel: (rand::random::<f32>() * 100.0).floor() as i32,
-            position: Position::random(),
-            shipyard_policy: PolicyId {
-                id: ID::from(uuid::Uuid::new_v4().to_string()),
-            },
-            ship_token_name: AssetName {
-                name: uuid::Uuid::new_v4().to_string(),
-            },
-            pilot_token_name: AssetName {
-                name: uuid::Uuid::new_v4().to_string(),
-            },
-            class: "Ship".to_string(),
-            datum: "{}".to_string(),
-            assets: vec![],
-        }
-    }
-}
-
 #[derive(Clone, SimpleObject)]
-pub struct Fuel {
+pub struct Pellet {
     id: ID,
     fuel: i32,
     position: Position,
-    shipyard_policy: PolicyId,
+    spacetime_policy: PolicyId,
     class: String,
     datum: String,
     assets: Vec<Asset>,
-}
-
-impl Fuel {
-    pub fn random() -> Self {
-        Self {
-            id: ID::from(uuid::Uuid::new_v4().to_string()),
-            fuel: (rand::random::<f32>() * 100.0).floor() as i32,
-            position: Position::random(),
-            shipyard_policy: PolicyId {
-                id: ID::from(uuid::Uuid::new_v4().to_string()),
-            },
-            class: "Fuel".to_string(),
-            datum: "{}".to_string(),
-            assets: vec![],
-        }
-    }
 }
 
 #[derive(Clone, SimpleObject)]
@@ -189,7 +109,7 @@ pub struct Asteria {
 #[derive(Clone, SimpleObject)]
 pub struct AsteriaState {
     ship_counter: i32,
-    shipyard_policy: PolicyId,
+    spacetime_policy: PolicyId,
     reward: i64,
 }
 
@@ -198,7 +118,7 @@ pub struct Token {
     id: ID,
     amount: i32,
     position: Position,
-    shipyard_policy: PolicyId,
+    spacetime_policy: PolicyId,
     class: String,
     name: String,
     datum: String,
@@ -209,14 +129,6 @@ pub struct Token {
 pub struct Position {
     x: i32,
     y: i32,
-}
-impl Position {
-    pub fn random() -> Self {
-        Self {
-            x: (rand::random::<f32>() * 200.0 - 100.0).floor() as i32,
-            y: (rand::random::<f32>() * 200.0 - 100.0).floor() as i32,
-        }
-    }
 }
 
 #[derive(Clone, SimpleObject)]
@@ -243,8 +155,7 @@ pub struct PositionInput {
 #[derive(InputObject, Clone)]
 pub struct TokenInput {
     policy_id: String,
-    address: String,
-    name: String,
+    asset_name: String,
 }
 
 #[derive(SimpleObject, Clone)]
@@ -275,7 +186,7 @@ pub struct LeaderboardRecord {
 #[derive(Union)]
 pub enum MapObject {
     Ship(Ship),
-    Fuel(Fuel),
+    Pellet(Pellet),
     Token(Token),
     Asteria(Asteria),
 }
@@ -287,68 +198,22 @@ pub enum MapObject {
 )]
 pub enum PositionalInterface {
     Ship(Ship),
-    Fuel(Fuel),
+    Pellet(Pellet),
     Token(Token),
     Asteria(Asteria),
 }
 
 #[Object]
 impl QueryRoot {
-    async fn ship(
-        &self,
-        ctx: &Context<'_>,
-        ship_token_name: AssetNameInput,
-    ) -> Result<Option<Ship>> {
-        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
-        Ok(data.clone().ship(&ship_token_name.name))
-    }
-
-    async fn ships(
-        &self,
-        ctx: &Context<'_>,
-        limit: Option<i32>,
-        offset: Option<i32>,
-    ) -> Result<Vec<Ship>> {
-        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
-        Ok(data.clone().ships(
-            limit.unwrap_or(10).try_into().unwrap(),
-            offset.unwrap_or(0).try_into().unwrap(),
-        ))
-    }
-
-    async fn fuel_pellets(
-        &self,
-        ctx: &Context<'_>,
-        limit: Option<i32>,
-        offset: Option<i32>,
-    ) -> Result<Vec<Fuel>> {
-        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
-        Ok(data.clone().fuel_pellets(
-            limit.unwrap_or(10).try_into().unwrap(),
-            offset.unwrap_or(0).try_into().unwrap(),
-        ))
-    }
-
-    async fn asteria(&self, ctx: &Context<'_>) -> Result<AsteriaState> {
-        let data = ctx.data::<Data>().map_err(|e| Error::new(e.message))?;
-        Ok(AsteriaState {
-            ship_counter: data.ships.len() as i32,
-            shipyard_policy: PolicyId {
-                id: ID::from(uuid::Uuid::new_v4().to_string()),
-            },
-            reward: 15000000,
-        })
-    }
-
     async fn objects_in_radius(
         &self,
         ctx: &Context<'_>,
         center: PositionInput,
         radius: i32,
-        shipyard_policy_id: String,
-        fuel_policy_id: String,
-        ship_address: String,
-        fuel_address: String,
+        spacetime_policy_id: String,
+        spacetime_address: String,
+        pellet_policy_id: String,
+        pellet_address: String,
         asteria_address: String,
         tokens: Option<Vec<TokenInput>>,
     ) -> Result<Vec<PositionalInterface>, Error> {
@@ -367,7 +232,7 @@ impl QueryRoot {
                     CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                    $4::varchar AS shipyard_policy,
+                    $4::varchar AS spacetime_policy,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
                     CAST(utxo_subject_amount(era, cbor, decode(CONCAT($4::varchar, CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT)), 'hex')) AS INTEGER) AS ship_asset_amount,
@@ -384,11 +249,11 @@ impl QueryRoot {
                 
                 SELECT 
                     id,
-                    'Fuel' as class,
+                    'Pellet' as class,
                     CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
                     CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
                     NULL AS ship_asset_amount,
@@ -399,8 +264,8 @@ impl QueryRoot {
                     utxos
                 WHERE 
                     utxo_address(era, cbor) = from_bech32($7::varchar)
+                    AND CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) > 0
                     AND spent_slot IS NULL
-
                 UNION ALL
                 
                 SELECT 
@@ -409,7 +274,7 @@ impl QueryRoot {
                     0 AS fuel,
                     0 AS position_x,
                     0 AS position_y,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
                     NULL AS ship_token_name,
                     NULL AS pilot_token_name,
                     NULL AS ship_asset_amount,
@@ -427,7 +292,7 @@ impl QueryRoot {
                 fuel,
                 position_x,
                 position_y,
-                shipyard_policy,
+                spacetime_policy,
                 ship_token_name,
                 pilot_token_name,
                 class,
@@ -439,15 +304,15 @@ impl QueryRoot {
                 data
              WHERE
                 ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int
-                AND shipyard_policy = $4::text
+                AND spacetime_policy = $4::text
             ",
             center.x,
             center.y,
             radius,
-            shipyard_policy_id,
-            fuel_policy_id,
-            ship_address,
-            fuel_address,
+            spacetime_policy_id,
+            pellet_policy_id,
+            spacetime_address,
+            pellet_address,
             asteria_address,
         )
         .fetch_all(pool)
@@ -464,8 +329,8 @@ impl QueryRoot {
                         x: record.position_x.unwrap_or(0),
                         y: record.position_y.unwrap_or(0),
                     },
-                    shipyard_policy: PolicyId {
-                        id: ID::from(record.shipyard_policy.clone().unwrap_or_default()),
+                    spacetime_policy: PolicyId {
+                        id: ID::from(record.spacetime_policy.clone().unwrap_or_default()),
                     },
                     ship_token_name: AssetName {
                         name: record.ship_token_name.clone().unwrap_or_default(),
@@ -477,37 +342,37 @@ impl QueryRoot {
                     datum: record.datum.unwrap_or_default().to_string(),
                     assets: vec![
                         Asset {
-                            policy_id: fuel_policy_id.clone(),
+                            policy_id: pellet_policy_id.clone(),
                             name: "FUEL".to_string(),
                             amount: record.fuel.unwrap_or(0),
                         },
                         Asset {
-                            policy_id: format!("{}{}", record.shipyard_policy.clone().unwrap_or_default(), record.ship_token_name.clone().unwrap_or_default()),
+                            policy_id: format!("{}{}", record.spacetime_policy.clone().unwrap_or_default(), record.ship_token_name.clone().unwrap_or_default()),
                             name: String::from_utf8(hex::decode(record.ship_token_name.clone().unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
                             amount: record.ship_asset_amount.unwrap_or(0),
                         },
                         Asset {
-                            policy_id: format!("{}{}", record.shipyard_policy.clone().unwrap_or_default(), record.pilot_token_name.clone().unwrap_or_default()),
+                            policy_id: format!("{}{}", record.spacetime_policy.clone().unwrap_or_default(), record.pilot_token_name.clone().unwrap_or_default()),
                             name: String::from_utf8(hex::decode(record.pilot_token_name.unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
                             amount: record.pilot_asset_amount.unwrap_or(0),
                         },
                     ],
                 }),
-                Some("Fuel") => PositionalInterface::Fuel(Fuel {
+                Some("Pellet") => PositionalInterface::Pellet(Pellet {
                     id: ID::from(record.id.unwrap_or_default()),
                     fuel: record.fuel.unwrap_or(0),
                     position: Position {
                         x: record.position_x.unwrap_or(0),
                         y: record.position_y.unwrap_or(0),
                     },
-                    shipyard_policy: PolicyId {
-                        id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                    spacetime_policy: PolicyId {
+                        id: ID::from(record.spacetime_policy.unwrap_or_default()),
                     },
                     class: record.class.unwrap_or_default(),
                     datum: record.datum.unwrap_or_default().to_string(),
                     assets: vec![
                         Asset {
-                            policy_id: fuel_policy_id.clone(),
+                            policy_id: pellet_policy_id.clone(),
                             name: "FUEL".to_string(),
                             amount: record.fuel.unwrap_or(0),
                         },
@@ -538,10 +403,10 @@ impl QueryRoot {
                     "
                     SELECT 
                         id,
-                        CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS amount,
+                        CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS INTEGER) AS amount,
                         CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
                         CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS shipyard_policy,
+                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
                         utxo_plutus_data(era, cbor) as datum
                     FROM 
                         utxos
@@ -549,15 +414,16 @@ impl QueryRoot {
                         ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) - $1::int) +
                         ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) - $2::int) < $3::int
                         AND CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) = $4::text
-                        AND utxo_address(era, cbor) = from_bech32($6::varchar)
+                        AND CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS INTEGER) > 0
+                        AND utxo_address(era, cbor) = from_bech32($5::varchar)
                         AND spent_slot IS NULL
                     ",
                     center.x,
                     center.y,
                     radius,
-                    shipyard_policy_id,
+                    spacetime_policy_id,
+                    pellet_address,
                     token.policy_id,
-                    token.address,
                 )
                 .fetch_all(pool)
                 .await
@@ -566,21 +432,21 @@ impl QueryRoot {
                 for record in fetched_tokens {
                     map_objects.push(PositionalInterface::Token(Token {
                         id: ID::from(record.id),
-                        name: token.name.clone(),
+                        name: token.asset_name.clone(),
                         amount: record.amount.unwrap_or(0),
                         position: Position {
                             x: record.position_x.unwrap_or(0),
                             y: record.position_y.unwrap_or(0),
                         },
-                        shipyard_policy: PolicyId {
-                            id: ID::from(record.shipyard_policy.unwrap_or_default()),
+                        spacetime_policy: PolicyId {
+                            id: ID::from(record.spacetime_policy.unwrap_or_default()),
                         },
                         class: "Token".to_string(),
                         datum: record.datum.unwrap_or_default().to_string(),
                         assets: vec![
                             Asset {
                                 policy_id: token.policy_id.clone(),
-                                name: format!("${}", token.name).to_uppercase(),
+                                name: format!("${}", token.asset_name).to_uppercase(),
                                 amount: record.amount.unwrap_or(0),
                             },
                         ],
@@ -592,69 +458,10 @@ impl QueryRoot {
         Ok(map_objects)
     }
 
-    async fn all_ship_actions(
-        &self,
-        _ctx: &Context<'_>,
-        limit: Option<i32>,
-        offset: Option<i32>,
-    ) -> Vec<ShipAction> {
-        let mut actions = Vec::new();
-        let num_actions = limit.unwrap_or(10) as usize;
-        let start = offset.unwrap_or(0) as usize;
-
-        // Generate fake data for ship actions
-        for i in start..(start + num_actions) {
-            actions.push(ShipAction {
-                action_id: ID::from(format!("action-{}", i)),
-                ship_id: ID::from("ship-1"),
-                action_type: ShipActionType::Move,
-                position: Position {
-                    x: i as i32 * 5,
-                    y: i as i32 * 10,
-                },
-                timestamp: "01/01/1971".to_string(),
-            });
-        }
-
-        actions
-    }
-
-    async fn ship_actions(
-        &self,
-        _ctx: &Context<'_>,
-        ship_id: ID,
-        limit: Option<i32>,
-        offset: Option<i32>,
-    ) -> Vec<ShipAction> {
-        let mut actions = Vec::new();
-        let num_actions = limit.unwrap_or(5) as usize;
-        let start = offset.unwrap_or(0) as usize;
-
-        // Generate fake data for specific ship actions
-        for i in start..(start + num_actions) {
-            actions.push(ShipAction {
-                action_id: ID::from(format!("action-{}-{}", *ship_id, i)),
-                ship_id: ship_id.clone(),
-                action_type: if i % 2 == 0 {
-                    ShipActionType::Move
-                } else {
-                    ShipActionType::GatherFuel
-                },
-                position: Position {
-                    x: 100 + i as i32,
-                    y: 200 + i as i32,
-                },
-                timestamp: "01/01/1971".to_string(),
-            });
-        }
-
-        actions
-    }
-
     async fn leaderboard(
         &self,
         ctx: &Context<'_>,
-        shipyard_policy_id: String,
+        spacetime_policy_id: String,
         fuel_policy_id: String,
         ship_address: String,
     ) -> Result<Vec<LeaderboardRecord>, Error> {
@@ -678,7 +485,7 @@ impl QueryRoot {
                 AND spent_slot IS NULL
             ORDER BY distance ASC
             ",
-            shipyard_policy_id,
+            spacetime_policy_id,
             fuel_policy_id,
             ship_address,
         )
@@ -739,7 +546,7 @@ async fn rocket() -> _ {
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
         .data(pool)
-        .data(Data::new(200, 100))
+        .data(Data::new())
         .finish();
 
     rocket::build()

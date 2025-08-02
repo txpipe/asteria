@@ -52,9 +52,9 @@ export default async function handler(
       player: ArgValue.from(playerAddress),
       pPosX: ArgValue.from(positionX),
       pPosY: ArgValue.from(positionY),
-      txLatestPosixTime: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
       pilotName: ArgValue.from(new TextEncoder().encode(`PILOT${shipNumber}`)),
       shipName: ArgValue.from(new TextEncoder().encode(`SHIP${shipNumber}`)),
+      tipSlot: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
     });
     return res.json({
       data: {

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://e5qycvw6c1km"
-path="res://.godot/imported/token_stuff_active.png-a09dcb9cc57f0eae93189559c32dd174.ctex"
+uid="uid://d17kmn8xn27st"
+path="res://.godot/imported/token_hosky.png-9ee44e7d32bafbda613f8de7476ad3bd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/token_stuff_active.png"
-dest_files=["res://.godot/imported/token_stuff_active.png-a09dcb9cc57f0eae93189559c32dd174.ctex"]
+source_file="res://resources/token_hosky.png"
+dest_files=["res://.godot/imported/token_hosky.png-9ee44e7d32bafbda613f8de7476ad3bd.ctex"]
 
 [params]
 

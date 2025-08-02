@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxv4154qyfv4j"
-path="res://.godot/imported/token_vyfi_active.png-0b5087e89dc8bd96fc57dbe7461b0af5.ctex"
+uid="uid://c7b1phdcwbd7e"
+path="res://.godot/imported/token_pellet.png-069c9b1a6acdce5cebbae993cf656d40.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/token_vyfi_active.png"
-dest_files=["res://.godot/imported/token_vyfi_active.png-0b5087e89dc8bd96fc57dbe7461b0af5.ctex"]
+source_file="res://resources/token_pellet.png"
+dest_files=["res://.godot/imported/token_pellet.png-069c9b1a6acdce5cebbae993cf656d40.ctex"]
 
 [params]
 
