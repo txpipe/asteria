@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Challenge } from '@/stores/challenge';
+import { Challenge, Token } from '@/stores/challenge';
 
 interface AsteriaMapProps {
   mode: 'map' | 'joystick';
@@ -9,16 +9,22 @@ interface AsteriaMapProps {
 
 const baseURL = '/visualizer/index.html';
 
+const getTokensQuery = (tokens: Token[]) => {
+  const data = tokens.map(token => `{assetName: "${token.assetName}", policyId: "${token.policyId}"}`).join(',');
+  return `[${data}]`;
+};
+
 export default function AsteriaMap({ mode, challenge, className }: AsteriaMapProps) {
   const src = useMemo(() => {
     const params = new URLSearchParams([
       ['mode', mode],
       ['apiUrl', `${process.env.API_URL}/graphql`],
-      ['shipyardPolicyId', challenge.shipyardPolicyId],
-      ['fuelPolicyId', challenge.fuelPolicyId],
-      ['shipAddress', challenge.shipAddress],
-      ['fuelAddress', challenge.fuelAddress],
+      ['spacetimePolicyId', challenge.spacetimePolicyId],
+      ['spacetimeAddress', challenge.spacetimeAddress],
+      ['pelletPolicyId', challenge.pelletPolicyId],
+      ['pelletAddress', challenge.pelletAddress],
       ['asteriaAddress', challenge.asteriaAddress],
+      ['tokens', getTokensQuery(challenge.tokens)],
     ]);
     return `${baseURL}?${params.toString()}`;
   }, [mode, challenge]);

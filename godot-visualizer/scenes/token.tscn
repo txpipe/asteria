@@ -1,12 +1,10 @@
-[gd_scene load_steps=10 format=3 uid="uid://5y7v35p7p3lu"]
+[gd_scene load_steps=8 format=3 uid="uid://5y7v35p7p3lu"]
 
-[ext_resource type="Texture2D" uid="uid://d17kmn8xn27st" path="res://resources/token_hosky_active.png" id="1_5phyg"]
+[ext_resource type="Texture2D" uid="uid://d17kmn8xn27st" path="res://resources/token_hosky.png" id="1_5phyg"]
 [ext_resource type="Script" uid="uid://bw2uwnf5pgc7t" path="res://scripts/token.gd" id="1_xdvoi"]
-[ext_resource type="Texture2D" uid="uid://cuysxu0gqb1xx" path="res://resources/token_hosky_inactive.png" id="2_xdvoi"]
-[ext_resource type="Texture2D" uid="uid://e5qycvw6c1km" path="res://resources/token_stuff_active.png" id="3_smo0k"]
-[ext_resource type="Texture2D" uid="uid://cgixymi1kvc4o" path="res://resources/token_stuff_inactive.png" id="4_kgolw"]
-[ext_resource type="Texture2D" uid="uid://bxv4154qyfv4j" path="res://resources/token_vyfi_active.png" id="5_cwit4"]
-[ext_resource type="Texture2D" uid="uid://c1ruvft8cd6yw" path="res://resources/token_vyfi_inactive.png" id="6_hdi43"]
+[ext_resource type="Texture2D" uid="uid://c7b1phdcwbd7e" path="res://resources/token_pellet.png" id="3_ijof8"]
+[ext_resource type="Texture2D" uid="uid://e5qycvw6c1km" path="res://resources/token_stuff.png" id="3_smo0k"]
+[ext_resource type="Texture2D" uid="uid://bxv4154qyfv4j" path="res://resources/token_vyfi.png" id="5_cwit4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5phyg"]
 size = Vector2(128, 128)
@@ -18,15 +16,15 @@ animations = [{
 "texture": ExtResource("1_5phyg")
 }],
 "loop": true,
-"name": &"hosky_active",
+"name": &"hosky",
 "speed": 5.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("2_xdvoi")
+"texture": ExtResource("3_ijof8")
 }],
 "loop": true,
-"name": &"hosky_inactive",
+"name": &"pellet",
 "speed": 5.0
 }, {
 "frames": [{
@@ -34,15 +32,7 @@ animations = [{
 "texture": ExtResource("3_smo0k")
 }],
 "loop": true,
-"name": &"stuff_active",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("4_kgolw")
-}],
-"loop": true,
-"name": &"stuff_inactive",
+"name": &"stuff",
 "speed": 5.0
 }, {
 "frames": [{
@@ -50,15 +40,7 @@ animations = [{
 "texture": ExtResource("5_cwit4")
 }],
 "loop": true,
-"name": &"vyfi_active",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("6_hdi43")
-}],
-"loop": true,
-"name": &"vyfi_inactive",
+"name": &"vyfi",
 "speed": 5.0
 }]
 
@@ -72,7 +54,7 @@ shape = SubResource("RectangleShape2D_5phyg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_5i2ku")
-animation = &"hosky_active"
+animation = &"hosky"
 
 [connection signal="mouse_entered" from="Area2D" to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="Area2D" to="." method="_on_mouse_exited"]

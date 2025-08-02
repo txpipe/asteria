@@ -16,13 +16,13 @@ function InputElem(
 ) {
   return (
     <fieldset className={clsx(containerClassName, 'mt-4')} disabled={disabled}>
-      {label && <label className='font-monocraft-regular text-sm' htmlFor={props.name}>{label}</label>}
+      {label && <label className='font-mono text-sm' htmlFor={props.name}>{label}</label>}
       <input
         {...props}
         ref={ref}
         id={props.name}
         className={clsx(
-          'border border-solid bg-black py-3 px-4 rounded-md font-inter-regular text-[#F1E9D9] bg-transparent focus:outline-none appearance-none text-md text-left w-full',
+          'border border-solid py-3 px-4 rounded-md text-[#F1E9D9] bg-transparent focus:outline-hidden appearance-none text-base text-left w-full',
           {
             'border-red-500': error,
             'border-[#5B5B5B]': !error,

@@ -17,12 +17,12 @@ export default function ConnectWallet({ onWalletConnected }: Props) {
 
   return (
     <Menu>
-      <MenuButton className="font-dmsans-regular text-sm px-1 py-2 text-white/60 hover:text-[#07F3E6]">
+      <MenuButton className="text-sm px-1 py-2 text-white/60 hover:text-[#07F3E6]">
         Select wallet
         <ChevronDownIcon className="inline mt-[-2px] ml-[2px] size-4" />
       </MenuButton>
       <MenuItems
-        className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50"
+        className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50 z-10"
         anchor="bottom start"
       >
         {walletList.map((wallet) => (
