@@ -80,7 +80,7 @@ export default function Landing() {
                   Network | <span className="text-[#F1E9D9] capitalize">{ challenge.network }</span>
                 </p>
                 <p className="mb-2 text-[#6F6F6F] text-base truncate">
-                  Shipyard Policy | <span className="text-[#F1E9D9]">{ challenge.shipyardPolicyId }</span>
+                  Spacetime Policy | <span className="text-[#F1E9D9]">{ challenge.spacetimePolicyId }</span>
                 </p>
                 <p className="mb-4 font-semibold text-white text-2xl truncate">
                   { challenge.label }
