@@ -98,7 +98,7 @@ export const challenges: Challenge[] = [{
       ['/images/challenge/sponsors/main-challenge/asset1znlnu4s2uv3ern2f52csz6s6pvr5rf6dj2uevx.png', 'VYFI'],
       ['/images/challenge/sponsors/main-challenge/asset1m4u92ke6820pkk07m8qmmguye02ewr8g6tezr0.png', 'SUNDAE'],
     ],
-    moreSponsors: 8,
+    moreSponsors: 7,
   },
 }];
 
