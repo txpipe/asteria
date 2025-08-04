@@ -15,11 +15,12 @@ var loading = true
 
 var mode = ""
 var api_url = ""
-var shipyard_policy_id = ""
-var fuel_policy_id = ""
-var ship_address = ""
-var fuel_address = ""
+var spacetime_policy_id = ""
+var spacetime_address = ""
+var pellet_policy_id = ""
+var pellet_address = ""
 var asteria_address = ""
+var tokens = ""
 
 const headers = ["Content-Type: application/json"]
 const query = """
@@ -27,24 +28,12 @@ const query = """
 	objectsInRadius(
 		center: { x: 0, y: 0 },
 		radius: %s,
-		shipyardPolicyId: "%s",
-		fuelPolicyId: "%s",
-		shipAddress: "%s",
-		fuelAddress: "%s",
+		spacetimePolicyId: "%s",
+		spacetimeAddress: "%s",
+		pelletPolicyId: "%s",
+		pelletAddress: "%s",
 		asteriaAddress: "%s",
-		tokens: [{
-			name: "hosky",
-			policyId: "%s",
-			address: "%s"
-		},{
-			name: "stuff",
-			policyId: "%s",
-			address: "%s"
-		},{
-			name: "vyfi",
-			policyId: "%s",
-			address: "%s"
-		}]
+		tokens: %s,
 	) {
 		__typename,
 		position {
@@ -67,7 +56,7 @@ const query = """
 				amount
 			}
 		},
-		... on Fuel {
+		... on Pellet {
 			id,
 			fuel,
 			datum,
@@ -109,20 +98,12 @@ func fetch_data():
 	$HTTPRequest.request(api_url, headers, HTTPClient.METHOD_POST, JSON.stringify({
 		"query": query % [
 			radius,
-			shipyard_policy_id,
-			fuel_policy_id,
-			ship_address,
-			fuel_address,
+			spacetime_policy_id,
+			spacetime_address,
+			pellet_policy_id,
+			pellet_address,
 			asteria_address,
-			
-			fuel_policy_id,
-			fuel_address,
-			
-			fuel_policy_id,
-			fuel_address,
-			
-			fuel_policy_id,
-			fuel_address
+			tokens
 		]
 	}))
 
@@ -134,19 +115,21 @@ func _process(delta: float) -> void:
 func _ready():
 	mode = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('mode')")
 	api_url = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('apiUrl')")
-	shipyard_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipyardPolicyId')")
-	fuel_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelPolicyId')")
-	ship_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('shipAddress')")
-	fuel_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('fuelAddress')")
+	spacetime_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('spacetimePolicyId')")
+	spacetime_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('spacetimeAddress')")
+	pellet_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('pelletAddress')")
+	pellet_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('pelletPolicyId')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
+	tokens = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('tokens')")
 	
-	#mode = "joystick"
+	#mode = "map"
 	#api_url = "http://localhost:8000/graphql"
-	#shipyard_policy_id = "f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
-	#fuel_policy_id = "fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
-	#ship_address = "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6"
-	#fuel_address = "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
+	#spacetime_policy_id = "f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
+	#spacetime_address = "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6"
+	#pellet_policy_id = "fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
+	#pellet_address = "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
 	#asteria_address = "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
+	#tokens = "[]"
 	
 	Global.set_mode(mode)
 	
@@ -272,16 +255,16 @@ func _on_map_show_ship_tooltip(ship: Global.ShipData) -> void:
 	update_tooltip_position(ship.position)
 
 
-func _on_map_show_fuel_tooltip(fuel: Global.FuelData) -> void:
+func _on_map_show_fuel_tooltip(pellet: Global.PelletData) -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "FUEL PELLET"
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [fuel.position.x, fuel.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Fuel | %s" % fuel.fuel
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [pellet.position.x, pellet.position.y]
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Fuel | %s" % pellet.fuel
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label4.visible = false
-	update_tooltip_position(fuel.position)
+	update_tooltip_position(pellet.position)
 
 
 func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
@@ -298,12 +281,11 @@ func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
 
 func _on_map_show_token_tooltip(token: Global.TokenData) -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "Token"
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "%s TOKEN" % token.name.to_upper()
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [token.position.x, token.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Name | %s" % token.name
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.text = "Amount | %s" % token.amount
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "$%s | %s" % [token.name.to_upper(), token.amount]
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = true
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label4.visible = false
 	update_tooltip_position(token.position)

@@ -1,25 +1,14 @@
-[gd_scene load_steps=38 format=3 uid="uid://b5ypw8og4vdle"]
+[gd_scene load_steps=23 format=3 uid="uid://b5ypw8og4vdle"]
 
 [ext_resource type="Script" uid="uid://csn0qk6y75lbp" path="res://scripts/main.gd" id="1_4dsde"]
 [ext_resource type="PackedScene" uid="uid://ch6xqejnd1rqf" path="res://scenes/map.tscn" id="1_quhpi"]
 [ext_resource type="Script" uid="uid://cgpssrlmkcdc6" path="res://scripts/minimap_background.gd" id="3_46wls"]
-[ext_resource type="StyleBox" uid="uid://cu582sfg7gs6x" path="res://resources/textures/sidebar.tres" id="3_af3cf"]
-[ext_resource type="StyleBox" uid="uid://rxcw47ry73rj" path="res://resources/textures/modal.tres" id="3_m73wt"]
 [ext_resource type="Script" uid="uid://dbwnhqahyuwve" path="res://scripts/minimap.gd" id="3_n1hxv"]
 [ext_resource type="StyleBox" uid="uid://bwavatvw423ao" path="res://resources/textures/minimap.tres" id="3_n4qh8"]
-[ext_resource type="Script" uid="uid://cehro3qutc5lj" path="res://scripts/modal_panel.gd" id="4_0ugj1"]
-[ext_resource type="FontFile" uid="uid://blmuew6tip1jc" path="res://resources/fonts/Monocraft.otf" id="4_r2c3r"]
-[ext_resource type="Texture2D" uid="uid://b345rvjpq2yk6" path="res://resources/icons/icon_move.svg" id="4_yky0p"]
-[ext_resource type="Texture2D" uid="uid://hbgo5cp4jlpy" path="res://resources/icons/icon_close.svg" id="5_1gbsb"]
-[ext_resource type="Texture2D" uid="uid://bqxqgk3g1ey1a" path="res://resources/icons/icon_gather_fuel.svg" id="5_nwrgf"]
 [ext_resource type="Texture2D" uid="uid://cp4ixcdbrcyhv" path="res://resources/icons/icon_ship_inactive.svg" id="6_0e6fi"]
-[ext_resource type="Texture2D" uid="uid://d3ctiiwfo7pbr" path="res://resources/icons/icon_mine_token.svg" id="6_3xw4f"]
 [ext_resource type="StyleBox" uid="uid://dgj63ntwqnn7l" path="res://resources/textures/minimap_control.tres" id="6_fqp1o"]
-[ext_resource type="StyleBox" uid="uid://clslw7srsonv1" path="res://resources/textures/code_block.tres" id="6_qbv5r"]
-[ext_resource type="FontFile" uid="uid://byi50ffeorbd7" path="res://resources/fonts/RobotoMono.ttf" id="7_nw756"]
 [ext_resource type="Texture2D" uid="uid://b3ptdeb0ffukj" path="res://resources/icons/icon_fuel_inactive.svg" id="7_wdsf5"]
 [ext_resource type="Texture2D" uid="uid://bivcvqtshb7na" path="res://resources/icons/icon_ship_active.svg" id="8_8e8w0"]
-[ext_resource type="StyleBox" uid="uid://crwklp3ly8akb" path="res://resources/textures/button.tres" id="8_gxn1n"]
 [ext_resource type="Texture2D" uid="uid://3idp7n15cwd1" path="res://resources/icons/icon_token_inactive.svg" id="8_vjqgv"]
 [ext_resource type="Texture2D" uid="uid://c2u6fpdbxqbrt" path="res://resources/icons/icon_fuel_active.svg" id="10_ycgkw"]
 [ext_resource type="Texture2D" uid="uid://d28tctb3snsau" path="res://resources/icons/icon_token_active.svg" id="12_dpchl"]
@@ -29,18 +18,6 @@
 [ext_resource type="FontFile" uid="uid://b7vayqoopjyv" path="res://resources/fonts/DMSans.ttf" id="27_u6i6b"]
 [ext_resource type="Texture2D" uid="uid://j1rgnsv8l1ne" path="res://resources/icons/icon_zoom_out.svg" id="28_kl1su"]
 [ext_resource type="Texture2D" uid="uid://dqpu7ll4k1fs1" path="res://resources/loader.png" id="28_wxhmh"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_jrdxu"]
-font = ExtResource("4_r2c3r")
-font_size = 64
-font_color = Color(0.027451, 0.952941, 0.901961, 1)
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qgk7r"]
-
-[sub_resource type="FontVariation" id="FontVariation_wpmnj"]
-base_font = ExtResource("4_r2c3r")
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ltxx7"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aclu6"]
 bg_color = Color(0, 0, 0, 0)
@@ -104,176 +81,6 @@ alignment = 2
 layout_mode = 2
 size_flags_horizontal = 10
 alignment = 2
-
-[node name="MarginContainerTop" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 40
-
-[node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop"]
-layout_mode = 2
-theme_override_constants/separation = 40
-alignment = 2
-
-[node name="ModalPanel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer"]
-visible = false
-custom_minimum_size = Vector2(1000, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = ExtResource("3_m73wt")
-script = ExtResource("4_0ugj1")
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 56
-theme_override_constants/margin_top = 56
-theme_override_constants/margin_right = 56
-theme_override_constants/margin_bottom = 56
-
-[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 64
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 8
-
-[node name="HBoxContainer" type="HBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="TitleLabel" type="Label" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 1
-text = "MOVE"
-label_settings = SubResource("LabelSettings_jrdxu")
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="CloseButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 2
-mouse_filter = 1
-texture_normal = ExtResource("5_1gbsb")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="Panel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
-theme_override_styles/panel = ExtResource("6_qbv5r")
-
-[node name="MarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 32
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 32
-
-[node name="RichTextLabel" type="RichTextLabel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/Panel/MarginContainer"]
-layout_mode = 2
-focus_mode = 2
-mouse_filter = 1
-theme_override_fonts/normal_font = ExtResource("7_nw756")
-theme_override_font_sizes/normal_font_size = 30
-theme_override_styles/focus = SubResource("StyleBoxEmpty_qgk7r")
-text = "const { Client } = require(\"pg\");  // replace the following values async function main() { const client = new Client({     ship name: \"dbsync-v3.demeter.run\",     pilot name: 5432,     pos_x: \"dmtr_dbsync1jjv9pyqyna\",     pos_y: \"your_password\", });  await client.connect();  //query example const res = await client.query(     \"SELECT * FROM block ORDER BY id DESC LIMIT 10\" );  console.log(res.rows);  //remember to close the connection client.end(); }  main();"
-context_menu_enabled = true
-selection_enabled = true
-
-[node name="ButtonMarginContainer" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="Panel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/ButtonMarginContainer"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_styles/panel = ExtResource("8_gxn1n")
-
-[node name="CopyButton" type="Button" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/ButtonMarginContainer"]
-custom_minimum_size = Vector2(0, 136)
-layout_mode = 2
-mouse_filter = 1
-theme_override_colors/font_disabled_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_hover_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_focus_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_colors/font_pressed_color = Color(0.0901961, 0.0901961, 0.0901961, 1)
-theme_override_fonts/font = SubResource("FontVariation_wpmnj")
-theme_override_font_sizes/font_size = 48
-theme_override_styles/focus = SubResource("StyleBoxEmpty_ltxx7")
-text = "Copy code"
-flat = true
-
-[node name="SidebarPanel" type="Panel" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer"]
-custom_minimum_size = Vector2(320, 960)
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 0
-theme_override_styles/panel = ExtResource("3_af3cf")
-
-[node name="CenterContainer" type="CenterContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 16
-alignment = 1
-
-[node name="MoveButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(264, 264)
-layout_mode = 2
-mouse_filter = 1
-texture_normal = ExtResource("4_yky0p")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="GatherFuelButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(264, 264)
-layout_mode = 2
-mouse_filter = 1
-texture_normal = ExtResource("5_nwrgf")
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="MineTokenButton" type="TextureButton" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer"]
-custom_minimum_size = Vector2(264, 264)
-layout_mode = 2
-mouse_filter = 1
-texture_normal = ExtResource("6_3xw4f")
-ignore_texture_size = true
-stretch_mode = 0
 
 [node name="MarginContainerBottom" type="MarginContainer" parent="GUICanvasLayer/HBoxContainer/VBoxContainerEnd"]
 layout_mode = 2
@@ -505,15 +312,6 @@ text_overrun_behavior = 3
 [connection signal="show_fuel_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_fuel_tooltip"]
 [connection signal="show_ship_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_ship_tooltip"]
 [connection signal="show_token_tooltip" from="MapCanvasLayer/Map" to="." method="_on_map_show_token_tooltip"]
-[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_entered"]
-[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" to="MapCanvasLayer/Map" method="_on_modal_panel_mouse_exited"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/CloseButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_close_button_pressed"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel/MarginContainer/VBoxContainer/ButtonMarginContainer/CopyButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_copy_button_pressed"]
-[connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel" to="MapCanvasLayer/Map" method="_on_sidebar_panel_mouse_entered"]
-[connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel" to="MapCanvasLayer/Map" method="_on_sidebar_panel_mouse_exited"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/MoveButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_move_button_pressed"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/GatherFuelButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_gather_fuel_button_pressed"]
-[connection signal="pressed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/SidebarPanel/CenterContainer/VBoxContainer/MineTokenButton" to="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerTop/HBoxContainer/ModalPanel" method="_on_mine_token_button_pressed"]
 [connection signal="minimap_position_changed" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_minimap_position_changed"]
 [connection signal="mouse_entered" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_entered"]
 [connection signal="mouse_exited" from="GUICanvasLayer/HBoxContainer/VBoxContainerEnd/MarginContainerBottom/HBoxContainer/VBoxContainer/MarginContainer/MarginContainer/Minimap" to="MapCanvasLayer/Map" method="_on_minimap_mouse_exited"]

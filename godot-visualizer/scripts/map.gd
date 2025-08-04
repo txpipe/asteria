@@ -10,13 +10,11 @@ signal mouse_hover_gui(is_hover: bool)
 signal hide_tooltip()
 signal show_ship_tooltip(ship: Global.ShipData)
 signal show_token_tooltip(token: Global.TokenData)
-signal show_fuel_tooltip(fuel: Global.FuelData)
+signal show_fuel_tooltip(fuel: Global.PelletData)
 signal show_asteria_tooltip(asteria: Global.AsteriaData)
 
-var mouse_entered_sidebar = false
 var mouse_entered_minimap = false
 var mouse_entered_minimap_control = false
-var mouse_entered_modal = false
 
 var current = null
 var pressed_position = null
@@ -43,12 +41,12 @@ func _on_main_dataset_updated() -> void:
 	asteria.position = Global.get_asteria().position * cell_size
 	$Entities.add_child(asteria)
 	
-	for fuel_data in Global.get_fuels():
-		var fuel = Fuel.new_fuel()
-		fuel.position = fuel_data.position * cell_size
-		fuel.rotation = (7.5 - int(fuel_data.position.x * fuel_data.position.y) % 15) * PI/180
-		fuel.modulate.a = alpha
-		$Entities.add_child(fuel)
+	for pellet_data in Global.get_pellets():
+		var pellet = Token.new_token("pellet")
+		pellet.position = pellet_data.position * cell_size
+		pellet.rotation = (7.5 - int(pellet_data.position.x * pellet_data.position.y) % 15) * PI/180
+		pellet.modulate.a = alpha
+		$Entities.add_child(pellet)
 	
 	for token_data in Global.get_tokens():
 		var token = Token.new_token(token_data.name)
@@ -115,7 +113,7 @@ func _process(delta: float) -> void:
 		var asteria = Global.get_asteria()
 		var ships = Global.get_ships().filter(func(ship): return ship.position == cell_position)
 		var tokens = Global.get_tokens().filter(func(token): return token.position == cell_position)
-		var fuels = Global.get_fuels().filter(func(fuel): return fuel.position == cell_position)
+		var pellets = Global.get_pellets().filter(func(pellet): return pellet.position == cell_position)
 		
 		if asteria and asteria.position == cell_position:
 			$Cell.animation = "filled"
@@ -129,10 +127,10 @@ func _process(delta: float) -> void:
 			$Cell.animation = "filled"
 			show_token_tooltip.emit(tokens[0])
 			current = tokens[0]
-		elif fuels.size() > 0:
+		elif pellets.size() > 0:
 			$Cell.animation = "filled"
-			show_fuel_tooltip.emit(fuels[0])
-			current = fuels[0]
+			show_fuel_tooltip.emit(pellets[0])
+			current = pellets[0]
 		else:
 			$Cell.animation = "empty"
 			hide_tooltip.emit()
@@ -143,10 +141,7 @@ func _process(delta: float) -> void:
 
 
 func is_mouse_hover_gui() -> bool:
-	return (mouse_entered_sidebar ||
-		mouse_entered_minimap ||
-		mouse_entered_minimap_control ||
-		mouse_entered_modal)
+	return (mouse_entered_minimap || mouse_entered_minimap_control)
 
 
 func emit_mouse_hover_gui() -> void:
@@ -161,26 +156,6 @@ func _on_minimap_minimap_position_changed(position: Vector2) -> void:
 	minimap_position_changed.emit(position)
 
 
-func _on_sidebar_panel_mouse_entered() -> void:
-	mouse_entered_sidebar = true
-	emit_mouse_hover_gui()
-
-
-func _on_sidebar_panel_mouse_exited() -> void:
-	mouse_entered_sidebar = false
-	emit_mouse_hover_gui()
-
-
-func _on_modal_panel_mouse_entered() -> void:
-	mouse_entered_modal = true
-	emit_mouse_hover_gui()
-
-
-func _on_modal_panel_mouse_exited() -> void:
-	mouse_entered_modal = false
-	emit_mouse_hover_gui()
-
-
 func _on_minimap_mouse_entered() -> void:
 	mouse_entered_minimap = true
 	emit_mouse_hover_gui()
@@ -192,12 +167,12 @@ func _on_minimap_mouse_exited() -> void:
 
 
 func _on_minimap_control_panel_mouse_entered() -> void:
-	mouse_entered_modal = true
+	mouse_entered_minimap_control = true
 	emit_mouse_hover_gui()
 
 
 func _on_minimap_control_panel_mouse_exited() -> void:
-	mouse_entered_modal = false
+	mouse_entered_minimap_control = false
 	emit_mouse_hover_gui()
 
 

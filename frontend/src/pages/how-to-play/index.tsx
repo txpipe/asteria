@@ -46,10 +46,10 @@ export default function HowToPlay() {
         <section className="relative h-[calc(100dvh-64px)] snap-start flex" id="start">
           <div className="absolute h-full w-[100dvw] bg-[url(/board.png)] bg-bottom bg-no-repeat bg-contain" />
           <div className="relative m-16 w-[50dvw]">
-            <h3 className="font-dmsans-regular text-3xl text-left text-[#F1E9D9] mb-8">
+            <h3 className="text-3xl text-left text-[#F1E9D9] mb-8">
               Explore a web implementation to execute transactions for the Asteria challenge, built with the Tx3 toolkit.
             </h3>
-            <button className="font-monocraft-regular text-black bg-[#07F3E6] py-4 px-8 rounded-full text-md" onClick={handleScrollToCreateShip}>
+            <button className="font-mono text-black bg-[#07F3E6] py-4 px-8 rounded-full text-base" onClick={handleScrollToCreateShip}>
               Create ship
             </button>
           </div>

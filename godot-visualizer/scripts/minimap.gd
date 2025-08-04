@@ -24,8 +24,8 @@ func _draw():
 			draw_circle(ship.position*map_scale+map_position, 2, Color("#2EBA00"), true, -1 , true)
 	
 	if minimap_mode == "fuel":
-		for fuel in Global.get_fuels():
-			draw_circle(fuel.position*map_scale+map_position, 2, Color("#7982FD"), true, -1, true)
+		for pellet in Global.get_pellets():
+			draw_circle(pellet.position*map_scale+map_position, 2, Color("#7982FD"), true, -1, true)
 	
 	if minimap_mode == "token":
 		for token in Global.get_tokens():

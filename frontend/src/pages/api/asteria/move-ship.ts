@@ -54,11 +54,10 @@ export default async function handler(
       pDeltaX: ArgValue.from(positionX),
       pDeltaY: ArgValue.from(positionY),
       player: ArgValue.from(playerAddress),
-      // distance,
       requiredFuel: ArgValue.from(distance * 60), // fuel_per_step from SpaceTime datum
       shipName: ArgValue.from(new TextEncoder().encode(`SHIP${shipNumber}`)),
       pilotName: ArgValue.from(new TextEncoder().encode(`PILOT${shipNumber}`)),
-      txLatestPosixTime: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
+      tipSlot: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
     });
 
     return res.json({
