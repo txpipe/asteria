@@ -43,9 +43,14 @@ const NavBar: React.FunctionComponent = () => {
         </Link>
       </div>
       <div className="flex flex-row justify-end items-center gap-2.5 flex-auto basis-1/4 text-base">
-        <Link href="#" className="flex gap-2.5 items-center">
+        <Link href={`/challenge/${challenge.slug}`} className="flex gap-2.5 items-center">
           <ChallengeIcon className="size-5" />
-          <span className="text-[#F1E9D9] hover:text-primary-50">{challenge.label}</span>
+          <span
+            data-active={isActive(`/challenge/${challenge.slug}`)}
+            className="text-[#F1E9D9] hover:text-primary-50 data-active:text-primary-50"
+          >
+            {challenge.label}
+          </span>
         </Link>
         <span className="text-[#F1E9D9]/50">|</span>
         <Tooltip placement="bottom-end">

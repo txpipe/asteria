@@ -176,7 +176,11 @@
   }
 
   .btn-primary-outline {
-    @apply border-primary-50 text-primary-50 disabled:opacity-50;
+    @apply border-primary-50 text-primary-50 disabled:opacity-50
+  }
+
+  .btn-gray-outline {
+    @apply border-[#F1E9D9]/48 text-[#F1E9D9]/48 disabled:opacity-50
   }
 
   .shiki, .shiki code {

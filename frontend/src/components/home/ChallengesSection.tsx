@@ -36,14 +36,12 @@ export default function ChallengesSection() {
       </p>
       <div className="flex flex-col md:flex-row gap-8 mt-14 justify-center items-center">
         {challenges.map((challenge, idx) => (
-          <Link href={`/challenge/${challenge.asteriaAddress}`} key={challenge.asteriaAddress}>
+          <Link href={`/challenge/${challenge.slug}`} key={challenge.asteriaAddress}>
             <ChallengeCard
-              imageSrc={challenge.details.image}
-              day={challenge.details.day}
-              month={challenge.details.month}
+              {...challenge.details}
+              comingSoon={challenge.comingSoon}
               name={challenge.label}
               network={challenge.network}
-              reward={challenge.details.reward}
               onSelect={idx !== selected ? (e) => {
                 e.preventDefault();
                 e.stopPropagation();
