@@ -13,6 +13,7 @@
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'Monocraft', monospace;
   --font-inter: Inter, sans-serif;
+  --font-roboto-mono: 'Roboto Mono', monospace;
 
   --color-primary-50: #07F3E6;
   --color-secondary-80: #252954;
@@ -114,6 +115,14 @@
   @font-face {
     font-family: 'DM Sans';
     font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/fonts/DMSans-Medium.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
     font-weight: 600;
     font-display: swap;
     src: url('/fonts/DMSans-SemiBold.woff2') format('woff2');
@@ -125,6 +134,14 @@
     font-weight: 700;
     font-display: swap;
     src: url('/fonts/DMSans-Bold.woff2') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/fonts/RobotoMono-Regular.woff2') format('woff2');
   }
 }
 
@@ -156,5 +173,9 @@
 
   .btn-primary-outline {
     @apply border-primary-50 text-primary-50;
+  }
+
+  .shiki, .shiki code {
+    font-family: var(--font-roboto-mono);
   }
 }
