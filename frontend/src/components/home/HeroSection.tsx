@@ -7,7 +7,7 @@ import BotIcon from '@/components/icons/BotIcon';
 
 export default function HeroSection() {
   return (
-    <div className="min-h-[calc(100dvh-72px)] flex items-center">
+    <div className="min-h-[calc(100dvh-72px)] flex items-center overflow-x-hidden">
       <div className="relative pl-53 w-full">
         <Image
           src="/images/ship-vertical.svg"
