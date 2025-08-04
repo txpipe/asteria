@@ -8,8 +8,10 @@ interface ChallengeLayoutProps extends PropsWithChildren {
 
 export default function ChallengeLayout({ children }: ChallengeLayoutProps) {
   return (
-    <div className="container mx-auto">
-      <MdxLayout>{children}</MdxLayout>
+    <div className="min-h-[calc(100dvh-72px)] bg-starfield bg-cover bg-center relative">
+      <div className="container mx-auto">
+        <MdxLayout>{children}</MdxLayout>
+      </div>
     </div>
   );
 }
