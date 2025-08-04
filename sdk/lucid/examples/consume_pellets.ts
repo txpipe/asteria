@@ -1,21 +1,25 @@
-import { fromText, Data, Utxo } from "https://deno.land/x/lucid@0.20.5/mod.ts";
+import { Data, fromText, Utxo } from "https://deno.land/x/lucid@0.20.5/mod.ts";
 import {
   AsteriaTypesAssetClass,
   PelletPelletMint,
   PelletPelletSpend,
 } from "../../../onchain/src/plutus.ts";
 import { lucidBase } from "../src/utils.ts";
-import { chunkArray, delay, haveSameUTxOs } from "./utils.ts";
-import deployParams from "./deploy_params.json" with { type: "json" };
+import { adminTokenName, chunkArray, getAdminPolicy, waitUtxosUpdate } from "./utils.ts";
 
+const chunkLength = 25;
 const deployTxHash = Deno.args[0];
-const admin_token: AsteriaTypesAssetClass = {
-  policy: deployParams.admin_token.policy,
-  name: deployParams.admin_token.name,
-};
+console.log(`CHUNK LENGTH: ${chunkLength}`)
 
 const lucid = await lucidBase();
 
+const adminPolicy = await getAdminPolicy(lucid);
+const adminPolicyId = adminPolicy.toHash();
+
+const admin_token: AsteriaTypesAssetClass = {
+  policy: adminPolicyId,
+  name: adminTokenName,
+};
 const pelletValidator = new PelletPelletSpend(
   admin_token,
 );
@@ -39,7 +43,6 @@ const [pelletRef] = await lucid.utxosByOutRef([{
 }]);
 const fuelToken = pelletHash + fromText("FUEL");
 
-const chunkLength = 25;
 const chunkedPellets: Utxo[][] = chunkArray(pellets, chunkLength);
 for (const chunk of chunkedPellets) {
   const totalFuel = chunk.reduce(
@@ -50,21 +53,27 @@ for (const chunk of chunkedPellets) {
 
   const adminUTxO: Utxo = await lucid.wallet
     .getUtxos()
-    .then((us) => us.filter((u) => u.assets[admin_token.policy + admin_token.name] >= 1n))
+    .then((us) => us.filter((u) => u.assets[adminPolicyId + adminTokenName] >= 1n))
     .then((us) => us[0]);
 
   const tx = await lucid
       .newTx()
       .readFrom([pelletRef])
-      .mint(
-        {
-        [fuelToken]: -totalFuel,
-        },
-        Data.to("BurnFuel", PelletPelletMint.redeemer)
-      )
+      .attachScript(adminPolicy.script)
       .collectFrom(
         chunk,
         Data.to("ConsumePellet", PelletPelletSpend.redeemer)
+      )
+      .mint(
+        {
+          [fuelToken]: -totalFuel,
+        },
+        Data.to("BurnFuel", PelletPelletMint.redeemer)
+      )
+      .mint(
+        {
+          [adminPolicyId + adminTokenName]: BigInt(-chunkLength),
+        },
       )
       .collectFrom([adminUTxO])
       .commit();
@@ -76,16 +85,7 @@ for (const chunk of chunkedPellets) {
   console.log("\nTXHASH:", txHash);
   console.log("Waiting for transaction to be confirmed...");
   await lucid.awaitTx(txHash);
-
-  // This is a workaround to wait for the wallet UTxOs to be updated.
-  // This way we avoid errors like trying to use inputs that were already spent.
-  let wereUTxOsUpdated = false;
-  while (!wereUTxOsUpdated) {
-    console.log("Waiting for wallet UTXOs to be updated...");
-    await delay(5000);
-    const walletUTXOs = await lucid.wallet.getUtxos();
-    wereUTxOsUpdated = !haveSameUTxOs(walletUTXOs, initialWalletUTXOs);
-  }
+  await waitUtxosUpdate(lucid, initialWalletUTXOs);
 
   const remaining = await lucid.utxosAt(pelletAddress);
   console.log(`Consumed ${chunk.length} pellets (${remaining.length} remaining)`);
