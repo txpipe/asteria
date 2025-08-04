@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build-godot": "mkdir public/visualizer; godot --path ../godot-visualizer --headless --export-release \"Web\" ../frontend/public/visualizer/index.html; cp public/godot.png public/visualizer/index.png",
-    "dev": "npm run build-godot; next dev --turbo",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "devnet:start": "cd devnet && dolos daemon"

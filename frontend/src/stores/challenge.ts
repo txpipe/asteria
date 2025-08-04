@@ -15,6 +15,13 @@ export interface Challenge {
   network: string;
   explorerUrl: string;
   tokens: Token[];
+
+  details: {
+    day: number;
+    month: string;
+    reward: number;
+    image?: string;
+  };
 }
 
 export interface ChallengeStoreState {
@@ -36,6 +43,12 @@ export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
     network: 'preview',
     explorerUrl: 'https://preview.cexplorer.io/tx/',
     tokens: [],
+    details: {
+      day: 8,
+      month: 'AGO',
+      reward: 150,
+      image: '/images/challenge/first.png',
+    },
   },{
     label: 'Preview Challenge 2',
     spacetimePolicyId: 'b6c5e14f31af0c92515ce156625afc4749e30ceef178cfae1f929fff',
@@ -58,6 +71,12 @@ export const useChallengeStore = create<ChallengeStoreState>((set, get) => ({
       assetName: 'asd',
       policyId: '0d69753742e6e5fe5f545498708d61f3335adffd90686d41c8529a640014df10a49bfe0b8b0257a051d5cc7a16fb0881733d83188c978cdd0fbf1fdb',
     }],
+    details: {
+      day: 8,
+      month: 'AGO',
+      reward: 150,
+      image: '/images/challenge/second.png',
+    },
   }],
   current: () => get().challenges[get().selected],
   select: (index: number) => set(() => ({ selected: index })),

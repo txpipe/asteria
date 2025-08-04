@@ -164,15 +164,19 @@
   }
 
   .btn {
-    @apply flex font-mono text-base items-center px-5 py-3 rounded-full border gap-2.5;
+    @apply flex font-mono text-base items-center px-5 py-3 rounded-full border gap-2.5 cursor-pointer disabled:cursor-not-allowed
+  }
+
+  .btn-small {
+    @apply flex font-mono text-sm items-center px-4 py-1 rounded-full border gap-2.5 cursor-pointer disabled:cursor-not-allowed
   }
 
   .btn-primary {
-    @apply bg-primary-50 border-primary-50 text-secondary-80;
+    @apply bg-primary-50 border-primary-50 text-secondary-80 disabled:opacity-50
   }
 
   .btn-primary-outline {
-    @apply border-primary-50 text-primary-50;
+    @apply border-primary-50 text-primary-50 disabled:opacity-50;
   }
 
   .shiki, .shiki code {

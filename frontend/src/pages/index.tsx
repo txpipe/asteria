@@ -1,11 +1,9 @@
 // Store
 import { useChallengeStore } from '@/stores/challenge';
 
-// Icons
-import ChallengeIcon from '@/components/icons/ChallengeIcon';
-
 // Home Components
 import HeroSection from '@/components/home/HeroSection';
+import ChallengesSection from '@/components/home/ChallengesSection';
 
 export default function Landing() {
   const { challenges, selected, select } = useChallengeStore();
@@ -65,40 +63,7 @@ export default function Landing() {
         </div>
 
       </div>
-      <div className="container mx-auto sm flex flex-col pt-16 pb-32 px-32">
-        <h3 className="flex flex-row items-center justify-center mb-20">
-          <ChallengeIcon className="size-12 inline mr-5" />
-          <span className="font-mono text-[#07F3E6] text-4xl">Available Challenges</span>
-        </h3>
-
-        <div className="flex flex-row justify-center -mx-4">
-          {challenges.slice(0, 3).map((challenge, index) =>
-            <div key={index} className="mx-4 flex-initial basis-1/3 rounded-2xl backdrop-blur-xs bg-[#14141470] overflow-hidden landing-challenge">
-              <div className="w-full h-[240px] bg-challenge bg-center bg-cover" />
-              <div className="p-8">
-                <p className="mb-1 text-[#6F6F6F] text-base truncate">
-                  Network | <span className="text-[#F1E9D9] capitalize">{ challenge.network }</span>
-                </p>
-                <p className="mb-2 text-[#6F6F6F] text-base truncate">
-                  Shipyard Policy | <span className="text-[#F1E9D9]">{ challenge.shipyardPolicyId }</span>
-                </p>
-                <p className="mb-4 font-semibold text-white text-2xl truncate">
-                  { challenge.label }
-                </p>
-                <div className="mb-4 flex flex-row items-center justify-between">
-                  <button
-                    onClick={() => select(index)}
-                    disabled={selected === index}
-                    className="font-mono text-[#07F3E6] border border-[#07F3E6] bg-transparent py-4 px-6 rounded-full text-lg flex-initial disabled:opacity-50"
-                  >
-                    Select
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <ChallengesSection />
     </div>
   );
 }
