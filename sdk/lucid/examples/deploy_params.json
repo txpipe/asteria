@@ -1,8 +1,4 @@
 {
-    "admin_token": {
-        "policy": "b7341c90d38390ae3a890435559184f01fac24f79df06fd5c02f7fe4",
-        "name": "746f6b656e42"
-    },
     "ship_mint_lovelace_fee": 1000000,
     "max_asteria_mining": 50,
     "max_speed": {

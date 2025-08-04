@@ -1,4 +1,4 @@
-import { Utxo } from "https://deno.land/x/lucid@0.20.5/mod.ts";
+import { Addresses, Codec, fromText, Lucid, ScriptUtility, Utxo } from "https://deno.land/x/lucid@0.20.5/mod.ts";
 
 export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   const result: T[][] = [];
@@ -29,3 +29,39 @@ export function haveSameUTxOs(utxos_1: Utxo[], utxos_2: Utxo[]): boolean {
   }
   return true;
 }
+
+// This is a workaround to wait for the wallet UTxOs to be updated after a transaction.
+// This way we avoid errors like trying to use inputs that were already spent.
+export async function waitUtxosUpdate(lucid: Lucid, initialWalletUtxos: Utxo[]): Promise<Utxo[]> {
+  let wereUTxOsUpdated = false;
+  let newWalletUtxos: Utxo[] = [];
+
+  while (!wereUTxOsUpdated) {
+    console.log("Waiting for wallet UTXOs to be updated...");
+    await delay(5000);
+    newWalletUtxos = await lucid.wallet.getUtxos();
+    wereUTxOsUpdated = !haveSameUTxOs(newWalletUtxos, initialWalletUtxos);
+  }
+
+  return newWalletUtxos
+}
+
+export async function getAdminPolicy(lucid: Lucid): ScriptUtility {
+  const { payment } = Addresses.inspect(
+    await lucid.wallet.address(),
+  );
+  
+  return lucid.newScript({
+    type: "Native",
+    script: Codec.encodeNativeScript(
+      {
+        type: "All",
+        scripts: [
+          { type: "Sig", keyHash: payment?.hash! },
+        ],
+      },
+    ),
+  })
+}
+
+export const adminTokenName = fromText("auth");

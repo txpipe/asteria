@@ -9,18 +9,45 @@ import {
   SpacetimeSpacetimeSpend,
 } from "../../../onchain/src/plutus.ts";
 import { lucidBase } from "../src/utils.ts";
-import { chunkArray, delay, haveSameUTxOs } from "./utils.ts";
+import { adminTokenName, chunkArray, getAdminPolicy, waitUtxosUpdate } from "./utils.ts";
 import { readPelletsCSV } from "../../../offchain/tests/admin/pellets/utils.ts";
 import deployParams from "./deploy_params.json" with { type: "json" };
-
-console.log("DEPLOYING ASTERIA");
 
 //
 // CONFIGURATION
 //
+const lucid = await lucidBase();
+let walletUtxos = await lucid.wallet.getUtxos();
+
+const pellets = await readPelletsCSV("./pellets.csv");
+const pelletsAmount = pellets.length;
+
+const adminPolicy = await getAdminPolicy(lucid);
+const adminPolicyId = adminPolicy.toHash();
+const adminToken = adminPolicyId + adminTokenName;
+
+console.log(`\nMINTING ${pelletsAmount + 2} ADMIN TOKENS (#pellets + 2)`);
+
+const mintingTx = await lucid
+  .newTx()
+  .mint({ [adminToken]: BigInt(pelletsAmount) + 2n })
+  .attachScript(adminPolicy.script)
+  .commit();
+const signedTx = await mintingTx.sign().commit();
+const mintingTxHash = await signedTx.submit();
+
+console.log("Waiting for minting transaction to be confirmed...");
+await lucid.awaitTx(mintingTxHash);
+
+console.log("MINTING TXHASH:", mintingTxHash);
+console.log("ADMIN TOKEN POLICY ID:", adminPolicyId);
+walletUtxos = await waitUtxosUpdate(lucid, walletUtxos);
+
+console.log("\nDEPLOYING ASTERIA");
+
 const admin_token: AsteriaTypesAssetClass = {
-  policy: deployParams.admin_token.policy,
-  name: deployParams.admin_token.name,
+  policy: adminPolicyId,
+  name: adminTokenName,
 };
 const ship_mint_lovelace_fee = BigInt(deployParams.ship_mint_lovelace_fee);
 const max_asteria_mining = BigInt(deployParams.max_asteria_mining);
@@ -36,9 +63,6 @@ const min_asteria_distance = BigInt(deployParams.min_asteria_distance);
 //
 // VALIDATORS INSTANTIATION
 //
-const lucid = await lucidBase();
-const initialWalletUTXOs = await lucid.wallet.getUtxos();
-
 const deployValidator = new DeployDeploySpend(
   admin_token,
 );
@@ -79,7 +103,6 @@ console.log("PELLET SCRIPT ADDRESS:", { pelletAddress, pelletHash });
 //
 // ASTERIA 
 //
-const adminToken = admin_token.policy + admin_token.name;
 const asteriaDatum = {
   shipCounter: 0n,
   shipyardPolicy: spacetimeHash,
@@ -128,17 +151,9 @@ const signedDeployTx = await deployTx.sign().commit();
 const deployTxHash = await signedDeployTx.submit();
 console.log("\nDEPLOYMENT TXHASH:", deployTxHash);
 console.log("Waiting for deployment transaction to be confirmed...");
-await lucid.awaitTx(deployTxHash);
 
-// This is a workaround to wait for the wallet UTxOs to be updated after the deployment transaction.
-// This way we avoid errors like trying to use inputs that were already spent.
-let wereUTxOsUpdated = false;
-while (!wereUTxOsUpdated) {
-  console.log("Waiting for wallet UTXOs to be updated...");
-  await delay(5000);
-  const walletUTXOs = await lucid.wallet.getUtxos();
-  wereUTxOsUpdated = !haveSameUTxOs(walletUTXOs, initialWalletUTXOs);
-}
+await lucid.awaitTx(deployTxHash);
+walletUtxos = await waitUtxosUpdate(lucid, walletUtxos);
 
 //
 // CREATE PELLETS
@@ -150,7 +165,6 @@ const pelletRefs = await lucid.utxosByOutRef([{
   outputIndex: 2,
 }]);
 
-const pellets = await readPelletsCSV("./pellets.csv");
 const fuelToken = pelletHash + fromText("FUEL");
 
 const chunkLength = 80;
@@ -204,16 +218,9 @@ for (const chunk of chunkedPellets) {
   totalCreated += chunk.length;  
   console.log("\nPELLETS TXHASH:", pelletsTxHash);
   console.log(`Created ${chunk.length} pellets`);
-  console.log(`Total created: ${totalCreated} of ${pellets.length}`);
+  console.log(`Total created: ${totalCreated} of ${pelletsAmount}`);
   console.log(`Waiting for transaction to be confirmed...`);
-  await lucid.awaitTx(pelletsTxHash);
 
-  // Wait for wallet UTxOs to be updated.
-  let wereUTxOsUpdated = false;
-  while (!wereUTxOsUpdated) {
-    console.log("Waiting for wallet UTXOs to be updated...");
-    await delay(5000);
-    const walletUTXOs = await lucid.wallet.getUtxos();
-    wereUTxOsUpdated = !haveSameUTxOs(walletUTXOs, initialWalletUTXOs);
-  }
+  await lucid.awaitTx(pelletsTxHash);
+  walletUtxos = await waitUtxosUpdate(lucid, walletUtxos);
 }
