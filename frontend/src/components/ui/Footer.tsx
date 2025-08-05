@@ -21,7 +21,7 @@ export default function Footer() {
       </div>
 
       <span className="text-[#F1E9D9]/40 text-[15px]">
-        Copyright © 2025 TxPipe| All Rights Reserved
+        Copyright © 2025 TxPipe | All Rights Reserved
       </span>
     </footer>
   )
