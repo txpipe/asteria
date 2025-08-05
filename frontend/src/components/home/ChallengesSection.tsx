@@ -47,7 +47,7 @@ export default function ChallengesSection() {
                 e.stopPropagation();
                 select(idx);
 
-                router.push('/how-to-play')
+                router.push('/explorer')
               } : undefined}
             />
           </Link>

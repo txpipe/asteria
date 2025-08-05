@@ -9,8 +9,14 @@ import { challenges, useChallengeStore } from '@/stores/challenge';
 // Icons
 import PlayIcon from '@/components/icons/PlayIcon';
 
+interface PlayButtonProps {
+  slug: string;
+  label?: string;
+  destination?: string;
+  showIcon?: boolean;
+}
 
-export default function PlayButton({ slug }: { slug: string }) {
+export default function PlayButton({ slug, label, destination, showIcon }: PlayButtonProps) {
   const { select, current } = useChallengeStore();
 
   const router = useRouter();
@@ -26,13 +32,15 @@ export default function PlayButton({ slug }: { slug: string }) {
     const index = challenges.findIndex(c => c.slug === slug);
     if (index >= 0) {
       select(index);
-      router.push('/how-to-play');
+      router.push(destination ?? '/how-to-play');
     }
   }
   return (
     <button type="button" className="btn-small btn-primary" onClick={onPlay}>
-      <PlayIcon className="size-4.5" strokeWidth={1.5} />
-      Play
+      {showIcon && (
+        <PlayIcon className="size-4.5" strokeWidth={1.5} />
+      )}
+      {label ?? 'Play'}
     </button>
   );
 }
