@@ -18,12 +18,12 @@ export const DEFAULT_ENV_ARGS = {
 };
 
 export type CreateShipParams = {
-    pPosX: ArgValue //| bigint | number; // Int
-    pPosY: ArgValue //| bigint | number; // Int
-    pilotName: ArgValue //| Uint8Array; // Bytes
-    player: ArgValue //| string; // Address
-    shipName: ArgValue //| Uint8Array; // Bytes
-    tipSlot: ArgValue //| bigint | number; // Int
+    pPosX: ArgValue | bigint | number; // Int
+    pPosY: ArgValue | bigint | number; // Int
+    pilotName: ArgValue | Uint8Array; // Bytes
+    player: ArgValue | string; // Address
+    shipName: ArgValue | Uint8Array; // Bytes
+    tipSlot: ArgValue | bigint | number; // Int
 }
 
 export const CREATE_SHIP_IR = {
@@ -33,13 +33,13 @@ export const CREATE_SHIP_IR = {
 };
 
 export type MoveShipParams = {
-    pDeltaX: ArgValue //| bigint | number; // Int
-    pDeltaY: ArgValue //| bigint | number; // Int
-    pilotName: ArgValue //| Uint8Array; // Bytes
-    player: ArgValue //| string; // Address
-    requiredFuel: ArgValue //| bigint | number; // Int
-    shipName: ArgValue //| Uint8Array; // Bytes
-    tipSlot: ArgValue //| bigint | number; // Int
+    pDeltaX: ArgValue | bigint | number; // Int
+    pDeltaY: ArgValue | bigint | number; // Int
+    pilotName: ArgValue | Uint8Array; // Bytes
+    player: ArgValue | string; // Address
+    requiredFuel: ArgValue | bigint | number; // Int
+    shipName: ArgValue | Uint8Array; // Bytes
+    tipSlot: ArgValue | bigint | number; // Int
 }
 
 export const MOVE_SHIP_IR = {
@@ -49,10 +49,10 @@ export const MOVE_SHIP_IR = {
 };
 
 export type GatherFuelParams = {
-    pGatherAmount: ArgValue //| bigint | number; // Int
-    player: ArgValue //| string; // Address
-    shipName: ArgValue //| Uint8Array; // Bytes
-    tipSlot: ArgValue //| bigint | number; // Int
+    pGatherAmount: ArgValue | bigint | number; // Int
+    player: ArgValue | string; // Address
+    shipName: ArgValue | Uint8Array; // Bytes
+    tipSlot: ArgValue | bigint | number; // Int
 }
 
 export const GATHER_FUEL_IR = {
