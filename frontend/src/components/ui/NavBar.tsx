@@ -20,7 +20,7 @@ const NavBar: React.FunctionComponent = () => {
   const challenge = current();
   
   return (
-    <div className="sticky top-0 w-full px-14 py-[11.5px] flex flex-row items-center bg-[#171717] z-1">
+    <div className="sticky top-0 w-full px-14 py-[11.5px] flex flex-row items-center bg-[#171717] z-10">
       <div className="flex flex-row items-end flex-auto basis-1/4 gap-3">
         <Link href="/">
           <Image src="/images/logo.svg" alt="Asteria Logo" width={145} height={49} className="w-[145px] h-[49px]" />

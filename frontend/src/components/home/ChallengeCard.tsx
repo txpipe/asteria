@@ -15,6 +15,7 @@ interface ChallengeCardProps extends ChallengeDetails {
 }
 
 export default function ChallengeCard({ comingSoon, image, day, month, name, network, reward, sponsors, moreSponsors, onSelect }: ChallengeCardProps) {
+  const adaPrefix = network === 'preview' ? 't' : '';
   return (
     <div className="rounded-xl bg-[#141414]/70 shadow-[0px_2px_15.9px_0px_rgba(255,255,255,0.05),0px_0px_12.3px_0px_rgba(255,255,255,0.04)] overflow-hidden aspect-[390/353] w-[390px]">
       <div className="relative aspect-[390/209] w-full">
@@ -45,7 +46,7 @@ export default function ChallengeCard({ comingSoon, image, day, month, name, net
           </div>
           <div className="flex flex-row items-center gap-3 text-[#F1E9D9] mt-1">
             <span className="opacity-30">Reward |</span>
-            {reward ? `${reward} ₳` : '???'}
+            {reward ? `${reward} ${adaPrefix}₳` : '???'}
           </div>
         </div>
 
@@ -55,7 +56,7 @@ export default function ChallengeCard({ comingSoon, image, day, month, name, net
           onClick={!comingSoon ? onSelect : undefined}
           disabled={comingSoon || !onSelect}
         >
-          {comingSoon ? 'Coming Soon' : 'Play'}
+          {comingSoon ? 'Coming Soon' : 'Explore'}
         </button>
 
         {sponsors && sponsors.length > 0 && (

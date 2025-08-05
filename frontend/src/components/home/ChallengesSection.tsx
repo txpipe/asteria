@@ -34,7 +34,7 @@ export default function ChallengesSection() {
         There might be any number of open challenges (games) ongoing at any point.<br />
         Everything in Asteria is open-source, so you can even run your own challenge.
       </p>
-      <div className="flex flex-col md:flex-row gap-8 mt-14 justify-center items-center">
+      <div className="flex flex-col md:flex-row gap-8 mt-14 justify-center items-center flex-wrap">
         {challenges.map((challenge, idx) => (
           <Link href={`/challenge/${challenge.slug}`} key={challenge.asteriaAddress}>
             <ChallengeCard
@@ -47,7 +47,7 @@ export default function ChallengesSection() {
                 e.stopPropagation();
                 select(idx);
 
-                router.push('/how-to-play')
+                router.push('/explorer')
               } : undefined}
             />
           </Link>
