@@ -72,7 +72,7 @@ for (const chunk of chunkedPellets) {
       )
       .mint(
         {
-          [adminPolicyId + adminTokenName]: BigInt(-chunkLength),
+          [adminPolicyId + adminTokenName]: BigInt(-chunk.length),
         },
       )
       .collectFrom([adminUTxO])
