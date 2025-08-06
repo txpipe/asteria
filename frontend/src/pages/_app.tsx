@@ -2,11 +2,12 @@ import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 
 import NavBar from "@/components/ui/NavBar";
+import Footer from '@/components/ui/Footer';
 
 import "./globals.css";
-import Head from 'next/head';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode
@@ -30,6 +31,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
       <ApolloProvider client={client}>
         <NavBar />
         <Component {...pageProps} />
+        <Footer />
       </ApolloProvider>
     </>
   );

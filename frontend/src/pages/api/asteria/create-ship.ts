@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ArgValue } from "tx3-sdk/trp";
 
 // Utils
 import { protocol } from '@/utils/cli-protocol';
@@ -49,12 +48,12 @@ export default async function handler(
 
   try {
     const result = await protocol.createShipTx({
-      player: ArgValue.from(playerAddress),
-      pPosX: ArgValue.from(positionX),
-      pPosY: ArgValue.from(positionY),
-      pilotName: ArgValue.from(new TextEncoder().encode(`PILOT${shipNumber}`)),
-      shipName: ArgValue.from(new TextEncoder().encode(`SHIP${shipNumber}`)),
-      tipSlot: ArgValue.from(blockSlotValue + 300), // 5 minutes from last block
+      player: playerAddress,
+      pPosX: positionX,
+      pPosY: positionY,
+      pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
+      shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
+      tipSlot: blockSlotValue + 300, // 5 minutes from last block
     });
     return res.json({
       data: {

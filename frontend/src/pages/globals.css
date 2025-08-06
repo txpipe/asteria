@@ -8,7 +8,6 @@
   --color-foreground: var(--foreground);
 
   --background-image-starfield: url('/starfield.svg');
-  --background-image-challenge: url('/challenge.png');
 
   --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'Monocraft', monospace;

@@ -79,8 +79,8 @@ export const challenges: Challenge[] = [{
   },
 },{
   comingSoon: true,
-  label: 'Main Challenge',
-  slug: 'main-challenge',
+  label: 'Mainnet Challenge',
+  slug: 'mainnet-challenge',
   spacetimePolicyId: 'Coming soon',
   spacetimeAddress: 'Coming soon',
   pelletPolicyId: 'Coming soon',
@@ -94,9 +94,9 @@ export const challenges: Challenge[] = [{
     month: 'AGO',
     image: '/images/challenge/third.png',
     sponsors: [
-      ['/images/challenge/sponsors/main-challenge/asset17q7r59zlc3dgw0venc80pdv566q6yguw03f0d9.png', 'HOSKY'],
-      ['/images/challenge/sponsors/main-challenge/asset1znlnu4s2uv3ern2f52csz6s6pvr5rf6dj2uevx.png', 'VYFI'],
-      ['/images/challenge/sponsors/main-challenge/asset1m4u92ke6820pkk07m8qmmguye02ewr8g6tezr0.png', 'SUNDAE'],
+      ['/images/challenge/sponsors/mainnet-challenge/asset17q7r59zlc3dgw0venc80pdv566q6yguw03f0d9.png', 'HOSKY'],
+      ['/images/challenge/sponsors/mainnet-challenge/asset1znlnu4s2uv3ern2f52csz6s6pvr5rf6dj2uevx.png', 'VYFI'],
+      ['/images/challenge/sponsors/mainnet-challenge/asset1m4u92ke6820pkk07m8qmmguye02ewr8g6tezr0.png', 'SUNDAE'],
     ],
     moreSponsors: 7,
   },
