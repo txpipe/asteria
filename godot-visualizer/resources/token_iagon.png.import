@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dglhithj5wp1p"
-path="res://.godot/imported/token_stuff.png-dbfe955c3f4d1743b8fb0c02a8b59906.ctex"
+uid="uid://7mnlrtd3nxpr"
+path="res://.godot/imported/token_iagon.png-3ad9dc68da403ee68ebb3a287edb33c3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/token_stuff.png"
-dest_files=["res://.godot/imported/token_stuff.png-dbfe955c3f4d1743b8fb0c02a8b59906.ctex"]
+source_file="res://resources/token_iagon.png"
+dest_files=["res://.godot/imported/token_iagon.png-3ad9dc68da403ee68ebb3a287edb33c3.ctex"]
 
 [params]
 

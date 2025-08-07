@@ -121,6 +121,8 @@ pub struct Token {
     spacetime_policy: PolicyId,
     class: String,
     name: String,
+    asset_name: String,
+    display_name: String,
     datum: String,
     assets: Vec<Asset>,
 }
@@ -154,8 +156,10 @@ pub struct PositionInput {
 
 #[derive(InputObject, Clone)]
 pub struct TokenInput {
-    policy_id: String,
+    name: String,
+    display_name: String,
     asset_name: String,
+    policy_id: String,
 }
 
 #[derive(SimpleObject, Clone)]
@@ -432,7 +436,9 @@ impl QueryRoot {
                 for record in fetched_tokens {
                     map_objects.push(PositionalInterface::Token(Token {
                         id: ID::from(record.id),
-                        name: token.asset_name.clone(),
+                        name: token.name.clone(),
+                        asset_name: token.asset_name.clone(),
+                        display_name: token.display_name.clone(),
                         amount: record.amount.unwrap_or(0),
                         position: Position {
                             x: record.position_x.unwrap_or(0),
@@ -446,7 +452,7 @@ impl QueryRoot {
                         assets: vec![
                             Asset {
                                 policy_id: token.policy_id.clone(),
-                                name: format!("${}", token.asset_name).to_uppercase(),
+                                name: token.asset_name.clone(),
                                 amount: record.amount.unwrap_or(0),
                             },
                         ],

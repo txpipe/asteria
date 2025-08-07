@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dglhithj5wp1p"
-path="res://.godot/imported/token_stuff.png-dbfe955c3f4d1743b8fb0c02a8b59906.ctex"
+uid="uid://d0tdbx5xxeeys"
+path="res://.godot/imported/token_indigo.png-28056f19e06779b322f8186d58d1fed8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/token_stuff.png"
-dest_files=["res://.godot/imported/token_stuff.png-dbfe955c3f4d1743b8fb0c02a8b59906.ctex"]
+source_file="res://resources/token_indigo.png"
+dest_files=["res://.godot/imported/token_indigo.png-28056f19e06779b322f8186d58d1fed8.ctex"]
 
 [params]
 

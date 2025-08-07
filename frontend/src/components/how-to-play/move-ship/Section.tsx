@@ -13,54 +13,41 @@ import MoveShipDescription from '@/components/how-to-play/move-ship/Description.
 import type { ResponseData } from '@/pages/api/asteria/move-ship';
 import type { ConnectedWallet } from '@/hooks/useCardano';
 
-const tx3File = `// Asteria player
-party Player; // Sent by Form
-
-tx moveShip(
+const tx3File = `tx move_ship(
     p_delta_x: Int,
     p_delta_y: Int,
-    tx_latest_posix_time: Int,
-    // ship_tx_hash: Bytes,
     ship_name: Bytes,
     pilot_name: Bytes,
-    // distance: Int,
     required_fuel: Int,
+    tip_slot: Int, // TODO: remove when tip_slot() implemented
 ) {
+    locals {
+        spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+        spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
+        pellet_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
+    }
+
     validity {
-        until_slot: tx_latest_posix_time,
+        until_slot: tip_slot, // tip_slot() + 300
     }
 
-    // References
-    // SpaceTime
-    reference SpaceTimeRef {
-        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    reference SpacetimeRef {
+        ref: spacetime_policy_ref,
     }
 
-    // Pellet
     reference PelletRef {
-        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+        ref: pellet_policy_ref,
     }
 
-    // Inputs
     input source {
         from: Player,
         min_amount: fees,
     }
 
-    input spaceTime {
-        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
-        datum_is: SpaceTimeDatum,
-    }
-
-    // Is possible to get the SHIP token name using the txhash?
     input ship {
-        from: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
+        from: SpacetimePolicy,
         datum_is: ShipDatum,
-        // Ideally
-        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1) + Fuel(distance * fuel_per_step),
-        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship_name, 1),
-
-        // Is this correct?
+        min_amount: AnyAsset(spacetime_policy_hash, ship_name, 1),
         redeemer: ShipActions::MoveShip { 
             delta_x: p_delta_x,
             delta_y: p_delta_y,
@@ -69,27 +56,21 @@ tx moveShip(
 
     input pilot {
         from: Player,
-        // min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, ship.pilot_token_name, 1),
-        min_amount: AnyAsset(0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20, pilot_name, 1),
+        min_amount: AnyAsset(spacetime_policy_hash, pilot_name, 1),
     }
 
-    // Burn
     burn {
-        // amount: Fuel(distance * fuel_per_step),
         amount: Fuel(required_fuel),
         redeemer: (),
     }
 
-    // Outputs
     output {
-        // SpaceTime Contract
-        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
-        // amount: ship - Fuel(distance * fuel_per_step),
+        to: SpacetimePolicy,
         amount: ship - Fuel(required_fuel),
         datum: ShipDatum {
             pos_x: ship.pos_x + p_delta_x,
             pos_y: ship.pos_y + p_delta_y,
-            last_move_latest_time: tx_latest_posix_time,
+            last_move_latest_time: tip_slot,
             ...ship
         },
     }
@@ -98,20 +79,18 @@ tx moveShip(
         to: Player,
         amount: source - fees + pilot,
     }
-}
-`;
+}`;
 
 const jsFile = `const distance = Math.abs(positionX) + Math.abs(positionY);
 
 const result = await protocol.moveShipTx({
+  player: playerAddress,
   pDeltaX: positionX,
   pDeltaY: positionY,
-  player: playerAddress,
-  // distance,
-  requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
   pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
-  txLatestPosixTime: blockSlotValue + 300, // 5 minutes from last block
+  requiredFuel: distance * 60, // fuel_per_step from SpaceTime datum
+  tip_slot: blockSlotValue + 300, // 5 minutes from last block
 });`;
 
 type ActionState = {
