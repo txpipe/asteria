@@ -393,7 +393,7 @@ impl QueryRoot {
                         .total_rewards
                         .unwrap_or(BigDecimal::zero())
                         .to_i64()
-                        .unwrap_or(0),
+                        .unwrap_or(0) / 1_000_000,
                     class: record.class.unwrap_or_default(),
                     datum: record.datum.unwrap_or_default().to_string(),
                     assets: vec![],
@@ -408,7 +408,7 @@ impl QueryRoot {
                     "
                     SELECT 
                         id,
-                        CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS INTEGER) AS amount,
+                        CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS BIGINT) AS amount,
                         CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
                         CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
                         CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
@@ -419,7 +419,7 @@ impl QueryRoot {
                         ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) - $1::int) +
                         ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) - $2::int) < $3::int
                         AND CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) = $4::text
-                        AND CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS INTEGER) > 0
+                        AND CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS BIGINT) > 0
                         AND utxo_address(era, cbor) = from_bech32($5::varchar)
                         AND spent_slot IS NULL
                     ",
@@ -435,12 +435,14 @@ impl QueryRoot {
                 .map_err(|e| Error::new(e.to_string()))?;
 
                 for record in fetched_tokens {
+                    let amount = (record.amount.unwrap_or(0) / 10i64.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0))).to_i32().unwrap_or(0);
+
                     map_objects.push(PositionalInterface::Token(Token {
                         id: ID::from(record.id),
                         name: token.name.clone(),
                         asset_name: token.asset_name.clone(),
                         display_name: token.display_name.clone(),
-                        amount: record.amount.unwrap_or(0) / 10i32.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0)),
+                        amount: amount,
                         position: Position {
                             x: record.position_x.unwrap_or(0),
                             y: record.position_y.unwrap_or(0),
@@ -454,7 +456,7 @@ impl QueryRoot {
                             Asset {
                                 policy_id: token.policy_id.clone(),
                                 name: token.asset_name.clone(),
-                                amount: record.amount.unwrap_or(0) / 10i32.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0)),
+                                amount: amount,
                             },
                         ],
                     }));

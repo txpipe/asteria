@@ -57,24 +57,24 @@ export const challenges: Challenge[] = [{
     assetName: '$IAG',
     policyId: '5d16cc1a177b5d9ba9cfa9793b07e60f1fb70fea1f8aef064415d114494147',
     decimals: 6,
-  // },{
-  //   name: 'sundae',
-  //   displayName: 'SundaeSwap',
-  //   assetName: '$SUNDAE',
-  //   policyId: '9a9693a9a37912a5097918f97918d15240c92ab729a0b7c4aa144d7753554e444145',
-  //   decimals: 6,
+  },{
+    name: 'sundae',
+    displayName: 'SundaeSwap',
+    assetName: '$SUNDAE',
+    policyId: '9a9693a9a37912a5097918f97918d15240c92ab729a0b7c4aa144d7753554e444145',
+    decimals: 6,
   },{
     name: 'hosky',
     displayName: 'Hosky',
     assetName: '$HOSKY',
     policyId: 'a0028f350aaabe0545fdcb56b039bfb08e4bb4d8c4d7c3c7d481c235484f534b59',
     decimals: 6,
-  // },{
-  //   name: 'metera',
-  //   displayName: 'Metera',
-  //   assetName: '$METERA',
-  //   policyId: '8ebb4f0eb39543cdab83eb35f5f194798817eaaa3061872b4101efdb0014df104d4554455241',
-  //   decimals: 6,
+  },{
+    name: 'metera',
+    displayName: 'Metera',
+    assetName: '$METERA',
+    policyId: '8ebb4f0eb39543cdab83eb35f5f194798817eaaa3061872b4101efdb0014df104d4554455241',
+    decimals: 6,
   },{
     name: 'indigo',
     displayName: 'Indigo DAO Token',
@@ -87,12 +87,12 @@ export const challenges: Challenge[] = [{
     assetName: '$MIN',
     policyId: '29d222ce763455e3d7a09a665ce554f00ac89d2e99a1a83d267170c64d494e',
     decimals: 6,
-  // },{
-  //   name: 'stuff',
-  //   displayName: 'Stuff',
-  //   assetName: '$STUFF',
-  //   policyId: '51a5e236c4de3af2b8020442e2a26f454fda3b04cb621c1294a0ef34424f4f4b',
-  //   decimals: 6,
+  },{
+    name: 'stuff',
+    displayName: 'Stuff',
+    assetName: '$STUFF',
+    policyId: '51a5e236c4de3af2b8020442e2a26f454fda3b04cb621c1294a0ef34424f4f4b',
+    decimals: 6,
   },{
     name: 'fluid',
     displayName: 'FluidTokens',

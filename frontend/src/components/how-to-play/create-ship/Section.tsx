@@ -179,9 +179,9 @@ export default function CreateShip(props: CreateShipProps) {
 
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
-      <Tab label="Description">
+      {/* <Tab label="Description">
         <CreateShipDescription />
-      </Tab>
+      </Tab> */}
 
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>

@@ -264,7 +264,7 @@ func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "ASTERIA"
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [asteria.position.x, asteria.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Total rewards | %s" % asteria.totalRewards
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Total rewards | %s ADA" % asteria.totalRewards
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false

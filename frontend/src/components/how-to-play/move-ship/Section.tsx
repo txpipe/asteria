@@ -184,9 +184,9 @@ export default function MoveShip(props: MoveShipProps) {
 
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
-      <Tab label="Description">
+      {/* <Tab label="Description">
         <MoveShipDescription />
-      </Tab>
+      </Tab> */}
 
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>

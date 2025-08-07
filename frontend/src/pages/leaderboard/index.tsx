@@ -73,7 +73,7 @@ const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProp
         <span className="font-bold">Ship: </span> {hexToAscii(props.record.shipName)}
       </p>
       <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] text-[#171717]">
-        {`${props.record.distance}km`}
+        {props.record.distance}
       </div>
     </div>
   </a>
