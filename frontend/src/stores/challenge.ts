@@ -8,6 +8,8 @@ export interface Token {
 }
 
 export interface Challenge {
+  apiUrl: string;
+
   comingSoon?: boolean;
   label: string;
   slug: string;
@@ -38,6 +40,7 @@ export interface ChallengeStoreState {
 }
 
 export const challenges: Challenge[] = [{
+  apiUrl: process.env.MAINNET_API_URL!!,
   label: 'Mainnet Challenge',
   slug: 'mainnet-challenge',
   spacetimePolicyId: '0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43',
@@ -127,6 +130,58 @@ export const challenges: Challenge[] = [{
       ['/images/challenge/sponsors/mainnet-challenge/hosky.png', 'HOSKY'],
     ],
     moreSponsors: 7,
+  },
+},{
+  apiUrl: process.env.PREVIEW_API_URL!!,
+  label: 'Preview Challenge 1',
+  slug: 'preview-challenge-1',
+  spacetimePolicyId: 'f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20',
+  spacetimeAddress: 'addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6',
+  pelletPolicyId: 'fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c',
+  pelletAddress: 'addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63',
+  asteriaAddress: 'addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg',
+  network: 'preview',
+  explorerUrl: 'https://preview.cexplorer.io/tx/',
+  tokens: [],
+  details: {
+    reward: '150',
+    image: '/images/challenge/second.png',
+  },
+},{
+  apiUrl: process.env.PREVIEW_API_URL!!,
+  label: 'Preview Challenge 2',
+  slug: 'preview-challenge-2',
+  spacetimePolicyId: 'b6c5e14f31af0c92515ce156625afc4749e30ceef178cfae1f929fff',
+  spacetimeAddress: 'addr_test1wzmvtc20xxhseyj3tns4vcj6l3r5nccvamch3nawr7ffllcmwmxeq',
+  pelletPolicyId: '98b1c97b219c102dd0e9ba014481272d6ec069ec3ff47c63e291f1b74655454c',
+  pelletAddress: 'addr_test1wzvtrjtmyxwpqtwsaxaqz3ypyukkasrfasllglrru2glrdcsra05l',
+  asteriaAddress: 'addr_test1wzck5pm45hsytdyz4v4f3cjpey68lrl7yedmdtx3q3f2dnqmww2hy',
+  network: 'preview',
+  explorerUrl: 'https://preview.cexplorer.io/tx/',
+  tokens: [{
+    name: 'iagon',
+    displayName: 'IAGON',
+    assetName: '$IAG',
+    policyId: '255d6456fa68e3d858d80e3168b0d76d57b6c4033c6234e2f0de8499746f6b656e41',
+  },{
+    name: 'sundae',
+    displayName: 'SundaeSwap',
+    assetName: '$SUNDAE',
+    policyId: 'b7341c90d38390ae3a890435559184f01fac24f79df06fd5c02f7fe4746f6b656e42',
+  },{
+    name: 'hosky',
+    displayName: 'Hosky',
+    assetName: '$HOSKY',
+    policyId: 'fa3eff2047fdf9293c5feef4dc85ce58097ea1c6da4845a35153518374494e4459',
+  },{
+    name: 'metera',
+    displayName: 'Metera',
+    assetName: '$METERA',
+    policyId: '0d69753742e6e5fe5f545498708d61f3335adffd90686d41c8529a640014df10a49bfe0b8b0257a051d5cc7a16fb0881733d83188c978cdd0fbf1fdb',
+  }],
+  details: {
+    reward: '150',
+    image: '/images/challenge/third.png',
   },
 }];
 

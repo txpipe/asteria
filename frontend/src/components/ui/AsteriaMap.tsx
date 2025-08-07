@@ -18,7 +18,7 @@ export default function AsteriaMap({ mode, challenge, className }: AsteriaMapPro
   const src = useMemo(() => {
     const params = new URLSearchParams([
       ['mode', mode],
-      ['apiUrl', `${process.env.API_URL}/graphql`],
+      ['apiUrl', `${challenge.apiUrl}/graphql`],
       ['spacetimePolicyId', challenge.spacetimePolicyId],
       ['spacetimeAddress', challenge.spacetimeAddress],
       ['pelletPolicyId', challenge.pelletPolicyId],
