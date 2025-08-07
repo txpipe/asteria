@@ -25,6 +25,11 @@ export default function ConnectWallet({ onWalletConnected }: Props) {
         className="bg-black rounded-lg flex flex-col text-white/90 outline-none border border-white/50 z-10"
         anchor="bottom start"
       >
+        {walletList.length === 0 && (
+          <MenuItem disabled>
+            <div className="px-4 py-2 text-sm text-white/50">No wallets detected</div>
+          </MenuItem>
+        )}
         {walletList.map((wallet) => (
           <MenuItem key={wallet.key}>
             <button

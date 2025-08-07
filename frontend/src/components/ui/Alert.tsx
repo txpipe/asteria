@@ -69,9 +69,13 @@ export default function Alert({ type, children, className, title }: AlertProps) 
       )}
       <div className="relative min-h-0">
         <div ref={contentRef} className="h-full overflow-auto pr-2">{children}</div>
-        {showGradient && (
-          <div className="absolute bottom-0 left-0 right-2 top-0 pointer-events-none bg-gradient-to-t from-[#151B17] to-transparent to-45%" />
-        )}
+          <div className={clsx(
+            'absolute bottom-0 left-0 right-2 top-0 pointer-events-none bg-gradient-to-t to-transparent to-45%', {
+              'hidden': !showGradient,
+              'from-[#151B17]': type === 'success',
+              'from-[#1C1717]': type === 'error',
+            }
+          )} />
       </div>
     </div>
   );

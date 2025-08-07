@@ -68,7 +68,7 @@ export default async function handler(
     if (e instanceof Error) {
       return res.status(400).json({
         errors: {
-          global: `${e.message}\nCause: ${e.cause}` || 'Unknown error',
+          global: `${e.message}\nCause: ${JSON.stringify(e.cause)}` || 'Unknown error',
         }
       });
     }
