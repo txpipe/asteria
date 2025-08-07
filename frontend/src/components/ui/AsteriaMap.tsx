@@ -10,7 +10,7 @@ interface AsteriaMapProps {
 const baseURL = '/visualizer/index.html';
 
 const getTokensQuery = (tokens: Token[]) => {
-  const data = tokens.map(token => `{name: "${token.name}", displayName: "${token.displayName}", assetName: "${token.assetName}", policyId: "${token.policyId}"}`).join(',');
+  const data = tokens.map(token => `{name: "${token.name}", displayName: "${token.displayName}", assetName: "${token.assetName}", policyId: "${token.policyId}", decimals: ${token.decimals ?? 0}}`).join(',');
   return `[${data}]`;
 };
 

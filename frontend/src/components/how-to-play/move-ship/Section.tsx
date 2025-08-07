@@ -12,6 +12,7 @@ import MoveShipDescription from '@/components/how-to-play/move-ship/Description.
 
 import type { ResponseData } from '@/pages/api/asteria/move-ship';
 import type { ConnectedWallet } from '@/hooks/useCardano';
+import { useChallengeStore } from '@/stores/challenge';
 
 const tx3File = `tx move_ship(
     p_delta_x: Int,
@@ -105,6 +106,8 @@ interface MoveShipProps {
 }
 
 export default function MoveShip(props: MoveShipProps) {
+  const { current } = useChallengeStore();
+
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
@@ -163,6 +166,7 @@ export default function MoveShip(props: MoveShipProps) {
     setFormState({});
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
+    data['network'] = current().network;
     try {
       const res = await fetch('/api/asteria/move-ship', {
         method: 'POST',

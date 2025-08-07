@@ -52,8 +52,12 @@ RUN wget -qO- "https://github.com/tx3-lang/trix/releases/latest/download/trix-x8
 
 ENV PREVIEW_API_URL=https://8000-skillful-employee-kb9ou6.us1.demeter.run
 ENV MAINNET_API_URL=https://8000-ethereal-audience-bb83g6.us1.demeter.run
-ENV TRP_URL=https://cardano-preview.trp-m1.demeter.run
-ENV TRP_API_KEY=trp1ffyf88ugcyg6j6n3yuh
+
+ENV PREVIEW_TRP_URL=https://cardano-preview.trp-m1.demeter.run
+ENV PREVIEW_TRP_API_KEY=trp1ffyf88ugcyg6j6n3yuh
+
+ENV MAINNET_TRP_URL=https://cardano-mainnet.trp-m1.demeter.run
+ENV MAINNET_TRP_API_KEY=trp1lrnhzcax5064cgxsaup
 
 COPY --from=build /visualizer/build ./public/visualizer
 

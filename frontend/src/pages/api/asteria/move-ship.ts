@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Utils
-import { protocol } from '@/utils/cli-protocol';
+import { getProtocol } from '@/utils/cli-protocol';
 
 export type ResponseData = {
   data?: { tx?: string; };
@@ -49,7 +49,7 @@ export default async function handler(
   try {
     const distance = Math.abs(positionX) + Math.abs(positionY);
 
-    const result = await protocol.moveShipTx({
+    const result = await getProtocol(formData['network']).moveShipTx({
       pDeltaX: positionX,
       pDeltaY: positionY,
       player: playerAddress,

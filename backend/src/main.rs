@@ -160,6 +160,7 @@ pub struct TokenInput {
     display_name: String,
     asset_name: String,
     policy_id: String,
+    decimals: Option<i32>,
 }
 
 #[derive(SimpleObject, Clone)]
@@ -439,7 +440,7 @@ impl QueryRoot {
                         name: token.name.clone(),
                         asset_name: token.asset_name.clone(),
                         display_name: token.display_name.clone(),
-                        amount: record.amount.unwrap_or(0),
+                        amount: record.amount.unwrap_or(0) / 10i32.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0)),
                         position: Position {
                             x: record.position_x.unwrap_or(0),
                             y: record.position_y.unwrap_or(0),
@@ -453,7 +454,7 @@ impl QueryRoot {
                             Asset {
                                 policy_id: token.policy_id.clone(),
                                 name: token.asset_name.clone(),
-                                amount: record.amount.unwrap_or(0),
+                                amount: record.amount.unwrap_or(0) / 10i32.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0)),
                             },
                         ],
                     }));
