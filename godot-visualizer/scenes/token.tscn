@@ -1,10 +1,21 @@
-[gd_scene load_steps=8 format=3 uid="uid://5y7v35p7p3lu"]
+[gd_scene load_steps=19 format=3 uid="uid://5y7v35p7p3lu"]
 
-[ext_resource type="Texture2D" uid="uid://d17kmn8xn27st" path="res://resources/token_hosky.png" id="1_5phyg"]
+[ext_resource type="Texture2D" uid="uid://c1sms7lmfcvfe" path="res://resources/token_hosky.png" id="1_5phyg"]
 [ext_resource type="Script" uid="uid://bw2uwnf5pgc7t" path="res://scripts/token.gd" id="1_xdvoi"]
+[ext_resource type="Texture2D" uid="uid://c5xtkfexbw526" path="res://resources/token_about-stuff.png" id="2_o6iwt"]
+[ext_resource type="Texture2D" uid="uid://bg1knpyijgeud" path="res://resources/token_collecting-the-simpsons.png" id="3_42ep8"]
 [ext_resource type="Texture2D" uid="uid://c7b1phdcwbd7e" path="res://resources/token_pellet.png" id="3_ijof8"]
-[ext_resource type="Texture2D" uid="uid://e5qycvw6c1km" path="res://resources/token_stuff.png" id="3_smo0k"]
-[ext_resource type="Texture2D" uid="uid://bxv4154qyfv4j" path="res://resources/token_vyfi.png" id="5_cwit4"]
+[ext_resource type="Texture2D" uid="uid://dglhithj5wp1p" path="res://resources/token_stuff.png" id="3_smo0k"]
+[ext_resource type="Texture2D" uid="uid://dw2dk2yopxhsy" path="res://resources/token_fluid.png" id="4_gr5ct"]
+[ext_resource type="Texture2D" uid="uid://cg1yafsiyntqr" path="res://resources/token_vyfi.png" id="5_cwit4"]
+[ext_resource type="Texture2D" uid="uid://cvelvo8jhjxoq" path="res://resources/token_gutenberg-bible.png" id="5_db0v6"]
+[ext_resource type="Texture2D" uid="uid://7mnlrtd3nxpr" path="res://resources/token_iagon.png" id="7_iw0pl"]
+[ext_resource type="Texture2D" uid="uid://d0tdbx5xxeeys" path="res://resources/token_indigo.png" id="8_ote7x"]
+[ext_resource type="Texture2D" uid="uid://dgoww7tws153a" path="res://resources/token_metera.png" id="9_bw5ar"]
+[ext_resource type="Texture2D" uid="uid://dxnjq5itg5ord" path="res://resources/token_minswap.png" id="10_k0pby"]
+[ext_resource type="Texture2D" uid="uid://bjkd776517nia" path="res://resources/token_silver.png" id="12_mtqts"]
+[ext_resource type="Texture2D" uid="uid://cefjhtptx4165" path="res://resources/token_sundae.png" id="14_2hxpv"]
+[ext_resource type="Texture2D" uid="uid://6q0ix1d3as1d" path="res://resources/token_white-trash-warlock.png" id="16_6qkd5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5phyg"]
 size = Vector2(128, 128)
@@ -13,10 +24,74 @@ size = Vector2(128, 128)
 animations = [{
 "frames": [{
 "duration": 1.0,
+"texture": ExtResource("2_o6iwt")
+}],
+"loop": true,
+"name": &"about-stuff",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_42ep8")
+}],
+"loop": true,
+"name": &"collecting-the-simpsons",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_gr5ct")
+}],
+"loop": true,
+"name": &"fluid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_db0v6")
+}],
+"loop": true,
+"name": &"gutenberg-bible",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": ExtResource("1_5phyg")
 }],
 "loop": true,
 "name": &"hosky",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_iw0pl")
+}],
+"loop": true,
+"name": &"iagon",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_ote7x")
+}],
+"loop": true,
+"name": &"indigo",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_bw5ar")
+}],
+"loop": true,
+"name": &"metera",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("10_k0pby")
+}],
+"loop": true,
+"name": &"minswap",
 "speed": 5.0
 }, {
 "frames": [{
@@ -29,6 +104,14 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": ExtResource("12_mtqts")
+}],
+"loop": true,
+"name": &"silver",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": ExtResource("3_smo0k")
 }],
 "loop": true,
@@ -37,10 +120,26 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": ExtResource("14_2hxpv")
+}],
+"loop": true,
+"name": &"sundae",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": ExtResource("5_cwit4")
 }],
 "loop": true,
 "name": &"vyfi",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("16_6qkd5")
+}],
+"loop": true,
+"name": &"white-trash-warlock",
 "speed": 5.0
 }]
 
@@ -54,7 +153,7 @@ shape = SubResource("RectangleShape2D_5phyg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_5i2ku")
-animation = &"hosky"
+animation = &"about-stuff"
 
 [connection signal="mouse_entered" from="Area2D" to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="Area2D" to="." method="_on_mouse_exited"]

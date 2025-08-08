@@ -69,6 +69,8 @@ const query = """
 		... on Token {
 			id,
 			name,
+			displayName,
+			assetName,
 			amount,
 			datum,
 			assets {
@@ -121,15 +123,6 @@ func _ready():
 	pellet_policy_id = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('pelletPolicyId')")
 	asteria_address = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('asteriaAddress')")
 	tokens = JavaScriptBridge.eval("new URL(window.location.href).searchParams.get('tokens')")
-	
-	#mode = "map"
-	#api_url = "http://localhost:8000/graphql"
-	#spacetime_policy_id = "f9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20"
-	#spacetime_address = "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6"
-	#pellet_policy_id = "fc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd4655454c"
-	#pellet_address = "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63"
-	#asteria_address = "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg"
-	#tokens = "[]"
 	
 	Global.set_mode(mode)
 	
@@ -271,7 +264,7 @@ func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "ASTERIA"
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [asteria.position.x, asteria.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Total rewards | %s" % asteria.totalRewards
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "Total rewards | %s ADA" % asteria.totalRewards
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false
@@ -281,9 +274,9 @@ func _on_map_show_asteria_tooltip(asteria: Global.AsteriaData) -> void:
 
 func _on_map_show_token_tooltip(token: Global.TokenData) -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_POINTING_HAND)
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = "%s TOKEN" % token.name.to_upper()
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Title.text = token.displayName.to_upper()
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.text = "Position | %d, %d" % [token.position.x, token.position.y]
-	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "$%s | %s" % [token.name.to_upper(), token.amount]
+	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.text = "%s | %s" % [token.assetName.to_upper(), token.amount]
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label1.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label2.visible = true
 	$GUICanvasLayer/Tooltip/MarginContainer/VBoxContainer/Label3.visible = false

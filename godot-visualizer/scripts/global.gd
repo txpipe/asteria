@@ -37,7 +37,7 @@ func init_data(data: Variant):
 			pellets.append(PelletData.new(item["id"], item["fuel"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Token":
-			tokens.append(TokenData.new(item["id"], item["name"], item["amount"], position, item["datum"], item["assets"]))
+			tokens.append(TokenData.new(item["id"], item["name"], item["displayName"], item["assetName"], item["amount"], position, item["datum"], item["assets"]))
 		
 		if item["__typename"] == "Asteria":
 			asteria = AsteriaData.new(item["id"], item["totalRewards"], position, item["datum"], item["assets"])
@@ -138,14 +138,18 @@ class PelletData:
 class TokenData:
 	var id: String = ""
 	var name: String = ""
+	var displayName: String = ""
+	var assetName: String = ""
 	var amount: int = 0
 	var position: Vector2 = Vector2(0, 0)
 	var datum: String = ""
 	var assets: Variant = []
 	
-	func _init(_id: String, _name: String, _amount: int, _position: Vector2, _datum: String, _assets: Variant):
+	func _init(_id: String, _name: String, _displayName: String, _assetName: String, _amount: int, _position: Vector2, _datum: String, _assets: Variant):
 		id = _id
 		name = _name
+		displayName = _displayName
+		assetName = _assetName
 		amount = _amount
 		position = _position
 		datum = _datum
@@ -156,6 +160,8 @@ class TokenData:
 			"tx": id,
 			"type": "token",
 			"name": name,
+			"displayName": displayName,
+			"assetName": assetName,
 			"amount": amount,
 			"position": {
 				"x": position.x,

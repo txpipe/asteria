@@ -13,7 +13,7 @@ static func new_token(_token_name: String) -> Token:
 
 
 func _ready() -> void:
-	modulate.a = 0.5
+	modulate.a = 0.5 if token_name == "pellet" else 0.75
 	$AnimatedSprite2D.play(token_name)
 
 
@@ -22,4 +22,4 @@ func _on_mouse_entered() -> void:
 
 
 func _on_mouse_exited() -> void:
-	modulate.a = 0.5
+	modulate.a = 0.5 if token_name == "pellet" else 0.75

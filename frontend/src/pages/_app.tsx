@@ -1,4 +1,3 @@
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import type { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
@@ -17,22 +16,17 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout
 }
 
-const client = new ApolloClient({
-  uri: `${process.env.API_URL}/graphql`,
-  cache: new InMemoryCache(),
-});
-
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   return (
     <>
       <Head>
         <title>Asteria</title>
       </Head>
-      <ApolloProvider client={client}>
+      <>
         <NavBar />
         <Component {...pageProps} />
         <Footer />
-      </ApolloProvider>
+      </>
     </>
   );
 }

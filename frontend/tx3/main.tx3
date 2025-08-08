@@ -2,22 +2,22 @@ party Admin;
 party Player;
 
 policy SpacetimePolicy {
-    hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
-    ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+    ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
 }
 
 policy AsteriaPolicy {
-    hash: 0x1b0e10be9cb2915223b5db566baab70167edb4d8e652e888766c3690,
-    ref: 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277#0,
+    hash: 0xd55e332cd46d2abfe24dfa0558c2dedd0114d00424352eb807aac137,
+    ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#0,
 }
 
 policy PelletPolicy {
-    hash: 0xfc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd,
-    ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+    hash: 0x3babcffc6102ec25ced40e1a24fba20371925c46f0299b2b9456360e,
+    ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
 }
 
-asset Fuel = 0xfc8ad4f84181b85dc04f7b8c2984b129284c4e272ef45cd6440575fd."FUEL";
-asset AdminToken = 0x5ffc30389bee5838f5f25d015642f8d291769168145a80a686556e8a."Final Admin";
+asset Fuel = 0x3babcffc6102ec25ced40e1a24fba20371925c46f0299b2b9456360e."FUEL";
+asset AdminToken = 0xdb0d968cda2cc636b28c0f377e66691a065b8004e57be5129aeef822."auth";
 
 type AssetRecord {
     policy_id: Bytes,
@@ -68,12 +68,10 @@ tx create_ship(
     locals {
         initial_fuel: 480, // Should be taken from spaceTime datum
         ship_mint_lovelace_fee: 1000000, // Should be taken from asteria script datum
-        spacetime_policy_hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
-        spacetime_policy_ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
-        spacetime_address: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
-        asteria_policy_ref: 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277#0,
-        asteria_address: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
-        pellet_policy_ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+        spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+        spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
+        asteria_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#0,
+        pellet_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
     }
 
     validity {
@@ -119,7 +117,7 @@ tx create_ship(
     }
 
     output {
-        to: asteria_address,
+        to: AsteriaPolicy,
         amount: asteria + Ada(ship_mint_lovelace_fee),
         datum: AsteriaDatum {
             ship_counter: asteria.ship_counter + 1,
@@ -128,7 +126,7 @@ tx create_ship(
     }
 
     output {
-        to: spacetime_address,
+        to: SpacetimePolicy,
         amount: AnyAsset(spacetime_policy_hash, ship_name, 1) + Fuel(initial_fuel),
         datum: ShipDatum {
             pos_x: p_pos_x,
@@ -149,10 +147,9 @@ tx move_ship(
     tip_slot: Int, // TODO: remove when tip_slot() implemented
 ) {
     locals {
-        spacetime_policy_hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
-        spacetime_policy_ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
-        spacetime_address: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
-        pellet_policy_ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
+        spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+        spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
+        pellet_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
     }
 
     validity {
@@ -193,7 +190,7 @@ tx move_ship(
     }
 
     output {
-        to: spacetime_address,
+        to: SpacetimePolicy,
         amount: ship - Fuel(required_fuel),
         datum: ShipDatum {
             pos_x: ship.pos_x + p_delta_x,
@@ -215,11 +212,9 @@ tx gather_fuel (
     tip_slot: Int, // TODO: remove when tip_slot() implemented
 ) {
     locals {
-        spacetime_policy_hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
-        spacetime_policy_ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
-        spacetime_address: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
-        pellet_policy_ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
-        pellet_address: "addr_test1wr7g448cgxqmshwqfaacc2vyky5jsnzwyuh0ghxkgszhtlgzrxj63",
+        spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+        spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
+        pellet_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
     }
     
     validity {
@@ -263,13 +258,13 @@ tx gather_fuel (
     }
 
     output {
-        to: spacetime_address,
+        to: SpacetimePolicy,
         amount: ship + Fuel(p_gather_amount),
         datum: ShipDatum {...ship},
     }
 
     output {
-        to: pellet_address,
+        to: PelletPolicy,
         amount: pellet - Fuel(p_gather_amount),
         datum: PelletDatum {
             pos_x: pellet.pos_x,

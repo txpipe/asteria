@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import { useChallengeStore, Challenge } from '@/stores/challenge';
 
 const PAGE_SIZE = 10;
@@ -73,7 +73,7 @@ const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProp
         <span className="font-bold">Ship: </span> {hexToAscii(props.record.shipName)}
       </p>
       <div className="flex-initial py-2 px-4 rounded-full bg-[#E7ECEF] text-[#171717]">
-        {`${props.record.distance}km`}
+        {props.record.distance}
       </div>
     </div>
   </a>
@@ -113,11 +113,12 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
   </tr>
 );
 
-export default function Leaderboard() {
+export function Leaderboard() {
   const [ offset, setOffset ] = useState<number>(0);
   const [ leaderboard, setLeaderboard ] = useState<boolean>(true);
 
   const { current } = useChallengeStore();
+
   const { data } = useQuery<LeaderboardQueryResult>(leaderboard ? GET_LEADERBOARD_PLAYERS_RECORDS : GET_LEADERBOARD_WINNERS_RECORDS, {
     variables: {
       spacetimePolicyId: current().spacetimePolicyId,
@@ -237,5 +238,20 @@ export default function Leaderboard() {
       </div>
 
     </div>
+  );
+}
+
+export default function LeaderboardWrapper() {
+  const { current } = useChallengeStore();
+
+  const apolloClient = new ApolloClient({
+    uri: `${current().apiUrl}/graphql`,
+    cache: new InMemoryCache(),
+  });
+
+  return (
+    <ApolloProvider client={apolloClient}>
+      <Leaderboard />
+    </ApolloProvider>
   );
 }

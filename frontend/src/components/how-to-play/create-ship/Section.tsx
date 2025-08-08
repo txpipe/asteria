@@ -12,91 +12,68 @@ import CreateShipDescription from '@/components/how-to-play/create-ship/Descript
 
 import type { ResponseData } from '@/pages/api/asteria/create-ship';
 import type { ConnectedWallet } from '@/hooks/useCardano';
+import { useChallengeStore } from '@/stores/challenge';
 
-const tx3File = `// Asteria player
-party Player; // Sent by Form
-
-// Tx3 transaction for creating a ship
-tx createShip(
+const tx3File = `tx create_ship(
     p_pos_x: Int, // Ship Position X
     p_pos_y: Int, // Ship Position Y
-    tx_latest_posix_time: Int,
     ship_name: Bytes, // Name of the ship
     pilot_name: Bytes, // Name of the pilot
+    tip_slot: Int, // TODO: remove when tip_slot() implemented
 ) {
     locals {
-        shipshard_policy_hash: 0xf9497fc64e87c4da4ec6d2bd1a839b6af10a77c10817db7143ac3d20,
         initial_fuel: 480, // Should be taken from spaceTime datum
         ship_mint_lovelace_fee: 1000000, // Should be taken from asteria script datum
+        spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
+        spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
+        asteria_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#0,
+        pellet_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#2,
     }
 
     validity {
-        until_slot: tx_latest_posix_time,
+        until_slot: tip_slot, // tip_slot() + 300
     }
 
-    // References
-    // SpaceTime
-    reference SpaceTimeRef {
-        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
+    reference SpacetimeRef {
+        ref: spacetime_policy_ref,
     }
 
-    // Pellet
-    reference PelletRef {
-        ref: 0xba6fab625d70a81f5d1b699e7efde4b74922d06224bef1f6b84f3adf0a61f3f3#0,
-    }
-
-    // Asteria
     reference AsteriaRef {
-        ref: 0x39871aab15b7c5ab1075ba431d7475f3977fe40fbb8d654b6bdf6f6726659277#0,
+        ref: asteria_policy_ref,
     }
 
-    // Input blocks
-    // Ensure that the Player has the required assets
+    reference PelletRef {
+        ref: pellet_policy_ref,
+    }
+
     input source {
         from: Player,
         min_amount: fees + Ada(ship_mint_lovelace_fee),
     }
 
-    input spaceTime {
-        ref: 0x41e5881cd3bdc3f08bcf341796347e9027e3bcd8d58608b4fcfca5c16cbf5921#0,
-        datum_is: SpaceTimeDatum,
-    }
-
     input asteria {
-        // Asteria Contract
-        from: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
+        from: AsteriaPolicy,
         min_amount: AdminToken(1),
         datum_is: AsteriaDatum,
     }
-
-    // Optional mint/burn blocks
-    // mint {
-    //     amount: AnyAsset(shipshard_policy_hash, "PILOT" + asteria.ship_counter + 1, 1)
-    //         + AnyAsset(shipshard_policy_hash, "SHIP" + asteria.ship_counter + 1, 1),
-    //     redeemer: (),
-    // }
+    
     mint {
-        amount: AnyAsset(shipshard_policy_hash, pilot_name, 1)
-            + AnyAsset(shipshard_policy_hash, ship_name, 1),
+        amount: AnyAsset(spacetime_policy_hash, pilot_name, 1) + AnyAsset(spacetime_policy_hash, ship_name, 1),
         redeemer: (),
     }
 
     mint {
-        // amount: Fuel(spaceTime.initial_fuel),
         amount: Fuel(initial_fuel),
         redeemer: (),
     }
 
-    // Output blocks
     output {
         to: Player,
-        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(shipshard_policy_hash, pilot_name, 1),
+        amount: source - fees - Ada(ship_mint_lovelace_fee) + AnyAsset(spacetime_policy_hash, pilot_name, 1),
     }
 
-    // Output - Pay to Contract
     output {
-        // Asteria Contract
-        to: "addr_test1wqdsuy97njefz53rkhd4v6a2kuqk0md5mrn996ygwekrdyq369wjg",
+        to: AsteriaPolicy,
         amount: asteria + Ada(ship_mint_lovelace_fee),
         datum: AsteriaDatum {
             ship_counter: asteria.ship_counter + 1,
@@ -105,17 +82,14 @@ tx createShip(
     }
 
     output {
-        // SpaceTime Contract
-        to: "addr_test1wru5jl7xf6rufkjwcmft6x5rnd40zznhcyyp0km3gwkr6gq6sxzm6",
-        // to: ShipShardPolicy,
-        // amount: AnyAsset(shipshard_policy_hash, ship_name, 1) + Fuel(spaceTime.initial_fuel),
-        amount: AnyAsset(shipshard_policy_hash, ship_name, 1) + Fuel(initial_fuel),
+        to: SpacetimePolicy,
+        amount: AnyAsset(spacetime_policy_hash, ship_name, 1) + Fuel(initial_fuel),
         datum: ShipDatum {
             pos_x: p_pos_x,
             pos_y: p_pos_y,
             ship_token_name: ship_name,
             pilot_token_name: pilot_name,
-            last_move_latest_time: tx_latest_posix_time,
+            last_move_latest_time: tip_slot,
         },
     }
 }`;
@@ -124,9 +98,9 @@ const jsFile = `const result = await protocol.createShipTx({
   player: playerAddress,
   pPosX: positionX,
   pPosY: positionY,
-  txLatestPosixTime: blockSlotValue + 300, // 5 minutes from last block
   pilotName: new TextEncoder().encode(\`PILOT\${shipNumber}\`),
   shipName: new TextEncoder().encode(\`SHIP\${shipNumber}\`),
+  tipSlot: blockSlotValue + 300, // 5 minutes from last block
 });`;
 
 interface CreateShipProps {
@@ -134,6 +108,8 @@ interface CreateShipProps {
 }
 
 export default function CreateShip(props: CreateShipProps) {
+  const { current } = useChallengeStore();
+
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
@@ -185,6 +161,7 @@ export default function CreateShip(props: CreateShipProps) {
     setFormState({});
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
+    data['network'] = current().network;
     try {
       const res = await fetch('/api/asteria/create-ship', {
         method: 'POST',
@@ -202,9 +179,9 @@ export default function CreateShip(props: CreateShipProps) {
 
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
-      <Tab label="Description">
+      {/* <Tab label="Description">
         <CreateShipDescription />
-      </Tab>
+      </Tab> */}
 
       <Tab label="Tx Form">
         <form className="flex flex-col gap-8 justify-between h-full" onSubmit={handleSubmit}>

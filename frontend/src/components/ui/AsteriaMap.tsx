@@ -10,7 +10,7 @@ interface AsteriaMapProps {
 const baseURL = '/visualizer/index.html';
 
 const getTokensQuery = (tokens: Token[]) => {
-  const data = tokens.map(token => `{assetName: "${token.assetName}", policyId: "${token.policyId}"}`).join(',');
+  const data = tokens.map(token => `{name: "${token.name}", displayName: "${token.displayName}", assetName: "${token.assetName}", policyId: "${token.policyId}", decimals: ${token.decimals ?? 0}}`).join(',');
   return `[${data}]`;
 };
 
@@ -18,7 +18,7 @@ export default function AsteriaMap({ mode, challenge, className }: AsteriaMapPro
   const src = useMemo(() => {
     const params = new URLSearchParams([
       ['mode', mode],
-      ['apiUrl', `${process.env.API_URL}/graphql`],
+      ['apiUrl', `${challenge.apiUrl}/graphql`],
       ['spacetimePolicyId', challenge.spacetimePolicyId],
       ['spacetimeAddress', challenge.spacetimeAddress],
       ['pelletPolicyId', challenge.pelletPolicyId],

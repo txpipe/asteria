@@ -6,7 +6,8 @@ const nextConfig = {
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   transpilePackages: ['next-mdx-remote'],
   env: {
-    API_URL: process.env.API_URL,
+    PREVIEW_API_URL: process.env.PREVIEW_API_URL,
+    MAINNET_API_URL: process.env.MAINNET_API_URL,
   },
 }
 
