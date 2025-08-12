@@ -36,10 +36,6 @@ export default function HeroSection() {
               <span>Build your own bot</span>
               <BotIcon />
             </Link>
-            <Link href="/how-to-play" className="btn btn-primary-outline w-fit">
-              <GamepadIcon />
-              <span>How to play</span>
-            </Link>
           </div>
         </div>
 

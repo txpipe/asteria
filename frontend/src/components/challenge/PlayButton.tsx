@@ -32,7 +32,7 @@ export default function PlayButton({ slug, label, destination, showIcon }: PlayB
     const index = challenges.findIndex(c => c.slug === slug);
     if (index >= 0) {
       select(index);
-      router.push(destination ?? '/how-to-play');
+      router.push(destination ?? '/explorer');
     }
   }
   return (
