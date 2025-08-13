@@ -40,15 +40,6 @@ export default function HeroSection() {
               <GamepadIcon />
               <span>How to play</span>
             </Link> */}
-            <Link
-              href="https://github.com/txpipe/asteria-starter-kit"
-              className="btn btn-primary-outline w-fit"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <GamepadIcon />
-              <span>Starter kit</span>
-            </Link>
           </div>
         </div>
 
