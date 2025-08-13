@@ -189,7 +189,7 @@ pub struct LeaderboardRecord {
 }
 
 #[derive(SimpleObject, Clone)]
-pub struct LatestShipToken {
+pub struct NextShipTokenName {
     ship_name: String,
     pilot_name: String,
 }
@@ -579,12 +579,12 @@ impl QueryRoot {
         Ok(map_objects)
     }
 
-    async fn last_ship_token(
+    async fn next_ship_token_name(
         &self,
         ctx: &Context<'_>,
         spacetime_address: String,
         spacetime_policy_id: String,
-    ) -> Result<LatestShipToken, Error> {
+    ) -> Result<NextShipTokenName, Error> {
         let pool = ctx
             .data::<sqlx::PgPool>()
             .map_err(|e| Error::new(e.message))?;
@@ -614,7 +614,7 @@ impl QueryRoot {
 
         let ship_number = String::from_utf8(hex::decode(format!("{}", ship_number_encoded))?)?.parse::<i32>().unwrap_or_default() + 1;
 
-        Ok(LatestShipToken {
+        Ok(NextShipTokenName {
             ship_name: format!("SHIP{}", ship_number),
             pilot_name: format!("PILOT{}", ship_number),
         })
