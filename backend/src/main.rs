@@ -188,6 +188,17 @@ pub struct LeaderboardRecord {
     distance: i32,
 }
 
+#[derive(SimpleObject, Clone)]
+pub struct LatestShipToken {
+    ship_name: String,
+    pilot_name: String,
+}
+
+#[derive(SimpleObject, Clone)]
+pub struct LatestSlotNumber {
+    slot: i32,
+}
+
 #[derive(Union)]
 pub enum MapObject {
     Ship(Ship),
@@ -566,6 +577,68 @@ impl QueryRoot {
             .collect();
 
         Ok(map_objects)
+    }
+
+    async fn last_ship_token(
+        &self,
+        ctx: &Context<'_>,
+        spacetime_address: String,
+        spacetime_policy_id: String,
+    ) -> Result<LatestShipToken, Error> {
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let fetched_objects = sqlx::query!(
+            "
+            SELECT
+                CAST(REPLACE(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT), '53484950', '') AS INTEGER) AS ship_number
+            FROM 
+                utxos
+            WHERE 
+                utxo_address(era, cbor) = from_bech32($1::varchar) AND utxo_has_policy_id(era, cbor, decode($2::varchar, 'hex'))
+            ORDER BY ship_number DESC
+            LIMIT 1
+            ",
+            spacetime_address,
+            spacetime_policy_id,
+        )
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        let ship_number_encoded = fetched_objects
+            .get(0)
+            .and_then(|r| r.ship_number.clone())
+            .unwrap_or_default();
+
+        let ship_number = String::from_utf8(hex::decode(format!("{}", ship_number_encoded))?)?.parse::<i32>().unwrap_or_default() + 1;
+
+        Ok(LatestShipToken {
+            ship_name: format!("SHIP{}", ship_number),
+            pilot_name: format!("PILOT{}", ship_number),
+        })
+    }
+
+    async fn last_slot(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<LatestSlotNumber, Error> {
+        let pool = ctx
+            .data::<sqlx::PgPool>()
+            .map_err(|e| Error::new(e.message))?;
+
+        let fetched_objects = sqlx::query!("SELECT slot FROM blocks ORDER BY slot DESC LIMIT 1")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::new(e.to_string()))?;
+
+        let slot = fetched_objects
+            .get(0)
+            .and_then(|r| Some(r.slot.clone()))
+            .unwrap_or_default();
+
+        Ok(LatestSlotNumber { slot })
     }
 }
 
