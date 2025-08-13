@@ -56,7 +56,7 @@ export default function ChallengeCard({ comingSoon, image, day, month, name, net
           onClick={!comingSoon ? onSelect : undefined}
           disabled={comingSoon || !onSelect}
         >
-          {comingSoon ? 'Coming Soon' : 'Explore'}
+          {comingSoon ? 'Coming Soon' : onSelect ? 'Select' : 'Selected' }
         </button>
 
         {sponsors && sponsors.length > 0 && (

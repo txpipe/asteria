@@ -36,9 +36,18 @@ export default function HeroSection() {
               <span>Build your own bot</span>
               <BotIcon />
             </Link>
-            <Link href="/how-to-play" className="btn btn-primary-outline w-fit">
+            {/* <Link href="/how-to-play" className="btn btn-primary-outline w-fit">
               <GamepadIcon />
               <span>How to play</span>
+            </Link> */}
+            <Link
+              href="https://github.com/txpipe/asteria-starter-kit"
+              className="btn btn-primary-outline w-fit"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GamepadIcon />
+              <span>Starter kit</span>
             </Link>
           </div>
         </div>
