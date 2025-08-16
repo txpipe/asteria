@@ -24,13 +24,9 @@ To create a ship, a participant must mint the corresponding NFT from the valid p
 
 A unique UTxO will be place at the center of the grid to hold the rewards for the winner of the challenge. To claim rewards, a ship must be located at the center of the grid. Each claim is allowed to collect 1/2 of the total rewards.
 
-## Backstory
-
-// TODO
-
 ## Getting started
 
-// TODO
+[Asteria-Starter-Kit](https://github.com/txpipe/asteria-starter-kit)
 
 ## Monitoring progress
 
