@@ -60,7 +60,7 @@ const getShipByAddress = (address: string): string => {
 }
 
 const LeaderboardChip: React.FunctionComponent<RecordProps> = (props: RecordProps) => (
-  <a href={`${props.challenge.explorerUrl}${props.record.address.replace('#0', '')}`} target="_blank">
+  <a href={`${props.challenge.explorerUrl}${props.record.address}`} target="_blank">
     <div className="flex-initial flex flex-row items-center mx-4 pl-8 pr-6 py-4 rounded-full bg-linear-to-r from-[#46434312] to-[#FFFFFF12]">
       <h1 className="flex-initial pb-1 mr-6 font-mono text-5xl text-[#07F3E6]">
         {props.record.ranking}
@@ -88,10 +88,10 @@ const LeaderboardRow: React.FunctionComponent<RecordProps> = (props: RecordProps
       <img className="inline mr-4 w-8 h-8" src={getShipByAddress(props.record.address)} />
       <a
         className="text-[#07F3E6] underline"
-        href={`${props.challenge.explorerUrl}${props.record.address.replace('#0', '')}`}
+        href={`${props.challenge.explorerUrl}${props.record.address}`}
         target="_blank"
       >
-        {props.record.address.replace('#0', '')}
+        {props.record.address}
       </a>
     </td>
     <td className="p-4 text-[#D7D7D7] text-left border border-[#333333]">
@@ -129,7 +129,7 @@ export function Leaderboard() {
 
   const hasNextPage = () => {
     if (leaderboard) {
-      return data && data.leaderboardPlayers && offset + PAGE_SIZE < data.leaderboardPlayers.slice(3).length;
+      return data && data.leaderboardPlayers && offset + PAGE_SIZE < data.leaderboardPlayers.length;
     } else {
       return data && data.leaderboardWinners && offset + PAGE_SIZE < data.leaderboardWinners.length;
     }
@@ -153,7 +153,7 @@ export function Leaderboard() {
 
   const getPagination = () => {
     if (leaderboard) {
-      return `Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboardPlayers ? data.leaderboardPlayers.length-3 : 0}`;
+      return `Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboardPlayers ? data.leaderboardPlayers.length : 0}`;
     } else {
       return `Displaying ${offset+1}-${offset+PAGE_SIZE} of ${data && data.leaderboardWinners ? data.leaderboardWinners.length : 0}`;
     }
@@ -162,7 +162,7 @@ export function Leaderboard() {
   const getPageData = () => {
     if (leaderboard) {
       if (!data || !data.leaderboardPlayers) return [];
-      return data.leaderboardPlayers.slice(3).slice(offset, offset+PAGE_SIZE);
+      return data.leaderboardPlayers.slice(offset, offset+PAGE_SIZE);
     } else {
       if (!data || !data.leaderboardWinners) return [];
       return data.leaderboardWinners.slice(offset, offset+PAGE_SIZE);
@@ -186,14 +186,14 @@ export function Leaderboard() {
             {`ASTERIA ${ leaderboard ? 'PLAYERS' : 'WINNERS' } >`}
           </span>
         </h1>
-        <input
+        {/* <input
           type="text"
           placeholder="Type your ADDRESS / SHIP NAME"
           className="form-input flex-initial basis-2/5 mr-6 px-6 py-4 rounded-3xl bg-[#242424] border-transparent focus:border-[#919090] text-[#919090] focus:ring-0"
         />
         <button className="flex-initial font-mono text-black bg-[#07F3E6] py-4 px-8 rounded-full text-base">
           Find me
-        </button>
+        </button> */}
       </div>
 
       {leaderboard && (
