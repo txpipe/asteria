@@ -137,11 +137,11 @@ function getRingAreaCoordinates(inner_r: number, outer_r: number): Coordinates {
 /**
  * Returns an array with a random sample of pellet parameters over the area
  * between two circles with radii inner_r and outer_r respectively.
- * @param inner_r Inner diamond diagonal. Must be greater than or equal to 0.
- * @param outer_r Outer diamond diagonal. Must be greater than or equal to inner_r.
+ * @param inner_r Inner circle radius. Must be greater than or equal to 0.
+ * @param outer_r Outer circle radius. Must be greater than or equal to inner_r.
  * @param min_fuel Minimum fuel held by the sample pellets. Must be greater than or equal to 0.
  * @param max_fuel Maximum fuel held by the sample pellets. Must be greater than or equal to min_fuel.
- * @param density Density of the sample: equals 1 if every diamond point is taken. Must be in the range 0 - 1, inclusive.
+ * @param density Density of the sample: equals 1 if every ring area point is taken. Must be in the range 0 - 1, inclusive.
  */
 function getRingAreaSample(
   inner_r: number,
@@ -165,7 +165,7 @@ function getRingAreaSample(
 
 function writePelletsCSV(pellets: PelletParams, path: string) {
   const csv = stringify(pellets, {
-    columns: ["fuel", "pos_x", "pos_y"],
+    columns: ["fuel", "pos_x", "pos_y", "prize_policy", "prize_name", "prize_amount"],
   });
   Deno.writeTextFileSync(path, csv);
 }
@@ -174,13 +174,16 @@ async function readPelletsCSV(path: string) {
   const text = await Deno.readTextFile(path);
   const data = parse(text, {
     skipFirstRow: true,
-    columns: ["fuel", "pos_x", "pos_y"],
+    columns: ["fuel", "pos_x", "pos_y", "prize_policy", "prize_name", "prize_amount"],
   });
-  const params: { fuel: bigint; pos_x: bigint; pos_y: bigint }[] = data.map(
+  const params: { fuel: bigint; pos_x: bigint; pos_y: bigint; prize_policy: string | null; prize_name: string | null; prize_amount: bigint | null }[] = data.map(
     (p) => ({
       fuel: BigInt(p.fuel),
       pos_x: BigInt(p.pos_x),
       pos_y: BigInt(p.pos_y),
+      prize_policy: p.prize_policy || null,
+      prize_name: p.prize_name || null,
+      prize_amount: BigInt(p.prize_amount) || null,
     })
   );
   return params;
