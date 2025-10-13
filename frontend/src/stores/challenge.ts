@@ -52,6 +52,11 @@ export const challenges: Challenge[] = [{
   network: 'mainnet',
   explorerUrl: 'https://cexplorer.io/tx/',
   tokens: [{
+    name: 'cardano',
+    displayName: 'Cardano Summit 2025',
+    assetName: 'Cardano Summit 2025 discount shard',
+    policyId: '5fb286e39c3cda5a5abd17501c17b01987ebfa282df129c4df1bf27ee29ca82073756d6d6974203230323520646973636f756e74207368617264',
+  },{
     name: 'iagon',
     displayName: 'IAGON',
     assetName: '$IAG',

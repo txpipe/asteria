@@ -1,9 +1,10 @@
-[gd_scene load_steps=19 format=3 uid="uid://5y7v35p7p3lu"]
+[gd_scene load_steps=20 format=3 uid="uid://5y7v35p7p3lu"]
 
 [ext_resource type="Texture2D" uid="uid://c1sms7lmfcvfe" path="res://resources/token_hosky.png" id="1_5phyg"]
 [ext_resource type="Script" uid="uid://bw2uwnf5pgc7t" path="res://scripts/token.gd" id="1_xdvoi"]
 [ext_resource type="Texture2D" uid="uid://c5xtkfexbw526" path="res://resources/token_about-stuff.png" id="2_o6iwt"]
 [ext_resource type="Texture2D" uid="uid://bg1knpyijgeud" path="res://resources/token_collecting-the-simpsons.png" id="3_42ep8"]
+[ext_resource type="Texture2D" uid="uid://bjuk3dem73nti" path="res://resources/token_cardano.png" id="3_gr5ct"]
 [ext_resource type="Texture2D" uid="uid://c7b1phdcwbd7e" path="res://resources/token_pellet.png" id="3_ijof8"]
 [ext_resource type="Texture2D" uid="uid://dglhithj5wp1p" path="res://resources/token_stuff.png" id="3_smo0k"]
 [ext_resource type="Texture2D" uid="uid://dw2dk2yopxhsy" path="res://resources/token_fluid.png" id="4_gr5ct"]
@@ -28,6 +29,14 @@ animations = [{
 }],
 "loop": true,
 "name": &"about-stuff",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_gr5ct")
+}],
+"loop": true,
+"name": &"cardano",
 "speed": 5.0
 }, {
 "frames": [{
@@ -153,7 +162,7 @@ shape = SubResource("RectangleShape2D_5phyg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_5i2ku")
-animation = &"about-stuff"
+animation = &"cardano"
 
 [connection signal="mouse_entered" from="Area2D" to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="Area2D" to="." method="_on_mouse_exited"]
