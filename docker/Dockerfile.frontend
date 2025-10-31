@@ -1,6 +1,6 @@
 FROM --platform=linux/amd64 ubuntu:20.04 AS build
 
-ARG GODOT_VERSION="4.4"
+ARG GODOT_VERSION="4.5.1"
 
 USER root
 

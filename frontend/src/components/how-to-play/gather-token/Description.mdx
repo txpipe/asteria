@@ -1,0 +1,16 @@
+import Layout from "../mdx/Layout";
+export default ({ children }) => <Layout>{children}</Layout>;
+
+#### With this transaction you can gather fuel from the fuel pellets for your ship and retrieve tokens from the pellet.
+
+Updates the amount of fuel tokens in both `ShipState` and `PelletState` UTxOs, adding the `amount` (specified in the redeemer) from the first and subtracting it from the latter. Also allows the ship owner to get any amount of the prize tokens held in the pellet.
+
+#### Rules to take into account:
+
+- the ship number has to be the one controlled by the pilot token in your wallet.
+- the ship has to be in the same position than the pellet
+- the ship can't have more than 5 fuel units
+
+#### Diagram
+
+![gatherFuel diagram](/txs/gather-fuel.png)

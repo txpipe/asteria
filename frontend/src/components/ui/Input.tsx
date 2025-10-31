@@ -8,15 +8,36 @@ interface Props extends InputProps {
   label?: string;
   error?: string;
   containerClassName?: string;
-}
+  button?: string;
+  onClickButton?: () => void;
+  comment?: string;
+} 
 
 function InputElem(
-  { error, label, disabled, containerClassName, ...props }: Props,
+  { error, label, disabled, containerClassName, button, comment, onClickButton, ...props }: Props,
   ref: React.ForwardedRef<HTMLInputElement>,
 ) {
   return (
     <fieldset className={clsx(containerClassName, 'mt-4')} disabled={disabled}>
-      {label && <label className='font-mono text-sm' htmlFor={props.name}>{label}</label>}
+      {label && (
+        <div className='flex items-end justify-between'>
+          <label className='font-mono text-sm' htmlFor={props.name}>{label}</label>
+          {button && (
+            <button
+              type="button"
+              className="text-[#07F3E6] border border-solid border-[#07F3E6] py-1 px-3 rounded-full text-xs"
+              onClick={() => onClickButton ? onClickButton() : null}
+            >
+              {button}
+            </button>
+          )}
+          {comment && (
+            <span className="text-sm text-white/90 mr-1">
+              {comment}
+            </span>
+          )}
+        </div>
+      )}
       <input
         {...props}
         ref={ref}

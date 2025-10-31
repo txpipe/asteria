@@ -202,6 +202,11 @@ func _on_follow_ship_selected(ship_number: String) -> void:
 		selected_ship_position_changed.emit(ship_data.position * Global.get_cell_size() + initial_position)
 		Global.set_selected_ship(ship_data)
 		_on_main_dataset_updated()
+		
+		JavaScriptBridge.eval(
+			"parent.window.postMessage({ action: 'ship_selected', position: { x: %s, y: %s }, payload: %s })"
+			% [ship_data.position.x, ship_data.position.y, ship_data.json()]
+		)
 
 
 func _on_next_position_reset() -> void:

@@ -45,10 +45,10 @@ export default function Menu({ className }: MenuProps) {
     <ul className={clsx('fixed right-2 top-1/2 -translate-y-1/2 z-1 space-y-4 min-w-[168px] bg-[#0A0A0A]/80 p-2', className)}>
       <MenuItem href="#create-ship" isActive={activeHash === '#create-ship'} label="CREATE SHIP" />
       <MenuItem href="#move-ship" isActive={activeHash === '#move-ship'} label="MOVE SHIP" />
-      {/* <MenuItem href="#gather-fuel" isActive={activeHash === '#gather-fuel'} label="GATHER FUEL" />
-      <MenuItem href="#mine-tokens" isActive={activeHash === '#mine-tokens'} label="MINE TOKENS" />
+      <MenuItem href="#gather-fuel" isActive={activeHash === '#gather-fuel'} label="GATHER FUEL" />
+      <MenuItem href="#gather-token" isActive={activeHash === '#gather-token'} label="GATHER TOKEN" />
       <MenuItem href="#mine-asteria" isActive={activeHash === '#mine-asteria'} label="MINE ASTERIA" />
-      <MenuItem href="#quit-game" isActive={activeHash === '#quit-game'} label="QUIT GAME" /> */}
+      <MenuItem href="#quit-game" isActive={activeHash === '#quit-game'} label="QUIT GAME" />
     </ul>
   );
 }

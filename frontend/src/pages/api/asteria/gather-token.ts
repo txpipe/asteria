@@ -21,47 +21,47 @@ export default async function handler(
   const shipNumber = formData['shipNumber'] as string;
   const blockSlot = formData['blockSlot'] as string;
   const playerAddress = formData['playerAddress'] as string;
-  const deltaXValue = formData['deltaX'] as string;
-  const deltaYValue = formData['deltaY'] as string;
+  const pelletRef = formData['pelletRef'] as string;
+  const fuelAmountValue = formData['fuelAmount'] as string;
+  const tokenAmountValue = formData['tokenAmount'] as string;
+  const tokenName = formData['tokenName'] as string;
+  const tokenPolicyHash = formData['tokenPolicyHash'] as string;
 
   const errors: Record<string, string> = {};
 
   if (!shipNumber) errors.shipNumber = 'Ship number is required';
   if (!playerAddress) errors.playerAddress = 'Player address is required';
-  if (!deltaXValue) errors.deltaX = 'Delta X is required';
-  if (!deltaYValue) errors.deltaY = 'Delta Y is required';
+  if (!pelletRef) errors.pelletRef = 'Pellet reference is required';
+  if (!fuelAmountValue) errors.fuelAmount = 'Fuel amount is required';
   if (!blockSlot) errors.blockSlot = 'Block Slot is required';
+  if (!tokenAmountValue) errors.tokenAmount = 'Token amount is required';
+  if (!tokenName) errors.tokenName = 'Token name is required';
+  if (!tokenPolicyHash) errors.tokenPolicyHash = 'Token policy hash is required';
 
-  const deltaX = Number(deltaXValue);
-  if (Number.isNaN(deltaX)) errors.deltaX = 'Delta X is not a number';
-
-  const deltaY = Number(deltaYValue);
-  if (Number.isNaN(deltaY)) errors.deltaY = 'Delta Y is not a number';
+  const fuelAmount = Number(fuelAmountValue);
+  if (Number.isNaN(fuelAmount)) errors.fuelAmount = 'Fuel amount is not a number';
 
   const blockSlotValue = Number(blockSlot);
   if (Number.isNaN(blockSlotValue)) errors.blockSlot = 'Block Slot is not a number';
+
+  const tokenAmount = Number(tokenAmountValue);
+  if (Number.isNaN(tokenAmount)) errors.tokenAmount = 'Token amount is not a number';
 
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
 
   try {
-    const slotRequiredPerStep = 12096;
-    const distance = Math.abs(deltaX) + Math.abs(deltaY);
-    const sinceSlot = blockSlotValue - 100;
-    const untilSlot = blockSlotValue + slotRequiredPerStep * distance;
-    const lastMoveTimestamp = Date.now() + slotRequiredPerStep * distance * 1000;
-
-    const result = await getProtocol(formData['network']).moveShipTx({
+    const result = await getProtocol(formData['network']).gatherTokenTx({
       player: playerAddress,
-      pDeltaX: deltaX,
-      pDeltaY: deltaY,
-      requiredFuel: distance,
-      shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
+      fuelAmount: fuelAmount,
       pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
-      sinceSlot,
-      untilSlot,
-      lastMoveTimestamp,
+      shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
+      pelletRef,
+      sinceSlot: blockSlotValue - 100,
+      tokenAmount,
+      tokenName: new TextEncoder().encode(tokenName),
+      tokenPolicyHash: Uint8Array.from(Buffer.from(tokenPolicyHash, "hex")),
     });
 
     return res.json({
