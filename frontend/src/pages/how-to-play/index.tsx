@@ -7,6 +7,10 @@ import Menu from '@/components/how-to-play/Menu';
 import Section from '@/components/how-to-play/Section';
 import CreateShipSection from '@/components/how-to-play/create-ship/Section';
 import MoveShipSection from '@/components/how-to-play/move-ship/Section';
+import GatherFuelSection from '@/components/how-to-play/gather-fuel/Section';
+import GatherTokenSection from '@/components/how-to-play/gather-token/Section';
+import MineAsteriaSection from '@/components/how-to-play/mine-asteria/Section';
+import QuitGameSection from '@/components/how-to-play/quit-game/Section';
 
 export default function HowToPlay() {
   const { current } = useChallengeStore();
@@ -61,6 +65,22 @@ export default function HowToPlay() {
 
         <Section title="MOVE SHIP" id="move-ship">
           <MoveShipSection isActive={activeSection === 'move-ship'} />
+        </Section>
+
+        <Section title="GATHER FUEL" id="gather-fuel">
+          <GatherFuelSection isActive={activeSection === 'gather-fuel'} />
+        </Section>
+
+        <Section title="GATHER TOKEN" id="gather-token">
+          <GatherTokenSection isActive={activeSection === 'gather-token'} />
+        </Section>
+
+        <Section title="MINE ASTERIA" id="mine-asteria">
+          <MineAsteriaSection isActive={activeSection === 'mine-asteria'} />
+        </Section>
+
+        <Section title="QUIT GAME" id="quit-game">
+          <QuitGameSection isActive={activeSection === 'quit-game'} />
         </Section>
       </div>
 

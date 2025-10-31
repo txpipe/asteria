@@ -1,30 +1,27 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-import CodeBlock from '@/components/ui/CodeBlock';
 import Input from '@/components/ui/Input';
 import Alert from '@/components/ui/Alert';
+import CodeBlock from '@/components/ui/CodeBlock';
 import CopyButton from '@/components/ui/CopyButton';
 import ConnectWallet from '@/components/ui/ConnectWallet';
 
 import Tabs, { Tab } from '@/components/how-to-play/Tabs';
-import CreateShipDescription from '@/components/how-to-play/create-ship/Description.mdx';
+import MineAsteriaDescription from '@/components/how-to-play/mine-asteria/Description.mdx';
 
-import type { ResponseData } from '@/pages/api/asteria/create-ship';
+import type { ResponseData } from '@/pages/api/asteria/mine-asteria';
 import type { ConnectedWallet } from '@/hooks/useCardano';
 import { useChallengeStore } from '@/stores/challenge';
 
-const tx3File = `tx create_ship(
-  p_pos_x: Int, // Ship Position X
-  p_pos_y: Int, // Ship Position Y
-  ship_name: Bytes, // Name of the ship
-  pilot_name: Bytes, // Name of the pilot
-  tip_slot: Int, // TODO: remove when tip_slot() implemented
-  last_move_timestamp: Int,
+const tx3File = `tx mine_asteria(
+  ship_name: Bytes,
+  pilot_name: Bytes,
+  ship_fuel: Int,
+  mine_amount: Int,
+  since_slot: Int,
 ) {
   locals {
-    initial_fuel: 5, // Should be taken from spaceTime datum
-    ship_mint_lovelace_fee: 1000000, // Should be taken from asteria script datum
     spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
     spacetime_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#1,
     asteria_policy_ref: 0x3d308c0f3deb1eff764cbb765452c53d30704748681d7acd61c7775aeb8a8e46#0,
@@ -32,7 +29,7 @@ const tx3File = `tx create_ship(
   }
 
   validity {
-    until_slot: tip_slot, // tip_slot() + 300
+    since_slot: since_slot,
   }
 
   reference SpacetimeRef {
@@ -47,99 +44,100 @@ const tx3File = `tx create_ship(
     ref: pellet_policy_ref,
   }
 
-  input* gas {
-    from: Player,
-    min_amount: fees + Ada(ship_mint_lovelace_fee) + min_utxo(pilot_token) + min_utxo(new_ship) + min_utxo(gas_change),
-  }
-
   input asteria {
     from: AsteriaPolicy,
     min_amount: AdminToken(1),
     datum_is: AsteriaDatum,
-    redeemer: AsteriaRedeemer::AddNewShip {},
+    redeemer: AsteriaRedeemer::Mine {},
   }
-  
-  mint {
-    amount: AnyAsset(spacetime_policy_hash, pilot_name, 1) + AnyAsset(spacetime_policy_hash, ship_name, 1),
-    redeemer: ShipyardRedeemer::MintShip {},
+
+  input ship {
+    from: SpacetimePolicy,
+    datum_is: ShipDatum,
+    min_amount: AnyAsset(spacetime_policy_hash, ship_name, 1),
+    redeemer: ShipRedeemer::MineAsteria {},
+  }
+
+  input* pilot {
+    from: Player,
+    min_amount: AnyAsset(spacetime_policy_hash, pilot_name, 1) + fees + min_utxo(pilot_change),
   }
 
   mint {
-    amount: Fuel(initial_fuel),
-    redeemer: FuelRedeemer::MintFuel {},
+    amount: Fuel(ship_fuel) - Fuel(ship_fuel) - Fuel(ship_fuel),
+    redeemer: FuelRedeemer::BurnFuel {},
   }
 
-  output pilot_token {
-    to: Player,
-    amount: AnyAsset(spacetime_policy_hash, pilot_name, 1) + min_utxo(pilot_token),
+  mint {
+    amount: AnyAsset(spacetime_policy_hash, ship_name, 1) - AnyAsset(spacetime_policy_hash, ship_name, 1) - AnyAsset(spacetime_policy_hash, ship_name, 1),
+    redeemer: ShipyardRedeemer::BurnShip {},
   }
 
-  output updated_asteria {
+  output {
     to: AsteriaPolicy,
-    amount: asteria + Ada(ship_mint_lovelace_fee),
-    datum: AsteriaDatum {
-      ship_counter: asteria.ship_counter + 1,
-      shipyard_policy: asteria.shipyard_policy,
-    },
+    amount: asteria - Ada(mine_amount),
+    datum: AsteriaDatum {...asteria},
   }
 
-  output new_ship {
+  output {
     to: SpacetimePolicy,
-    amount: AnyAsset(spacetime_policy_hash, ship_name, 1) + Fuel(initial_fuel) + min_utxo(new_ship),
-    datum: ShipDatum {
-      pos_x: p_pos_x,
-      pos_y: p_pos_y,
-      ship_token_name: ship_name,
-      pilot_token_name: pilot_name,
-      last_move_latest_time: last_move_timestamp,
-    },
+    amount: ship - AnyAsset(spacetime_policy_hash, ship_name, 1) - Fuel(ship_fuel),
+    datum: ShipDatum {...ship},
   }
 
-  output gas_change {
+  output pilot_change {
     to: Player,
-    amount: gas - fees - Ada(ship_mint_lovelace_fee) - min_utxo(pilot_token) - min_utxo(new_ship),
+    amount: pilot - fees + Ada(mine_amount),
   }
 
   collateral {
     from: Player,
     min_amount: fees,
   }
+
 }`;
 
-const jsFile = `const playerAddress = process.env.PLAYER_ADDRESS;
-const positionX = 4; // Replace with your desired start X position
-const positionY = -50; // Replace with your desired start Y position
-const shipName = "SHIP0"; // Replace 0 with the next ship number
-const pilotName = "PILOT0"; // Replace 0 with the next ship number
-const tipSlot = 165246231; // Replace with the latest block slot
-const lastMoveTimestamp = Date.now() + 300_000;
+const jsFile = `const shipName = "SHIP0"; // Replace with your ship name
+const pilotName = "PILOT0"; // Replace with your pilot name
+const shipFuel = 3; // Replace with the ship fuel
+const mineAmount = 11_500_000; // Replace with the mine amount -- it should be 50% of asteria ada
 
-const args: CreateShipParams = {
+const playerAddress = process.env.PLAYER_ADDRESS;
+const tipSlot = 165470021; // Replace with the latest block slot
+
+const sinceSlot = tipSlot - 100; // 100 is just to be safe
+
+const args: MineAsteriaParams = {
   player: playerAddress,
-  pPosX: positionX,
-  pPosY: positionY,
   pilotName: new TextEncoder().encode(pilotName),
   shipName: new TextEncoder().encode(shipName),
-  tipSlot: tipSlot + 300, // 5 minutes from last block
-  lastMoveTimestamp,
+  shipFuel,
+  mineAmount,
+  sinceSlot,
 };
 
-const response = await client.createShipTx(args);`;
+const response = await client.mineAsteriaTx(args);`;
 
-interface CreateShipProps {
+type ActionState = {
+  data?: {
+    tx?: string;
+  };
+  errors?: Record<string, string>;
+};
+
+interface MineAsteriaProps {
   isActive: boolean;
 }
 
-export default function CreateShip(props: CreateShipProps) {
+export default function MineAsteria(props: MineAsteriaProps) {
   const { current } = useChallengeStore();
 
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
-  const [position, setPosition] = useState<{ x: number; y: number }|null>(null);
   const [wallet, setWallet] = useState<ConnectedWallet|null>(null);
   const [address, setAddress] = useState<string>('');
-  const [shipNumber, setShipNumber] = useState<number|undefined>(undefined);
+  const [shipNumber, setShipNumber] = useState<string>('');
   const [tipSlot, setTipSlot] = useState<number|undefined>(undefined);
 
   const errors = formState.errors || {};
@@ -147,53 +145,13 @@ export default function CreateShip(props: CreateShipProps) {
 
   useEffect(() => {
     if (props.isActive) {
-      window.GODOT_BRIDGE?.send({ action: 'clear_ship' });
+      window.GODOT_BRIDGE?.send({ action: 'clear_placeholder' });
     }
   }, [props.isActive]);
 
-  useEffect(() => {
-    window.addEventListener('message', (event) => {
-      if (pathname.includes('how-to-play') && window.location.hash === '#create-ship') {
-        if (event.data.action == 'map_click') {
-          updatePosition(event.data.position.x, event.data.position.y);
-        }
-      }
-    });
-  }, []);
-
-  const updatePositionX = (event: ChangeEvent<HTMLInputElement>) => {
-    updatePosition(parseInt(event.target.value), position ? position.y : 0);
-  }
-
-  const updatePositionY = (event: ChangeEvent<HTMLInputElement>) => {
-    updatePosition(position ? position.x : 0, parseInt(event.target.value));
-  }
-  
-  const updatePosition = (x: number, y: number) => {
-    setPosition({ x, y });
-    window.GODOT_BRIDGE?.send({ action: 'move_map', x, y });
-    window.GODOT_BRIDGE?.send({ action: 'create_placeholder', x, y });
-  }
-
-  const handleWallet = (connectedWallet: ConnectedWallet|null) => {
-    setWallet(connectedWallet);
-    setAddress(connectedWallet?.changeAddress || '');
-  }
-
-  const handleFetchShipNumber = async () => {
-    const shipRes = await (await fetch("https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql", {
-      "headers": { "content-type": "application/json" },
-      "body": "{\"query\":\"query { nextShipTokenName(spacetimePolicyId: \\\"0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43\\\", spacetimeAddress: \\\"addr1wypfrtn6awhsvjmc24pqj0ptzvtfalang33rq8ng6j6y7scnlkytx\\\") { shipName pilotName } }\",\"variables\":{}}",
-      "method": "POST"
-    })).json();
-
-    console.log(shipRes);
-
-    setShipNumber(parseInt(shipRes.data.nextShipTokenName.shipName.replace('SHIP', '')));
-  }
-
   const updateShipNumber = (event: ChangeEvent<HTMLInputElement>) => {
-    setShipNumber(parseInt(event.target.value));
+    setShipNumber(event.target.value);
+    window.GODOT_BRIDGE?.send({ action: 'select_ship', shipNumber: event.target.value });
   }
 
   const handleFetchLastSlot = async () => {
@@ -210,6 +168,11 @@ export default function CreateShip(props: CreateShipProps) {
     setTipSlot(parseInt(event.target.value));
   }
 
+  const handleWallet = (connectedWallet: ConnectedWallet|null) => {
+    setWallet(connectedWallet);
+    setAddress(connectedWallet?.changeAddress || '');
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -218,7 +181,7 @@ export default function CreateShip(props: CreateShipProps) {
     const data = Object.fromEntries(formData.entries());
     data['network'] = current().network;
     try {
-      const res = await fetch('/api/asteria/create-ship', {
+      const res = await fetch('/api/asteria/mine-asteria', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +198,7 @@ export default function CreateShip(props: CreateShipProps) {
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Description">
-        <CreateShipDescription />
+        <MineAsteriaDescription />
       </Tab>
 
       <Tab label="Tx Form">
@@ -254,29 +217,28 @@ export default function CreateShip(props: CreateShipProps) {
 
             <ConnectWallet onWalletConnected={handleWallet} />
 
-            <div className="w-full flex flex-row gap-x-4 mt-[-16px]">
-              <Input
-                name="shipNumber"
-                type="number"
-                placeholder="Enter ship number"
-                containerClassName="flex-1"
-                label="Ship Number"
-                error={errors.shipNumber}
-                disabled={submitting}
-                button="fetch last"
-                onClickButton={handleFetchShipNumber}
-                value={shipNumber}
-                onChange={updateShipNumber}
-                required
-              />
-
+            <div className="w-full flex flex-row gap-x-4">
+              <div className="mt-[6px] flex-1">
+                <Input
+                  name="shipNumber"
+                  type="number"
+                  placeholder="Enter ship number"
+                  containerClassName="flex-1"
+                  label="Ship Number"
+                  error={errors.shipNumber}
+                  disabled={submitting}
+                  value={shipNumber}
+                  onChange={updateShipNumber}
+                  required
+                />
+              </div>
               <Input
                 name="blockSlot"
                 type="number"
                 placeholder="Latest block slot"
                 containerClassName="flex-1"
                 label="Latest block slot"
-                error={errors.blockSlot}
+                error={errors.shipNumber}
                 disabled={submitting}
                 button="fetch last"
                 onClickButton={handleFetchLastSlot}
@@ -288,29 +250,25 @@ export default function CreateShip(props: CreateShipProps) {
 
             <div className="w-full flex flex-row gap-x-4">
               <Input
-                name="positionX"
+                name="fuelAmount"
                 type="number"
-                placeholder="Enter position X"
-                label="Position X"
-                error={errors.positionX}
+                placeholder="Enter fuel amount"
+                containerClassName="flex-1"
+                label="Fuel Amount"
+                error={errors.fuelAmount}
                 disabled={submitting}
                 required
-                containerClassName="flex-1"
-                value={position?.x ?? ''}
-                onChange={updatePositionX}
               />
 
               <Input
-                name="positionY"
+                name="mineAmount"
                 type="number"
-                placeholder="Enter position Y"
-                label="Position Y"
-                error={errors.positionY}
+                placeholder="Enter mine amount"
+                containerClassName="flex-1"
+                label="Mine Amount"
+                error={errors.mineAmount}
                 disabled={submitting}
                 required
-                containerClassName="flex-1"
-                value={position?.y ?? ''}
-                onChange={updatePositionY}
               />
             </div>
           </div>

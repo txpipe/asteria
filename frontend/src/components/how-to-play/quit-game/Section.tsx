@@ -8,21 +8,17 @@ import CopyButton from '@/components/ui/CopyButton';
 import ConnectWallet from '@/components/ui/ConnectWallet';
 
 import Tabs, { Tab } from '@/components/how-to-play/Tabs';
-import MoveShipDescription from '@/components/how-to-play/move-ship/Description.mdx';
+import QuitGameDescription from '@/components/how-to-play/quit-game/Description.mdx';
 
-import type { ResponseData } from '@/pages/api/asteria/move-ship';
+import type { ResponseData } from '@/pages/api/asteria/quit-game';
 import type { ConnectedWallet } from '@/hooks/useCardano';
 import { useChallengeStore } from '@/stores/challenge';
 
-const tx3File = `tx move_ship(
-  p_delta_x: Int,
-  p_delta_y: Int,
+const tx3File = `tx quit_game(
   ship_name: Bytes,
   pilot_name: Bytes,
-  required_fuel: Int,
+  ship_fuel: Int,
   since_slot: Int,
-  until_slot: Int,
-  last_move_timestamp: Int,
 ) {
   locals {
     spacetime_policy_hash: 0x0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43,
@@ -31,8 +27,7 @@ const tx3File = `tx move_ship(
   }
 
   validity {
-    since_slot: since_slot, 
-    until_slot: until_slot,
+    since_slot: since_slot,
   }
 
   reference SpacetimeRef {
@@ -43,19 +38,11 @@ const tx3File = `tx move_ship(
     ref: pellet_policy_ref,
   }
 
-  collateral {
-    from: Player,
-    min_amount: fees,
-  }
-
   input ship {
     from: SpacetimePolicy,
     datum_is: ShipDatum,
     min_amount: AnyAsset(spacetime_policy_hash, ship_name, 1),
-    redeemer: ShipRedeemer::MoveShip { 
-      delta_x: p_delta_x,
-      delta_y: p_delta_y,
-    },
+    redeemer: ShipRedeemer::Quit {},
   }
 
   input* pilot {
@@ -64,19 +51,19 @@ const tx3File = `tx move_ship(
   }
 
   mint {
-    amount: Fuel(required_fuel) - Fuel(required_fuel) - Fuel(required_fuel),
+    amount: Fuel(ship_fuel) - Fuel(ship_fuel) - Fuel(ship_fuel),
     redeemer: FuelRedeemer::BurnFuel {},
+  }
+
+  mint {
+    amount: AnyAsset(spacetime_policy_hash, ship_name, 1) - AnyAsset(spacetime_policy_hash, ship_name, 1) - AnyAsset(spacetime_policy_hash, ship_name, 1),
+    redeemer: ShipyardRedeemer::BurnShip {},
   }
 
   output {
     to: SpacetimePolicy,
-    amount: ship - Fuel(required_fuel),
-    datum: ShipDatum {
-      pos_x: ship.pos_x + p_delta_x,
-      pos_y: ship.pos_y + p_delta_y,
-      last_move_latest_time: last_move_timestamp,
-      ...ship
-    },
+    amount: ship - AnyAsset(spacetime_policy_hash, ship_name, 1) - Fuel(ship_fuel),
+    datum: ShipDatum {...ship},
   }
 
   output pilot_change {
@@ -84,36 +71,31 @@ const tx3File = `tx move_ship(
     amount: pilot - fees,
   }
 
+  collateral {
+    from: Player,
+    min_amount: fees,
+  }
+
 }`;
 
-const jsFile = `const slotRequiredPerStep = 12096;
-const playerAddress = process.env.PLAYER_ADDRESS;
-const deltaX = 0; // Replace with your desired X movement units
-const deltaY = 5; // Replace with your desired Y movement units
-const requiredFuel = 5; // Replace with the required fuel for the movement
-const shipName = "SHIP0"; // Replace with your ship name
+const jsFile = `const shipName = "SHIP0"; // Replace with your ship name
 const pilotName = "PILOT0"; // Replace with your pilot name
-const tipSlot = 165246300; // Replace with the latest block slot
+const shipFuel = 3; // Replace with the ship fuel
 
-// computed values
-const distance = Math.abs(deltaX) + Math.abs(deltaY);
-const sinceSlot = tipSlot - 100; // 100 is just to be safe;
-const untilSlot = tipSlot + slotRequiredPerStep * distance;
-const lastMoveTimestamp = Date.now() + slotRequiredPerStep * distance * 1000;
+const playerAddress = process.env.PLAYER_ADDRESS;
+const tipSlot = 165470021; // Replace with the latest block slot
 
-const args: MoveShipParams = {
+const sinceSlot = tipSlot - 100; // 100 is just to be safe
+
+const args: QuitGameParams = {
   player: playerAddress,
-  pDeltaX: deltaX,
-  pDeltaY: deltaY,
-  requiredFuel: requiredFuel,
   pilotName: new TextEncoder().encode(pilotName),
   shipName: new TextEncoder().encode(shipName),
+  shipFuel,
   sinceSlot,
-  untilSlot,
-  lastMoveTimestamp,
 };
 
-const response = await client.moveShipTx(args);`;
+const response = await client.quitGameTx(args);`;
 
 type ActionState = {
   data?: {
@@ -122,18 +104,16 @@ type ActionState = {
   errors?: Record<string, string>;
 };
 
-interface MoveShipProps {
+interface QuitGameProps {
   isActive: boolean;
 }
 
-export default function MoveShip(props: MoveShipProps) {
+export default function QuitGame(props: QuitGameProps) {
   const { current } = useChallengeStore();
 
   const pathname = usePathname() || '';
   const [submitting, setSubmitting] = useState(false);
   const [formState, setFormState] = useState<ResponseData>({});
-  const [position, setPosition] = useState<{ x: number; y: number }|null>(null);
-  const [delta, setDelta] = useState<{ x: number; y: number }|null>(null);
   const [wallet, setWallet] = useState<ConnectedWallet|null>(null);
   const [address, setAddress] = useState<string>('');
   const [shipNumber, setShipNumber] = useState<string>('');
@@ -147,37 +127,6 @@ export default function MoveShip(props: MoveShipProps) {
       window.GODOT_BRIDGE?.send({ action: 'clear_placeholder' });
     }
   }, [props.isActive]);
-
-  useEffect(() => {
-    window.addEventListener('message', (event) => {
-      if (pathname.includes('how-to-play') && window.location.hash === '#move-ship') {
-        if (event.data.action == 'ship_selected') {
-          updatePosition(event.data.position.x, event.data.position.y);
-        }
-      }
-    });
-  }, []);
-  
-  const updatePosition = (x: number, y: number) => {
-    setPosition({ x, y });
-  }
-
-  const updateDeltaX = (event: ChangeEvent<HTMLInputElement>) => {
-    updateDelta(parseInt(event.target.value), delta ? delta.y : 0);
-  }
-
-  const updateDeltaY = (event: ChangeEvent<HTMLInputElement>) => {
-    updateDelta(delta ? delta.x : 0, parseInt(event.target.value));
-  }
-
-  const updateDelta = (x: number, y: number) => {
-    setDelta({ x, y });
-    window.GODOT_BRIDGE?.send({
-      action: 'move_ship',
-      x: x + (position ? position.x : 0),
-      y: y + (position ? position.y : 0)
-    });
-  }
 
   const updateShipNumber = (event: ChangeEvent<HTMLInputElement>) => {
     setShipNumber(event.target.value);
@@ -211,7 +160,7 @@ export default function MoveShip(props: MoveShipProps) {
     const data = Object.fromEntries(formData.entries());
     data['network'] = current().network;
     try {
-      const res = await fetch('/api/asteria/move-ship', {
+      const res = await fetch('/api/asteria/quit-game', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -228,7 +177,7 @@ export default function MoveShip(props: MoveShipProps) {
   return (
     <Tabs className="w-full h-full overflow-hidden" contentClassName="overflow-auto">
       <Tab label="Description">
-        <MoveShipDescription />
+        <QuitGameDescription />
       </Tab>
 
       <Tab label="Tx Form">
@@ -259,7 +208,6 @@ export default function MoveShip(props: MoveShipProps) {
                   disabled={submitting}
                   value={shipNumber}
                   onChange={updateShipNumber}
-                  comment={position ? `position ${position.x}, ${position.y}` : ''}
                   required
                 />
               </div>
@@ -281,29 +229,14 @@ export default function MoveShip(props: MoveShipProps) {
 
             <div className="w-full flex flex-row gap-x-4">
               <Input
-                name="deltaX"
+                name="fuelAmount"
                 type="number"
-                placeholder="Enter delta X"
-                label="Delta X"
-                error={errors.deltaX}
+                placeholder="Enter fuel amount"
+                containerClassName="flex-1"
+                label="Fuel Amount"
+                error={errors.fuelAmount}
                 disabled={submitting}
                 required
-                containerClassName="flex-1"
-                value={delta?.x ?? ''}
-                onChange={updateDeltaX}
-              />
-
-              <Input
-                name="deltaY"
-                type="number"
-                placeholder="Enter delta Y"
-                label="Delta Y"
-                error={errors.deltaY}
-                disabled={submitting}
-                required
-                containerClassName="flex-1"
-                value={delta?.y ?? ''}
-                onChange={updateDeltaY}
               />
             </div>
           </div>

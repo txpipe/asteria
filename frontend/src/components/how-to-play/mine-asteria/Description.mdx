@@ -1,0 +1,15 @@
+import Layout from "../mdx/Layout";
+export default ({ children }) => <Layout>{children}</Layout>;
+
+#### With this transaction you can retrieve the asteria prize.
+
+Subtracts from the `AsteriaUTxO` at most `MAX_ASTERIA_MINING`% of the ada value, and pays that amount to the owner of the ship that reached Asteria, together with the min ada locked in the `ShipState` UTxO. The `ShipToken` and the remaining fuel tokens are burnt.
+
+#### Rules to take into account:
+
+- the ship number has to be the one controlled by the pilot token in your wallet.
+- the ship has to be in the position (0,0)
+
+#### Diagram
+
+![mineAsteria diagram](/txs/mine-asteria.png)

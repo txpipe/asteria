@@ -1,0 +1,10 @@
+import Layout from "../mdx/Layout";
+export default ({ children }) => <Layout>{children}</Layout>;
+
+#### With this transaction you can remove your ship from the game.
+
+Pays the min ada locked in the `ShipState` UTxO back to the ship owner. Also burns the `ShipToken` and the remaining fuel tokens.
+
+#### Rules to take into account:
+
+- the ship number has to be the one controlled by the pilot token in your wallet.

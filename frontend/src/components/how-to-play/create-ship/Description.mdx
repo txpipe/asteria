@@ -1,6 +1,32 @@
 import Layout from "../mdx/Layout";
 export default ({ children }) => <Layout>{children}</Layout>;
 
-Creates a `ShipState` UTxO locking min ada and a `ShipToken` (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, and setting `fuel` to an initial amount. Also adds to the `AsteriaUTxO` value the `SHIP_MINT_FEE` paid by the user.
+#### This is the first step in order to play the game.
+
+This transaction creates a `ShipState` UTxO locking min ada, a `ShipToken` (minted in this tx) and an `INITIAL_FUEL` amount of fuel tokens (minted in this tx), specifying in the datum the initial `pos_x` and `pos_y` coordinates of the ship, the ship and pilot token names and the `last_move_latest_time` as the upper bound of the transaction's validity range (posix time). Also adds to the `AsteriaUTxO` value the `SHIP_MINT_LOVELACE_FEE` paid by the user.
+
+#### Rules to take into account:
+
+- the ship number has to be exactly +1 of the last ship minted
+- the tip slot must be recent because it's used during validation of the tx
+- the start position has to be at a certain distance ([manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry)) of coordinates (0,0). For the mainnet challenge the minimum distance is `50`.
+
+#### You can query the next available ship and pilot token names using the following curl:
+
+```
+curl --location 'https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql' \
+--header 'Content-Type: application/json' \
+--data '{"query":"query { nextShipTokenName(spacetimePolicyId: \"0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43\", spacetimeAddress: \"addr1wypfrtn6awhsvjmc24pqj0ptzvtfalang33rq8ng6j6y7scnlkytx\") { shipName pilotName } }","variables":{}}'
+```
+
+#### You can query the tip of the chain using the following curl:
+
+```
+curl --location 'https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql' \
+--header 'Content-Type: application/json' \
+--data '{"query":"query { lastSlot { slot } }","variables":{}}'
+```
+
+#### Diagram
 
 ![createShip diagram](/txs/build-ship.png)

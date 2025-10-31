@@ -1,6 +1,16 @@
 import Layout from "../mdx/Layout";
 export default ({ children }) => <Layout>{children}</Layout>;
 
-Updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by adding the `delta_x` and `delta_y` values specified in the redeemer, and subtracting the fuel amount needed for the displacement.
+#### With this transaction you can move the ship through the space.
+
+This transaction updates the `pos_x`, `pos_y` and `fuel` datum fields of the `ShipState` UTxO by adding the `delta_x` and `delta_y` values specified in the redeemer, and subtracts from the ship value the amount of fuel tokens needed for the displacement (which are burnt in this tx). Also updates the `last_move_latest_time` field with the transaction's validity range latest posix time.
+
+#### Rules to take into account:
+
+- the ship number has to be the one controlled by the pilot token in your wallet.
+- the total distance you travel is constrained by the number of slots between your tx validity range (ttl end - ttl start).
+- the amount of fuel you pass is proportional to the total distance you travel (deltaX + deltaY).
+
+#### Diagram
 
 ![moveShip diagram](/txs/move-ship.png)

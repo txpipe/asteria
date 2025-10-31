@@ -53,7 +53,8 @@ export default async function handler(
       pPosY: positionY,
       pilotName: new TextEncoder().encode(`PILOT${shipNumber}`),
       shipName: new TextEncoder().encode(`SHIP${shipNumber}`),
-      tipSlot: blockSlotValue + 300, // 5 minutes from last block
+      tipSlot: blockSlotValue + 300,
+      lastMoveTimestamp: Date.now() + 300_000,
     });
     return res.json({
       data: {
