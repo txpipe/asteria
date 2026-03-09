@@ -1,18 +1,21 @@
 use async_graphql::http::GraphiQLSource;
+use blockfrost::{BlockFrostSettings, BlockfrostAPI, Pagination};
+use blockfrost_openapi::models::address_utxo_content_inner::AddressUtxoContentInner;
+use blockfrost_openapi::models::tx_content_output_amount_inner::TxContentOutputAmountInner;
 use dotenv::dotenv;
-use num_traits::{cast::ToPrimitive, Zero};
+use pallas::codec::minicbor;
+use pallas::ledger::primitives::{PlutusData, ToCanonicalJson};
+use rocket::State;
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::{Header, Method, Status};
 use rocket::response::content::RawHtml;
-use sqlx::types::BigDecimal;
-use std::env;
+use serde_json::Value;
 use std::ops::Deref;
 use std::vec;
 
 use async_graphql::*;
 use async_graphql_rocket::GraphQLRequest as Request;
 use async_graphql_rocket::GraphQLResponse as Response;
-use rocket::State;
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::{Header, Method, Status};
 
 pub struct CORS;
 
@@ -25,15 +28,318 @@ impl Fairing for CORS {
         }
     }
 
-    async fn on_response<'r>(&self, request: &'r rocket::Request<'_>, response: &mut rocket::Response<'r>) {
+    async fn on_response<'r>(
+        &self,
+        request: &'r rocket::Request<'_>,
+        response: &mut rocket::Response<'r>,
+    ) {
         if request.method() == Method::Options {
             response.set_status(Status::NoContent);
-            response.set_header(Header::new("Access-Control-Allow-Methods", "POST, PATCH, GET, DELETE"));
+            response.set_header(Header::new(
+                "Access-Control-Allow-Methods",
+                "POST, PATCH, GET, DELETE",
+            ));
             response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         }
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
+}
+
+fn utxo_id(utxo: &AddressUtxoContentInner) -> String {
+    format!("{}#{}", utxo.tx_hash, utxo.output_index)
+}
+
+fn try_i32(value: i64, context: &str) -> Result<i32, Error> {
+    i32::try_from(value)
+        .map_err(|_| Error::new(format!("value out of range for i32 in {context}: {value}")))
+}
+
+fn parse_quantity(quantity: &str) -> Result<i64, Error> {
+    quantity.parse::<i64>().map_err(|e| {
+        Error::new(format!(
+            "failed to parse asset quantity '{quantity}' as i64: {e}"
+        ))
+    })
+}
+
+fn sum_assets_by_policy(
+    amounts: &[TxContentOutputAmountInner],
+    policy_id: &str,
+) -> Result<i64, Error> {
+    amounts
+        .iter()
+        .filter(|amount| amount.unit.starts_with(policy_id))
+        .try_fold(0_i64, |acc, amount| {
+            Ok(acc + parse_quantity(&amount.quantity)?)
+        })
+}
+
+fn asset_amount_for_unit(amounts: &[TxContentOutputAmountInner], unit: &str) -> Result<i64, Error> {
+    amounts
+        .iter()
+        .find(|amount| amount.unit == unit)
+        .map(|amount| parse_quantity(&amount.quantity))
+        .transpose()
+        .map(|amount| amount.unwrap_or(0))
+}
+
+fn inline_datum_json(inline_datum: &Option<String>) -> Result<Value, Error> {
+    let datum_hex = inline_datum
+        .as_deref()
+        .unwrap_or("")
+        .strip_prefix("0x")
+        .unwrap_or(inline_datum.as_deref().unwrap_or(""));
+
+    if datum_hex.is_empty() {
+        return Ok(Value::Object(Default::default()));
+    }
+
+    let bytes = hex::decode(datum_hex).map_err(|e| Error::new(e.to_string()))?;
+    let plutus_data: PlutusData =
+        minicbor::decode(&bytes).map_err(|e| Error::new(e.to_string()))?;
+    Ok(plutus_data.to_json())
+}
+
+fn datum_field(datum: &Value, index: usize) -> Result<&Value, Error> {
+    let fields = datum
+        .get("fields")
+        .ok_or_else(|| Error::new("datum is missing 'fields' key"))?;
+    let fields_array = fields
+        .as_array()
+        .ok_or_else(|| Error::new("datum 'fields' is not an array"))?;
+    fields_array
+        .get(index)
+        .ok_or_else(|| Error::new(format!("datum field at index {index} is missing")))
+}
+
+fn datum_int(datum: &Value, index: usize) -> Result<i32, Error> {
+    let field = datum_field(datum, index)?;
+    let int_value = field
+        .get("int")
+        .ok_or_else(|| Error::new(format!("datum field at index {index} is missing 'int'")))?
+        .as_i64()
+        .ok_or_else(|| {
+            Error::new(format!(
+                "datum field at index {index} has non-integer 'int'"
+            ))
+        })?;
+
+    try_i32(int_value, &format!("datum int at index {index}"))
+}
+
+fn datum_bytes(datum: &Value, index: usize) -> Result<String, Error> {
+    let field = datum_field(datum, index)?;
+    let bytes = field
+        .get("bytes")
+        .ok_or_else(|| Error::new(format!("datum field at index {index} is missing 'bytes'")))?
+        .as_str()
+        .ok_or_else(|| {
+            Error::new(format!(
+                "datum field at index {index} has non-string 'bytes'"
+            ))
+        })?;
+
+    Ok(bytes.to_string())
+}
+
+fn decode_asset_name(hex_name: &str) -> Result<String, Error> {
+    let bytes = hex::decode(hex_name)
+        .map_err(|e| Error::new(format!("failed to decode asset name hex '{hex_name}': {e}")))?;
+    String::from_utf8(bytes).map_err(|e| {
+        Error::new(format!(
+            "asset name is not valid utf8 for '{hex_name}': {e}"
+        ))
+    })
+}
+
+fn distance_from_center(x: i32, y: i32, center: PositionInput) -> i32 {
+    (x - center.x).abs() + (y - center.y).abs()
+}
+
+fn parse_ship_number(token_name_hex: &str) -> Option<i32> {
+    let stripped = token_name_hex.strip_prefix("53484950")?;
+
+    let bytes = hex::decode(stripped).ok()?;
+    let value = String::from_utf8(bytes).ok()?;
+    value.parse::<i32>().ok()
+}
+
+impl TryFrom<(String, String, AddressUtxoContentInner)> for Ship {
+    type Error = Error;
+
+    fn try_from(value: (String, String, AddressUtxoContentInner)) -> Result<Self, Self::Error> {
+        let (spacetime_policy_id, pellet_policy_id, utxo) = value;
+        let datum_json = inline_datum_json(&utxo.inline_datum)?;
+
+        let position_x = datum_int(&datum_json, 0)?;
+        let position_y = datum_int(&datum_json, 1)?;
+        let ship_token_name = datum_bytes(&datum_json, 2)?;
+        let pilot_token_name = datum_bytes(&datum_json, 3)?;
+        let amounts = &utxo.amount;
+        let fuel = sum_assets_by_policy(amounts, &pellet_policy_id)?;
+        let ship_unit = format!("{}{}", spacetime_policy_id, ship_token_name);
+        let pilot_unit = format!("{}{}", spacetime_policy_id, pilot_token_name);
+        let ship_amount = asset_amount_for_unit(amounts, &ship_unit)?;
+        let pilot_amount = asset_amount_for_unit(amounts, &pilot_unit)?;
+
+        Ok(Ship {
+            id: ID::from(utxo_id(&utxo)),
+            fuel: try_i32(fuel, "ship fuel")?,
+            position: Position {
+                x: position_x,
+                y: position_y,
+            },
+            spacetime_policy: PolicyId {
+                id: ID::from(spacetime_policy_id.clone()),
+            },
+            ship_token_name: AssetName {
+                name: ship_token_name.clone(),
+            },
+            pilot_token_name: AssetName {
+                name: pilot_token_name.clone(),
+            },
+            class: "Ship".to_string(),
+            datum: datum_json.to_string(),
+            assets: vec![
+                Asset {
+                    policy_id: pellet_policy_id,
+                    name: "FUEL".to_string(),
+                    amount: try_i32(fuel, "ship fuel asset")?,
+                },
+                Asset {
+                    policy_id: ship_unit,
+                    name: decode_asset_name(&ship_token_name)?,
+                    amount: try_i32(ship_amount, "ship token amount")?,
+                },
+                Asset {
+                    policy_id: pilot_unit,
+                    name: decode_asset_name(&pilot_token_name)?,
+                    amount: try_i32(pilot_amount, "pilot token amount")?,
+                },
+            ],
+        })
+    }
+}
+
+impl TryFrom<(String, AddressUtxoContentInner)> for Pellet {
+    type Error = Error;
+
+    fn try_from(value: (String, AddressUtxoContentInner)) -> Result<Self, Self::Error> {
+        let (pellet_policy_id, utxo) = value;
+        let datum_json = inline_datum_json(&utxo.inline_datum)?;
+        let position_x = datum_int(&datum_json, 0)?;
+        let position_y = datum_int(&datum_json, 1)?;
+        let spacetime_policy = datum_bytes(&datum_json, 2)?;
+        let fuel = sum_assets_by_policy(&utxo.amount, &pellet_policy_id)?;
+
+        Ok(Pellet {
+            id: ID::from(utxo_id(&utxo)),
+            fuel: try_i32(fuel, "pellet fuel")?,
+            position: Position {
+                x: position_x,
+                y: position_y,
+            },
+            spacetime_policy: PolicyId {
+                id: ID::from(spacetime_policy),
+            },
+            class: "Pellet".to_string(),
+            datum: datum_json.to_string(),
+            assets: vec![Asset {
+                policy_id: pellet_policy_id,
+                name: "FUEL".to_string(),
+                amount: try_i32(fuel, "pellet fuel asset")?,
+            }],
+        })
+    }
+}
+
+impl TryFrom<AddressUtxoContentInner> for Asteria {
+    type Error = Error;
+
+    fn try_from(utxo: AddressUtxoContentInner) -> Result<Self, Self::Error> {
+        let datum_json = inline_datum_json(&utxo.inline_datum)?;
+        let _spacetime_policy = datum_bytes(&datum_json, 1)?;
+        let total_rewards = asset_amount_for_unit(&utxo.amount, "lovelace")? / 1_000_000;
+
+        Ok(Asteria {
+            id: ID::from(utxo_id(&utxo)),
+            position: Position { x: 0, y: 0 },
+            total_rewards,
+            class: "Asteria".to_string(),
+            datum: datum_json.to_string(),
+            assets: vec![],
+        })
+    }
+}
+
+fn scale_token_amount(raw_amount: i64, decimals: Option<i32>) -> Result<i64, Error> {
+    let decimals_value = decimals.unwrap_or(0);
+    if decimals_value < 0 {
+        return Err(Error::new(format!(
+            "token decimals cannot be negative: {decimals_value}"
+        )));
+    }
+
+    if decimals_value == 0 {
+        return Ok(raw_amount);
+    }
+
+    let divisor = 10_i64.checked_pow(decimals_value as u32).ok_or_else(|| {
+        Error::new(format!(
+            "token decimals too large for scaling divisor: {decimals_value}"
+        ))
+    })?;
+
+    Ok(raw_amount / divisor)
+}
+
+impl TryFrom<(TokenInput, AddressUtxoContentInner)> for Token {
+    type Error = Error;
+
+    fn try_from(value: (TokenInput, AddressUtxoContentInner)) -> Result<Self, Self::Error> {
+        let (token, utxo) = value;
+        let datum_json = inline_datum_json(&utxo.inline_datum)?;
+        let position_x = datum_int(&datum_json, 0)?;
+        let position_y = datum_int(&datum_json, 1)?;
+        let spacetime_policy = datum_bytes(&datum_json, 2)?;
+
+        let unit = format!("{}{}", token.policy_id, token.asset_name);
+        let raw_amount = asset_amount_for_unit(&utxo.amount, &unit)?;
+        let scaled_amount = scale_token_amount(raw_amount, token.decimals)?;
+
+        Ok(Token {
+            id: ID::from(utxo_id(&utxo)),
+            name: token.name,
+            asset_name: token.asset_name.clone(),
+            display_name: token.display_name,
+            amount: try_i32(scaled_amount, "token amount")?,
+            position: Position {
+                x: position_x,
+                y: position_y,
+            },
+            spacetime_policy: PolicyId {
+                id: ID::from(spacetime_policy),
+            },
+            class: "Token".to_string(),
+            datum: datum_json.to_string(),
+            assets: vec![Asset {
+                policy_id: token.policy_id,
+                name: token.asset_name,
+                amount: try_i32(scaled_amount, "token asset amount")?,
+            }],
+        })
+    }
+}
+
+async fn fetch_utxos_by_policy(
+    api: &BlockfrostAPI,
+    address: &str,
+    policy_id: &str,
+) -> Result<Vec<AddressUtxoContentInner>, Error> {
+    api.addresses_utxos_asset(address, policy_id, Pagination::all())
+        .await
+        .map_err(|e| Error::new(e.to_string()))
 }
 
 struct QueryRoot;
@@ -53,6 +359,11 @@ pub struct Asset {
     pub amount: i32,
 }
 
+impl Default for Data {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Data {
     pub fn new() -> Self {
@@ -72,7 +383,7 @@ impl Data {
     }
 }
 
-#[derive(sqlx::FromRow, Clone, SimpleObject)]
+#[derive(Clone, SimpleObject)]
 pub struct Ship {
     id: ID,
     fuel: i32,
@@ -221,6 +532,7 @@ pub enum PositionalInterface {
 
 #[Object]
 impl QueryRoot {
+    #[allow(clippy::too_many_arguments)]
     async fn objects_in_radius(
         &self,
         ctx: &Context<'_>,
@@ -233,244 +545,79 @@ impl QueryRoot {
         asteria_address: String,
         tokens: Option<Vec<TokenInput>>,
     ) -> Result<Vec<PositionalInterface>, Error> {
-        // Access the connection pool from the GraphQL context
-        let pool = ctx
-            .data::<sqlx::PgPool>()
+        let api = ctx
+            .data::<BlockfrostAPI>()
             .map_err(|e| Error::new(e.message))?;
 
-        // Query to select map objects within a radius using Manhattan distance
-        let fetched_objects = sqlx::query!(
-            "
-            WITH data AS (
-                SELECT 
-                    id,
-                    'Ship' as class,
-                    CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                    $4::varchar AS spacetime_policy,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
-                    CAST(utxo_subject_amount(era, cbor, decode(CONCAT($4::varchar, CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT)), 'hex')) AS INTEGER) AS ship_asset_amount,
-                    CAST(utxo_subject_amount(era, cbor, decode(CONCAT($4::varchar, CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT)), 'hex')) AS INTEGER) AS pilot_asset_amount,
-                    0 AS total_rewards,
-                    utxo_plutus_data(era, cbor) as datum
-                FROM 
-                    utxos
-                WHERE 
-                    utxo_address(era, cbor) = from_bech32($6::varchar)
-                    AND utxo_has_policy_id(era, cbor, decode($4::varchar, 'hex'))
-                    AND spent_slot IS NULL
-                UNION ALL
-                
-                SELECT 
-                    id,
-                    'Pellet' as class,
-                    CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) AS fuel,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
-                    NULL AS ship_token_name,
-                    NULL AS pilot_token_name,
-                    NULL AS ship_asset_amount,
-                    NULL AS pilot_asset_amount,
-                    0 AS total_rewards,
-                    utxo_plutus_data(era, cbor) as datum
-                FROM 
-                    utxos
-                WHERE 
-                    utxo_address(era, cbor) = from_bech32($7::varchar)
-                    AND CAST(utxo_subject_amount(era, cbor, decode($5::varchar, 'hex')) AS INTEGER) > 0
-                    AND spent_slot IS NULL
-                UNION ALL
-                
-                SELECT 
-                    id,
-                    'Asteria' as class,
-                    0 AS fuel,
-                    0 AS position_x,
-                    0 AS position_y,
-                    CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
-                    NULL AS ship_token_name,
-                    NULL AS pilot_token_name,
-                    NULL AS ship_asset_amount,
-                    NULL AS pilot_asset_amount,
-                    utxo_lovelace(era, cbor) as total_rewards,
-                    utxo_plutus_data(era, cbor) as datum
-                FROM 
-                    utxos
-                WHERE 
-                    utxo_address(era, cbor) = from_bech32($8::varchar)
-                    AND spent_slot IS NULL
-            )
-            SELECT
-                id,
-                fuel,
-                position_x,
-                position_y,
-                spacetime_policy,
-                ship_token_name,
-                pilot_token_name,
-                class,
-                total_rewards,
-                datum,
-                ship_asset_amount,
-                pilot_asset_amount
-             FROM
-                data
-             WHERE
-                ABS(position_x - $1::int) + ABS(position_y - $2::int) < $3::int
-                AND spacetime_policy = $4::text
-            ",
-            center.x,
-            center.y,
-            radius,
-            spacetime_policy_id,
-            pellet_policy_id,
-            spacetime_address,
-            pellet_address,
-            asteria_address,
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
+        let mut map_objects = Vec::new();
 
-        let mut map_objects: Vec<PositionalInterface> = fetched_objects
-            .into_iter()
-            .map(|record| match record.class.as_deref() {
-                Some("Ship") => PositionalInterface::Ship(Ship {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    fuel: record.fuel.unwrap_or(0),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    spacetime_policy: PolicyId {
-                        id: ID::from(record.spacetime_policy.clone().unwrap_or_default()),
-                    },
-                    ship_token_name: AssetName {
-                        name: record.ship_token_name.clone().unwrap_or_default(),
-                    },
-                    pilot_token_name: AssetName {
-                        name: record.pilot_token_name.clone().unwrap_or_default(),
-                    },
-                    class: record.class.unwrap_or_default(),
-                    datum: record.datum.unwrap_or_default().to_string(),
-                    assets: vec![
-                        Asset {
-                            policy_id: pellet_policy_id.clone(),
-                            name: "FUEL".to_string(),
-                            amount: record.fuel.unwrap_or(0),
-                        },
-                        Asset {
-                            policy_id: format!("{}{}", record.spacetime_policy.clone().unwrap_or_default(), record.ship_token_name.clone().unwrap_or_default()),
-                            name: String::from_utf8(hex::decode(record.ship_token_name.clone().unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
-                            amount: record.ship_asset_amount.unwrap_or(0),
-                        },
-                        Asset {
-                            policy_id: format!("{}{}", record.spacetime_policy.clone().unwrap_or_default(), record.pilot_token_name.clone().unwrap_or_default()),
-                            name: String::from_utf8(hex::decode(record.pilot_token_name.unwrap_or_default()).unwrap_or_default()).unwrap_or_default(),
-                            amount: record.pilot_asset_amount.unwrap_or(0),
-                        },
-                    ],
-                }),
-                Some("Pellet") => PositionalInterface::Pellet(Pellet {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    fuel: record.fuel.unwrap_or(0),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    spacetime_policy: PolicyId {
-                        id: ID::from(record.spacetime_policy.unwrap_or_default()),
-                    },
-                    class: record.class.unwrap_or_default(),
-                    datum: record.datum.unwrap_or_default().to_string(),
-                    assets: vec![
-                        Asset {
-                            policy_id: pellet_policy_id.clone(),
-                            name: "FUEL".to_string(),
-                            amount: record.fuel.unwrap_or(0),
-                        },
-                    ],
-                }),
-                Some("Asteria") => PositionalInterface::Asteria(Asteria {
-                    id: ID::from(record.id.unwrap_or_default()),
-                    position: Position {
-                        x: record.position_x.unwrap_or(0),
-                        y: record.position_y.unwrap_or(0),
-                    },
-                    total_rewards: record
-                        .total_rewards
-                        .unwrap_or(BigDecimal::zero())
-                        .to_i64()
-                        .unwrap_or(0) / 1_000_000,
-                    class: record.class.unwrap_or_default(),
-                    datum: record.datum.unwrap_or_default().to_string(),
-                    assets: vec![],
-                }),
-                _ => panic!("Unknown class type or class not provided"),
-            })
-            .collect();
+        for utxo in fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await? {
+            let ship =
+                Ship::try_from((spacetime_policy_id.clone(), pellet_policy_id.clone(), utxo))?;
+            let distance = distance_from_center(ship.position.x, ship.position.y, center);
+            if distance >= radius {
+                continue;
+            }
 
-        if tokens.is_some() {
-            for token in tokens.unwrap() {
-                let fetched_tokens = sqlx::query!(
-                    "
-                    SELECT 
-                        id,
-                        CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS BIGINT) AS amount,
-                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) AS position_x,
-                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) AS position_y,
-                        CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) AS spacetime_policy,
-                        utxo_plutus_data(era, cbor) as datum
-                    FROM 
-                        utxos
-                    WHERE
-                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER) - $1::int) +
-                        ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER) - $2::int) < $3::int
-                        AND CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS VARCHAR(56)) = $4::text
-                        AND CAST(utxo_subject_amount(era, cbor, decode($6::varchar, 'hex')) AS BIGINT) > 0
-                        AND utxo_address(era, cbor) = from_bech32($5::varchar)
-                        AND spent_slot IS NULL
-                    ",
-                    center.x,
-                    center.y,
-                    radius,
-                    spacetime_policy_id,
-                    pellet_address,
-                    token.policy_id,
-                )
-                .fetch_all(pool)
-                .await
-                .map_err(|e| Error::new(e.to_string()))?;
+            map_objects.push(PositionalInterface::Ship(ship));
+        }
 
-                for record in fetched_tokens {
-                    let amount = (record.amount.unwrap_or(0) / 10i64.pow(token.decimals.unwrap_or(0).to_u32().unwrap_or(0))).to_i32().unwrap_or(0);
+        for utxo in fetch_utxos_by_policy(api, &pellet_address, &pellet_policy_id).await? {
+            let pellet = Pellet::try_from((pellet_policy_id.clone(), utxo))?;
+            let distance = distance_from_center(pellet.position.x, pellet.position.y, center);
+            if distance >= radius {
+                continue;
+            }
 
-                    map_objects.push(PositionalInterface::Token(Token {
-                        id: ID::from(record.id),
-                        name: token.name.clone(),
-                        asset_name: token.asset_name.clone(),
-                        display_name: token.display_name.clone(),
-                        amount: amount,
-                        position: Position {
-                            x: record.position_x.unwrap_or(0),
-                            y: record.position_y.unwrap_or(0),
-                        },
-                        spacetime_policy: PolicyId {
-                            id: ID::from(record.spacetime_policy.unwrap_or_default()),
-                        },
-                        class: "Token".to_string(),
-                        datum: record.datum.unwrap_or_default().to_string(),
-                        assets: vec![
-                            Asset {
-                                policy_id: token.policy_id.clone(),
-                                name: token.asset_name.clone(),
-                                amount: amount,
-                            },
-                        ],
-                    }));
+            if pellet.spacetime_policy.id.to_string() != spacetime_policy_id {
+                continue;
+            }
+
+            if pellet.fuel <= 0 {
+                continue;
+            }
+
+            map_objects.push(PositionalInterface::Pellet(pellet));
+        }
+
+        for utxo in fetch_utxos_by_policy(api, &asteria_address, &spacetime_policy_id).await? {
+            let datum_json = inline_datum_json(&utxo.inline_datum)?;
+            let spacetime_policy = datum_bytes(&datum_json, 1)?;
+            if spacetime_policy != spacetime_policy_id {
+                continue;
+            }
+
+            let asteria = Asteria::try_from(utxo)?;
+            let distance = distance_from_center(asteria.position.x, asteria.position.y, center);
+            if distance >= radius {
+                continue;
+            }
+
+            map_objects.push(PositionalInterface::Asteria(asteria));
+        }
+
+        if let Some(tokens) = tokens {
+            for token in tokens {
+                let token_utxos =
+                    fetch_utxos_by_policy(api, &pellet_address, &token.policy_id).await?;
+
+                for utxo in token_utxos {
+                    let map_token = Token::try_from((token.clone(), utxo))?;
+                    let distance =
+                        distance_from_center(map_token.position.x, map_token.position.y, center);
+                    if distance >= radius {
+                        continue;
+                    }
+
+                    if map_token.spacetime_policy.id.to_string() != spacetime_policy_id {
+                        continue;
+                    }
+
+                    if map_token.amount <= 0 {
+                        continue;
+                    }
+
+                    map_objects.push(PositionalInterface::Token(map_token));
                 }
             }
         }
@@ -485,48 +632,48 @@ impl QueryRoot {
         pellet_policy_id: String,
         spacetime_address: String,
     ) -> Result<Vec<LeaderboardRecord>, Error> {
-        let pool = ctx
-            .data::<sqlx::PgPool>()
+        let api = ctx
+            .data::<BlockfrostAPI>()
             .map_err(|e| Error::new(e.message))?;
+        let utxos = fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await?;
 
-        let fetched_objects = sqlx::query!(
-            "
-            SELECT 
-                id,
-                CAST(utxo_subject_amount(era, cbor, decode($2::varchar, 'hex')) AS INTEGER) AS fuel,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name,
-                ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) AS distance
-            FROM 
-                utxos
-            WHERE 
-                utxo_address(era, cbor) = from_bech32($3::varchar)
-                AND utxo_has_policy_id(era, cbor, decode($1::varchar, 'hex'))
-                AND spent_slot IS NULL
-            ORDER BY distance ASC
-            ",
-            spacetime_policy_id,
-            pellet_policy_id,
-            spacetime_address,
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
+        let mut records: Vec<(i32, LeaderboardRecord)> = utxos
+            .into_iter()
+            .map(|utxo| {
+                let datum_json = inline_datum_json(&utxo.inline_datum)?;
+                let position_x = datum_int(&datum_json, 0)?;
+                let position_y = datum_int(&datum_json, 1)?;
+                let distance = position_x.abs() + position_y.abs();
+                let ship_token_name = datum_bytes(&datum_json, 2)?;
+                let pilot_token_name = datum_bytes(&datum_json, 3)?;
+                let fuel = sum_assets_by_policy(&utxo.amount, &pellet_policy_id)?;
 
-        let map_objects: Vec<LeaderboardRecord> = fetched_objects
+                Ok::<_, Error>((
+                    distance,
+                    LeaderboardRecord {
+                        ranking: 0,
+                        address: utxo_id(&utxo),
+                        ship_name: ship_token_name,
+                        pilot_name: pilot_token_name,
+                        fuel: try_i32(fuel, "leaderboard player fuel")?,
+                        distance,
+                    },
+                ))
+            })
+            .collect::<Result<Vec<_>, Error>>()?;
+
+        records.sort_by_key(|(distance, _)| *distance);
+
+        let ranked = records
             .into_iter()
             .enumerate()
-            .map(|(i, record)| LeaderboardRecord {
-                ranking: i as i32 + 1,
-                address: record.id,
-                ship_name: record.ship_token_name.unwrap_or_default(),
-                pilot_name: record.pilot_token_name.unwrap_or_default(),
-                fuel: record.fuel.unwrap_or(0),
-                distance: record.distance.unwrap_or(0)
+            .map(|(index, (_, mut record))| {
+                record.ranking = index as i32 + 1;
+                record
             })
             .collect();
 
-        Ok(map_objects)
+        Ok(ranked)
     }
 
     async fn leaderboard_winners(
@@ -536,47 +683,46 @@ impl QueryRoot {
         pellet_policy_id: String,
         spacetime_address: String,
     ) -> Result<Vec<LeaderboardRecord>, Error> {
-        let pool = ctx
-            .data::<sqlx::PgPool>()
+        let api = ctx
+            .data::<BlockfrostAPI>()
             .map_err(|e| Error::new(e.message))?;
+        let utxos = fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await?;
 
-        let fetched_objects = sqlx::query!(
-            "
-            SELECT 
-                id,
-                CAST(utxo_subject_amount(era, cbor, decode($2::varchar, 'hex')) AS INTEGER) AS fuel,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT) AS ship_token_name,
-                CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 3 ->> 'bytes' AS TEXT) AS pilot_token_name
-            FROM 
-                utxos
-            WHERE 
-                utxo_address(era, cbor) = from_bech32($3::varchar)
-                AND utxo_has_policy_id(era, cbor, decode($1::varchar, 'hex'))
-                AND ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 0 ->> 'int' AS INTEGER)) + ABS(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 1 ->> 'int' AS INTEGER)) = 0
-            order by slot ASC
-            ",
-            spacetime_policy_id,
-            pellet_policy_id,
-            spacetime_address,
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
+        let mut winners = Vec::new();
 
-        let map_objects: Vec<LeaderboardRecord> = fetched_objects
+        for utxo in utxos {
+            let datum_json = inline_datum_json(&utxo.inline_datum)?;
+            let position_x = datum_int(&datum_json, 0)?;
+            let position_y = datum_int(&datum_json, 1)?;
+            let distance = position_x.abs() + position_y.abs();
+            if distance != 0 {
+                continue;
+            }
+
+            let ship_token_name = datum_bytes(&datum_json, 2)?;
+            let pilot_token_name = datum_bytes(&datum_json, 3)?;
+            let fuel = sum_assets_by_policy(&utxo.amount, &pellet_policy_id)?;
+
+            winners.push(LeaderboardRecord {
+                ranking: 0,
+                address: utxo_id(&utxo),
+                ship_name: ship_token_name,
+                pilot_name: pilot_token_name,
+                fuel: try_i32(fuel, "leaderboard winner fuel")?,
+                distance: 0,
+            });
+        }
+
+        let ranked = winners
             .into_iter()
             .enumerate()
-            .map(|(i, record)| LeaderboardRecord {
-                ranking: i as i32 + 1,
-                address: record.id,
-                ship_name: record.ship_token_name.unwrap_or_default(),
-                pilot_name: record.pilot_token_name.unwrap_or_default(),
-                fuel: record.fuel.unwrap_or(0),
-                distance: 0
+            .map(|(index, mut record)| {
+                record.ranking = index as i32 + 1;
+                record
             })
             .collect();
 
-        Ok(map_objects)
+        Ok(ranked)
     }
 
     async fn next_ship_token_name(
@@ -585,34 +731,23 @@ impl QueryRoot {
         spacetime_address: String,
         spacetime_policy_id: String,
     ) -> Result<NextShipTokenName, Error> {
-        let pool = ctx
-            .data::<sqlx::PgPool>()
+        let api = ctx
+            .data::<BlockfrostAPI>()
             .map_err(|e| Error::new(e.message))?;
+        let utxos = fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await?;
 
-        let fetched_objects = sqlx::query!(
-            "
-            SELECT
-                CAST(REPLACE(CAST(utxo_plutus_data(era, cbor) -> 'fields' -> 2 ->> 'bytes' AS TEXT), '53484950', '') AS INTEGER) AS ship_number
-            FROM 
-                utxos
-            WHERE 
-                utxo_address(era, cbor) = from_bech32($1::varchar) AND utxo_has_policy_id(era, cbor, decode($2::varchar, 'hex'))
-            ORDER BY ship_number DESC
-            LIMIT 1
-            ",
-            spacetime_address,
-            spacetime_policy_id,
-        )
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
+        let mut max_ship_number = 0;
+        for utxo in utxos {
+            let datum_json = inline_datum_json(&utxo.inline_datum)?;
+            let ship_token_name = datum_bytes(&datum_json, 2)?;
+            if let Some(number) = parse_ship_number(&ship_token_name)
+                && number > max_ship_number
+            {
+                max_ship_number = number;
+            }
+        }
 
-        let ship_number_encoded = fetched_objects
-            .get(0)
-            .and_then(|r| r.ship_number.clone())
-            .unwrap_or_default();
-
-        let ship_number = String::from_utf8(hex::decode(format!("{}", ship_number_encoded))?)?.parse::<i32>().unwrap_or_default() + 1;
+        let ship_number = max_ship_number + 1;
 
         Ok(NextShipTokenName {
             ship_name: format!("SHIP{}", ship_number),
@@ -620,23 +755,16 @@ impl QueryRoot {
         })
     }
 
-    async fn last_slot(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<LatestSlotNumber, Error> {
-        let pool = ctx
-            .data::<sqlx::PgPool>()
+    async fn last_slot(&self, ctx: &Context<'_>) -> Result<LatestSlotNumber, Error> {
+        let api = ctx
+            .data::<BlockfrostAPI>()
             .map_err(|e| Error::new(e.message))?;
+        let block = api
+            .blocks_latest()
+            .await
+            .map_err(|e| Error::new(e.to_string()))?;
 
-        let fetched_objects = sqlx::query!("SELECT slot FROM blocks ORDER BY slot DESC LIMIT 1")
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::new(e.to_string()))?;
-
-        let slot = fetched_objects
-            .get(0)
-            .and_then(|r| Some(r.slot.clone()))
-            .unwrap_or_default();
+        let slot = block.slot.unwrap_or(0);
 
         Ok(LatestSlotNumber { slot })
     }
@@ -666,18 +794,27 @@ async fn graphiql() -> RawHtml<String> {
 async fn rocket() -> _ {
     dotenv().ok();
 
-    let database_url =
-        env::var("DATABASE_URL").expect("DATABASE_URL must be set in the environment");
+    let mut settings = BlockFrostSettings::new();
+    settings.base_url = Some(
+        std::env::var("BLOCKFROST_BASE_URL")
+            .expect("BLOCKFROST_BASE_URL must be set in the environment"),
+    );
 
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(5)
-        .connect(database_url.as_str())
-        .await
-        .expect("Failed to create pool");
+    if let Ok(dmtr_api_key) = std::env::var("DMTR_API_KEY") {
+        settings.headers =
+            std::collections::HashMap::from([("dmtr-api-key".to_string(), dmtr_api_key)]);
+    }
+
+    let client = BlockfrostAPI::new(
+        std::env::var("BLOCKFROST_PROJECT_ID")
+            .unwrap_or("asteria-backend".to_string())
+            .as_str(),
+        settings,
+    );
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
-        .data(pool)
+        .data(client)
         .data(Data::new())
         .finish();
 
