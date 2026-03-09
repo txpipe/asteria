@@ -5,6 +5,7 @@ use blockfrost_openapi::models::tx_content_output_amount_inner::TxContentOutputA
 use dotenv::dotenv;
 use pallas::codec::minicbor;
 use pallas::ledger::primitives::{PlutusData, ToCanonicalJson};
+use reqwest::Client;
 use rocket::State;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Method, Status};
@@ -805,12 +806,15 @@ async fn rocket() -> _ {
             std::collections::HashMap::from([("dmtr-api-key".to_string(), dmtr_api_key)]);
     }
 
-    let client = BlockfrostAPI::new(
-        std::env::var("BLOCKFROST_PROJECT_ID")
-            .unwrap_or("asteria-backend".to_string())
-            .as_str(),
+    let project_id = std::env::var("BLOCKFROST_PROJECT_ID")
+        .unwrap_or("asteria-backend".to_string());
+
+    let client = BlockfrostAPI::new_with_client(
+        &project_id,
         settings,
-    );
+        Client::builder().use_rustls_tls(),
+    )
+    .expect("failed to create Blockfrost client");
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()

@@ -11,8 +11,9 @@ dotenv = "0.15"
 uuid = { version = "1.10.0", features = ["v4"] }
 rand = "0.8.5"
 hex = "0.4.3"
-blockfrost = "1.2.1"
+blockfrost = { version = "1.2.1", default-features = false, features = ["rustls-tls"] }
 blockfrost-openapi = "0.1.83"
 pallas = { version = "1.0.0-alpha.4", features = ["hardano", "phase2", "unstable"] }
+reqwest = { version = "0.12.9", default-features = false, features = ["rustls-tls"] }
 serde_json = "1.0"
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
