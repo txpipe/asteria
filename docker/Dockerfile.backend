@@ -1,15 +1,15 @@
-FROM rust:1.88 AS build
+FROM rust:1.93 AS build
 
 WORKDIR /app
 
-RUN apt update 
-RUN apt install -y build-essential pkg-config libssl-dev cmake 
+RUN apt update
+RUN apt install -y build-essential pkg-config libssl-dev cmake
 
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./backend ./backend
 
 RUN cargo build --release
 
-FROM rust:1.88-slim 
+FROM rust:1.93-slim
 COPY --from=build /app/target/release/asteria-backend .
 CMD ["./asteria-backend"]
