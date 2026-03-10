@@ -342,6 +342,15 @@ async fn fetch_utxos_by_policy(
         .map_err(|e| Error::new(e.to_string()))
 }
 
+async fn fetch_utxos_by_address(
+    api: &BlockfrostAPI,
+    address: &str,
+) -> Result<Vec<AddressUtxoContentInner>, Error> {
+    api.addresses_utxos(address, Pagination::all())
+        .await
+        .map_err(|e| Error::new(e.to_string()))
+}
+
 struct QueryRoot;
 
 #[derive(Clone)]
@@ -407,7 +416,7 @@ pub struct Pellet {
     assets: Vec<Asset>,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct Asteria {
     id: ID,
     position: Position,
@@ -417,7 +426,7 @@ pub struct Asteria {
     assets: Vec<Asset>,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct AsteriaState {
     ship_counter: i32,
     spacetime_policy: PolicyId,
@@ -550,7 +559,6 @@ impl QueryRoot {
             .map_err(|e| Error::new(e.message))?;
 
         let mut map_objects = Vec::new();
-        let mut has_asteria = false;
 
         for utxo in fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await? {
             let ship =
@@ -581,32 +589,20 @@ impl QueryRoot {
             map_objects.push(PositionalInterface::Pellet(pellet));
         }
 
-        for utxo in fetch_utxos_by_policy(api, &asteria_address, &spacetime_policy_id).await? {
+        for utxo in fetch_utxos_by_address(api, &asteria_address).await? {
             let datum_json = inline_datum_json(&utxo.inline_datum)?;
             let spacetime_policy = datum_bytes(&datum_json, 1)?;
             if spacetime_policy != spacetime_policy_id {
                 continue;
             }
-
             let asteria = Asteria::try_from(utxo)?;
+
             let distance = distance_from_center(asteria.position.x, asteria.position.y, center);
             if distance >= radius {
                 continue;
             }
 
             map_objects.push(PositionalInterface::Asteria(asteria));
-            has_asteria = true;
-        }
-
-        if !has_asteria {
-            map_objects.push(PositionalInterface::Asteria(Asteria {
-                id: ID::from("fallback-asteria"),
-                position: Position { x: 0, y: 0 },
-                total_rewards: 0,
-                class: "Asteria".to_string(),
-                datum: "{}".to_string(),
-                assets: vec![],
-            }));
         }
 
         if let Some(tokens) = tokens {
