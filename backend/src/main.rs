@@ -615,11 +615,9 @@ impl QueryRoot {
                     fetch_utxos_by_policy(api, &pellet_address, &token.policy_id).await?;
 
                 for utxo in token_utxos {
-                    dbg!(&utxo);
                     let map_token = Token::try_from((token.clone(), utxo))?;
                     let distance =
                         distance_from_center(map_token.position.x, map_token.position.y, center);
-                    dbg!(&map_token);
                     if distance >= radius {
                         continue;
                     }
