@@ -305,8 +305,7 @@ impl TryFrom<(TokenInput, AddressUtxoContentInner)> for Token {
         let position_y = datum_int(&datum_json, 1)?;
         let spacetime_policy = datum_bytes(&datum_json, 2)?;
 
-        let unit = format!("{}{}", token.policy_id, token.asset_name);
-        let raw_amount = asset_amount_for_unit(&utxo.amount, &unit)?;
+        let raw_amount = asset_amount_for_unit(&utxo.amount, &token.policy_id)?;
         let scaled_amount = scale_token_amount(raw_amount, token.decimals)?;
 
         Ok(Token {
@@ -353,7 +352,7 @@ pub struct Data {
     pub asteria: Asteria,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct Asset {
     pub policy_id: String,
     pub name: String,
@@ -425,7 +424,7 @@ pub struct AsteriaState {
     reward: i64,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct Token {
     id: ID,
     amount: i32,
@@ -439,13 +438,13 @@ pub struct Token {
     assets: Vec<Asset>,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct Position {
     x: i32,
     y: i32,
 }
 
-#[derive(Clone, SimpleObject)]
+#[derive(Clone, SimpleObject, Debug)]
 pub struct PolicyId {
     id: ID,
 }
@@ -551,6 +550,7 @@ impl QueryRoot {
             .map_err(|e| Error::new(e.message))?;
 
         let mut map_objects = Vec::new();
+        let mut has_asteria = false;
 
         for utxo in fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await? {
             let ship =
@@ -595,6 +595,18 @@ impl QueryRoot {
             }
 
             map_objects.push(PositionalInterface::Asteria(asteria));
+            has_asteria = true;
+        }
+
+        if !has_asteria {
+            map_objects.push(PositionalInterface::Asteria(Asteria {
+                id: ID::from("fallback-asteria"),
+                position: Position { x: 0, y: 0 },
+                total_rewards: 0,
+                class: "Asteria".to_string(),
+                datum: "{}".to_string(),
+                assets: vec![],
+            }));
         }
 
         if let Some(tokens) = tokens {
@@ -806,15 +818,12 @@ async fn rocket() -> _ {
             std::collections::HashMap::from([("dmtr-api-key".to_string(), dmtr_api_key)]);
     }
 
-    let project_id = std::env::var("BLOCKFROST_PROJECT_ID")
-        .unwrap_or("asteria-backend".to_string());
+    let project_id =
+        std::env::var("BLOCKFROST_PROJECT_ID").unwrap_or("asteria-backend".to_string());
 
-    let client = BlockfrostAPI::new_with_client(
-        &project_id,
-        settings,
-        Client::builder().use_rustls_tls(),
-    )
-    .expect("failed to create Blockfrost client");
+    let client =
+        BlockfrostAPI::new_with_client(&project_id, settings, Client::builder().use_rustls_tls())
+            .expect("failed to create Blockfrost client");
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
         .register_output_type::<PositionalInterface>()
