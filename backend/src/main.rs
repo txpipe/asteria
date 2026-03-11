@@ -8,6 +8,7 @@ use pallas::ledger::primitives::{PlutusData, ToCanonicalJson};
 use reqwest::Client;
 use rocket::State;
 use rocket::fairing::{Fairing, Info, Kind};
+use rocket::futures::future::join_all;
 use rocket::http::{Header, Method, Status};
 use rocket::response::content::RawHtml;
 use serde_json::Value;
@@ -154,7 +155,7 @@ fn decode_asset_name(hex_name: &str) -> Result<String, Error> {
     })
 }
 
-fn distance_from_center(x: i32, y: i32, center: PositionInput) -> i32 {
+fn distance_from_center(x: i32, y: i32, center: &PositionInput) -> i32 {
     (x - center.x).abs() + (y - center.y).abs()
 }
 
@@ -349,6 +350,103 @@ async fn fetch_utxos_by_address(
     api.addresses_utxos(address, Pagination::all())
         .await
         .map_err(|e| Error::new(e.to_string()))
+}
+
+async fn ships_in_radius(
+    api: &BlockfrostAPI,
+    spacetime_address: &str,
+    spacetime_policy_id: &str,
+    pellet_policy_id: &str,
+    radius: i32,
+    center: &PositionInput,
+) -> Result<Vec<PositionalInterface>, Error> {
+    Ok(
+        fetch_utxos_by_policy(api, spacetime_address, spacetime_policy_id)
+            .await?
+            .into_iter()
+            .map(|x| {
+                Ship::try_from((
+                    spacetime_policy_id.to_string(),
+                    pellet_policy_id.to_string(),
+                    x,
+                ))
+            })
+            .collect::<Result<Vec<Ship>, Error>>()?
+            .into_iter()
+            .filter(|ship| {
+                let distance = distance_from_center(ship.position.x, ship.position.y, center);
+                distance < radius
+            })
+            .map(|ship| PositionalInterface::Ship(ship.clone()))
+            .collect::<Vec<PositionalInterface>>(),
+    )
+}
+
+async fn pellets_in_radius(
+    api: &BlockfrostAPI,
+    pellet_address: &str,
+    pellet_policy_id: &str,
+    radius: i32,
+    center: &PositionInput,
+) -> Result<Vec<PositionalInterface>, Error> {
+    Ok(
+        fetch_utxos_by_policy(api, pellet_address, pellet_policy_id)
+            .await?
+            .into_iter()
+            .map(|x| Pellet::try_from((pellet_policy_id.to_string(), x)))
+            .collect::<Result<Vec<Pellet>, Error>>()?
+            .into_iter()
+            .filter(|pellet| {
+                let distance = distance_from_center(pellet.position.x, pellet.position.y, center);
+                distance < radius
+            })
+            .map(|pellet| PositionalInterface::Pellet(pellet.clone()))
+            .collect::<Vec<PositionalInterface>>(),
+    )
+}
+
+async fn asteria_in_radius(
+    api: &BlockfrostAPI,
+    asteria_address: &str,
+    spacetime_policy_id: &str,
+    radius: i32,
+    center: &PositionInput,
+) -> Result<Option<PositionalInterface>, Error> {
+    for utxo in fetch_utxos_by_address(api, asteria_address).await? {
+        let datum_json = inline_datum_json(&utxo.inline_datum)?;
+        let spacetime_policy = datum_bytes(&datum_json, 1)?;
+        if spacetime_policy != spacetime_policy_id {
+            continue;
+        }
+        let asteria = Asteria::try_from(utxo)?;
+
+        let distance = distance_from_center(asteria.position.x, asteria.position.y, center);
+        if distance >= radius {
+            continue;
+        }
+
+        return Ok(Some(PositionalInterface::Asteria(asteria)));
+    }
+    Ok(None)
+}
+
+async fn tokens_in_radius(
+    api: &BlockfrostAPI,
+    pellet_address: &str,
+    token: &TokenInput,
+    radius: i32,
+    center: &PositionInput,
+) -> Result<Vec<PositionalInterface>, Error> {
+    Ok(fetch_utxos_by_policy(api, pellet_address, &token.policy_id)
+        .await?
+        .into_iter()
+        .map(|utxo| Token::try_from((token.clone(), utxo)))
+        .collect::<Result<Vec<Token>, Error>>()?
+        .into_iter()
+        .filter(|token| distance_from_center(token.position.x, token.position.y, center) <= radius)
+        .filter(|token| token.amount > 0)
+        .map(PositionalInterface::Token)
+        .collect())
 }
 
 struct QueryRoot;
@@ -560,75 +658,35 @@ impl QueryRoot {
 
         let mut map_objects = Vec::new();
 
-        for utxo in fetch_utxos_by_policy(api, &spacetime_address, &spacetime_policy_id).await? {
-            let ship =
-                Ship::try_from((spacetime_policy_id.clone(), pellet_policy_id.clone(), utxo))?;
-            let distance = distance_from_center(ship.position.x, ship.position.y, center);
-            if distance >= radius {
-                continue;
-            }
-
-            map_objects.push(PositionalInterface::Ship(ship));
-        }
-
-        for utxo in fetch_utxos_by_policy(api, &pellet_address, &pellet_policy_id).await? {
-            let pellet = Pellet::try_from((pellet_policy_id.clone(), utxo))?;
-            let distance = distance_from_center(pellet.position.x, pellet.position.y, center);
-            if distance >= radius {
-                continue;
-            }
-
-            if pellet.spacetime_policy.id.to_string() != spacetime_policy_id {
-                continue;
-            }
-
-            if pellet.fuel <= 0 {
-                continue;
-            }
-
-            map_objects.push(PositionalInterface::Pellet(pellet));
-        }
-
-        for utxo in fetch_utxos_by_address(api, &asteria_address).await? {
-            let datum_json = inline_datum_json(&utxo.inline_datum)?;
-            let spacetime_policy = datum_bytes(&datum_json, 1)?;
-            if spacetime_policy != spacetime_policy_id {
-                continue;
-            }
-            let asteria = Asteria::try_from(utxo)?;
-
-            let distance = distance_from_center(asteria.position.x, asteria.position.y, center);
-            if distance >= radius {
-                continue;
-            }
-
-            map_objects.push(PositionalInterface::Asteria(asteria));
-        }
-
-        if let Some(tokens) = tokens {
-            for token in tokens {
-                let token_utxos =
-                    fetch_utxos_by_policy(api, &pellet_address, &token.policy_id).await?;
-
-                for utxo in token_utxos {
-                    let map_token = Token::try_from((token.clone(), utxo))?;
-                    let distance =
-                        distance_from_center(map_token.position.x, map_token.position.y, center);
-                    if distance >= radius {
-                        continue;
-                    }
-
-                    if map_token.spacetime_policy.id.to_string() != spacetime_policy_id {
-                        continue;
-                    }
-
-                    if map_token.amount <= 0 {
-                        continue;
-                    }
-
-                    map_objects.push(PositionalInterface::Token(map_token));
+        let (ships, pellets, asteria, tokens) = tokio::join!(
+            ships_in_radius(
+                api,
+                &spacetime_address,
+                &spacetime_policy_id,
+                &pellet_policy_id,
+                radius,
+                &center,
+            ),
+            pellets_in_radius(api, &pellet_address, &pellet_policy_id, radius, &center),
+            asteria_in_radius(api, &asteria_address, &spacetime_policy_id, radius, &center),
+            async {
+                match tokens.as_ref().map(|tokens| {
+                    tokens
+                        .iter()
+                        .map(|token| tokens_in_radius(api, &pellet_address, token, radius, &center))
+                        .collect::<Vec<_>>()
+                }) {
+                    Some(futs) => join_all(futs).await,
+                    None => Vec::new(),
                 }
             }
+        );
+
+        map_objects.extend(ships?);
+        map_objects.extend(pellets?);
+        map_objects.extend(asteria?.into_iter());
+        for token_objects in tokens {
+            map_objects.extend(token_objects?);
         }
 
         Ok(map_objects)
