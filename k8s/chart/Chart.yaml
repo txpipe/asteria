@@ -1,0 +1,11 @@
+apiVersion: v2
+name: asteria
+description: The Asteria challenge services, the GraphQL backend and the game frontend
+type: application
+# Chart version: this chart. appVersion: not tracked; each component's image
+# is pinned in the instance values.
+version: 0.1.0
+home: https://github.com/txpipe/asteria
+keywords:
+  - asteria
+  - cardano

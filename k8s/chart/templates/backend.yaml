@@ -1,0 +1,11 @@
+{{- if .Values.backend.enabled }}
+{{- $values := .Values.backend }}
+{{- $env := dict
+  "BLOCKFROST_BASE_URL" (required "backend.blockfrostBaseUrl is required" $values.blockfrostBaseUrl)
+  "ROCKET_ADDRESS" "0.0.0.0"
+  "ROCKET_PORT" $values.port
+}}
+{{- $probe := dict "httpGet" (dict "path" "/" "port" "http") }}
+---
+{{ include "asteria.workload" (dict "root" . "component" "backend" "values" $values "env" $env "probe" $probe) }}
+{{- end }}
