@@ -142,7 +142,7 @@ export default function GatherFuel(props: GatherFuelProps) {
   }
 
   const handleFetchLastSlot = async () => {
-    const slotRes = await (await fetch("https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql", {
+    const slotRes = await (await fetch("https://asteria.txpipe.io/api/graphql", {
       "headers": { "content-type": "application/json" },
       "body": "{\"query\":\"query { lastSlot { slot } }\"}",
       "method": "POST"

@@ -181,7 +181,7 @@ export default function CreateShip(props: CreateShipProps) {
   }
 
   const handleFetchShipNumber = async () => {
-    const shipRes = await (await fetch("https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql", {
+    const shipRes = await (await fetch("https://asteria.txpipe.io/api/graphql", {
       "headers": { "content-type": "application/json" },
       "body": "{\"query\":\"query { nextShipTokenName(spacetimePolicyId: \\\"0291ae7aebaf064b785542093c2b13169effb34462301e68d4b44f43\\\", spacetimeAddress: \\\"addr1wypfrtn6awhsvjmc24pqj0ptzvtfalang33rq8ng6j6y7scnlkytx\\\") { shipName pilotName } }\",\"variables\":{}}",
       "method": "POST"
@@ -197,7 +197,7 @@ export default function CreateShip(props: CreateShipProps) {
   }
 
   const handleFetchLastSlot = async () => {
-    const slotRes = await (await fetch("https://8000-ethereal-audience-bb83g6.us1.demeter.run/graphql", {
+    const slotRes = await (await fetch("https://asteria.txpipe.io/api/graphql", {
       "headers": { "content-type": "application/json" },
       "body": "{\"query\":\"query { lastSlot { slot } }\"}",
       "method": "POST"
