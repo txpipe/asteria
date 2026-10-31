@@ -1,3 +1,4 @@
+```ts
 import { GameIdentifier, OutRef } from "../src/types";
 import { gatherFuel } from "../src";
 import { Unwrapped } from "@blaze-cardano/ogmios";
@@ -55,3 +56,4 @@ async function main() {
 main().then((tx) => {
     console.log(tx.toCbor());
 });
+```
