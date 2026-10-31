@@ -9,15 +9,14 @@ import {
 } from "@blaze-cardano/core";
 import {
     Blaze,
-    Constr,
     Core,
-    Data,
     Kupmios,
     makeValue,
-    Static,
 } from "@blaze-cardano/sdk";
+import { parse, serialize } from "@blaze-cardano/data";
 import {
     blazeInit,
+    constr,
     extractPolicyIdFromAddress,
     outRefToTransactionInput,
     slotToUnix,
@@ -82,10 +81,7 @@ async function createShip(
     const fuel_assetName = "4655454C";
     const fuel_token = AssetId(fuel_policy + fuel_assetName);
 
-    const asteria_ref_datum_data = Data.from(
-        asteria_ref_datum,
-        AsteriaScriptDatum,
-    );
+    const asteria_ref_datum_data = parse(AsteriaScriptDatum, asteria_ref_datum);
 
     const admin_token_from_datum = asteria_ref_datum_data.admin_token;
     const admin_token = AssetId(
@@ -93,15 +89,9 @@ async function createShip(
     );
     const asteria_utxos = await blaze.provider.getUnspentOutputsWithAsset(asteria_validator_address, admin_token);
     const asteria_datum = asteria_utxos[0].output().datum()!.asInlineData()!;
-    const spacetime_ref_datum_data = Data.from(
-        spacetime_ref_datum,
-        SpaceTimeScriptDatum,
-    );
+    const spacetime_ref_datum_data = parse(SpaceTimeScriptDatum, spacetime_ref_datum);
 
-    const asteria_datum_data = Data.from(
-        asteria_datum,
-        AsteriaDatum,
-    );
+    const asteria_datum_data = parse(AsteriaDatum, asteria_datum);
 
     const ship_name = "SHIP" + asteria_datum_data.ship_counter.toString();
     const pilot_name = "PILOT" + asteria_datum_data.ship_counter.toString();
@@ -127,15 +117,15 @@ async function createShip(
         tx_latest_posix_time: BigInt(tx_latest_posix_time),
     };
 
-    const ship_datum = Data.to(ship_datum_data, ShipDatum);
+    const ship_datum = serialize(ShipDatum, ship_datum_data);
     const new_asteria_datum_data = {
         ship_counter: asteria_datum_data.ship_counter + 1n,
         shipyard_policy: asteria_datum_data.shipyard_policy,
     };
 
-    const new_asteria_datum = Data.to(new_asteria_datum_data, AsteriaDatum);
+    const new_asteria_datum = serialize(AsteriaDatum, new_asteria_datum_data);
 
-    const redeemer = Data.to(new Constr(0, []));
+    const redeemer = constr(0n, []);
 
     const tx = blaze
         .newTransaction()
@@ -220,10 +210,7 @@ async function moveShip(
 
     const ship_datum = ship_utxo[0].output().datum()!.asInlineData()!;
 
-    const old_ship_datum = Data.from(
-        ship_datum,
-        ShipDatum,
-    );
+    const old_ship_datum = parse(ShipDatum, ship_datum);
 
     let pilot_utxo: TransactionUnspentOutput = utxos[0];
     for (const utxo of utxos) {
@@ -243,10 +230,7 @@ async function moveShip(
 
     const spacetime_ref_datum = spacetime_ref_utxos[0].output().datum()!
         .asInlineData()!;
-    const spacetime_ref_datum_data = Data.from(
-        spacetime_ref_datum,
-        SpaceTimeScriptDatum,
-    );
+    const spacetime_ref_datum_data = parse(SpaceTimeScriptDatum, spacetime_ref_datum);
 
     const distance = BigInt(
         Math.abs(Number(delta_x)) + Math.abs(Number(delta_y)),
@@ -285,10 +269,10 @@ async function moveShip(
         shipyard_policy + old_ship_datum.ship_token_name,
     );
 
-    const new_ship_datum = Data.to(new_ship_data, ShipDatum);
+    const new_ship_datum = serialize(ShipDatum, new_ship_data);
 
-    const moveShipRedeemer = Data.to(new Constr(0, [delta_x, delta_y]));
-    const burnFuelRedeemer = Data.to(new Constr(1, []));
+    const moveShipRedeemer = constr(0n, [delta_x, delta_y]);
+    const burnFuelRedeemer = constr(1n, []);
 
     const tx = blaze
         .newTransaction()
@@ -365,19 +349,16 @@ async function gatherFuel(
     const utxos = await blaze.provider.getUnspentOutputs(blaze.wallet.address);
 
     const ship_datum = ship_utxo[0].output().datum()!.asInlineData()!;
-    const old_ship_datum = Data.from(ship_datum, ShipDatum);
-    const new_ship_datum = Data.to(old_ship_datum, ShipDatum);
+    const old_ship_datum = parse(ShipDatum, ship_datum);
+    const new_ship_datum = serialize(ShipDatum, old_ship_datum);
 
     const pellet_datum = pellet_utxos[0].output().datum()!.asInlineData()!;
     const spacetime_ref_datum = spacetime_ref_utxos[0].output().datum()!
         .asInlineData()!;
-    const spacetime_ref_datum_data = Data.from(
-        spacetime_ref_datum,
-        SpaceTimeScriptDatum,
-    );
+    const spacetime_ref_datum_data = parse(SpaceTimeScriptDatum, spacetime_ref_datum);
 
-    const old_pellet_datum = Data.from(pellet_datum, PelletDatum);
-    const new_pellet_datum = Data.to(old_pellet_datum, PelletDatum);
+    const old_pellet_datum = parse(PelletDatum, pellet_datum);
+    const new_pellet_datum = serialize(PelletDatum, old_pellet_datum);
 
     let pilot_utxo: TransactionUnspentOutput = utxos[0];
     for (const utxo of utxos) {
@@ -397,10 +378,7 @@ async function gatherFuel(
 
     const pellet_ref_datum = pellet_ref_utxos[0].output().datum()!
         .asInlineData()!;
-    const pellet_ref_datum_data = Data.from(
-        pellet_ref_datum,
-        PelletScriptDatum,
-    );
+    const pellet_ref_datum_data = parse(PelletScriptDatum, pellet_ref_datum);
     const admin_token_from_datum = pellet_ref_datum_data.admin_token;
 
     const admin_token = AssetId(
@@ -437,8 +415,8 @@ async function gatherFuel(
         amount_to_gather = pellet_fuel;
     }
 
-    const gather_fuel_redeemer = Data.to(new Constr(1, [amount_to_gather]));
-    const provide_fuel_redeemer = Data.to(new Constr(0, [amount_to_gather]));
+    const gather_fuel_redeemer = constr(1n, [amount_to_gather]);
+    const provide_fuel_redeemer = constr(0n, [amount_to_gather]);
 
     const pilot_token = AssetId(
         shipyard_policy + old_ship_datum.pilot_token_name,
@@ -526,10 +504,7 @@ async function mineAsteria(
 
     const asteria_ref_datum = asteria_ref_utxos[0].output().datum()!
         .asInlineData()!;
-    const asteria_ref_datum_data = Data.from(
-        asteria_ref_datum,
-        AsteriaScriptDatum,
-    );
+    const asteria_ref_datum_data = parse(AsteriaScriptDatum, asteria_ref_datum);
     const admin_token_from_datum = asteria_ref_datum_data.admin_token;
 
     const fuel_policy = extractPolicyIdFromAddress(pellet_validator_address);
@@ -542,15 +517,12 @@ async function mineAsteria(
     const asteria_utxos = await blaze.provider.getUnspentOutputsWithAsset(asteria_validator_address, admin_token);
     const asteria_datum = asteria_utxos[0].output().datum()!.asInlineData()!;
 
-    const asteria_datum_data = Data.from(
-        asteria_datum,
-        AsteriaDatum,
-    );
+    const asteria_datum_data = parse(AsteriaDatum, asteria_datum);
 
-    const new_asteria_datum = Data.to(asteria_datum_data, AsteriaDatum);
+    const new_asteria_datum = serialize(AsteriaDatum, asteria_datum_data);
 
     const ship_datum = ship_utxo[0].output().datum()!.asInlineData()!;
-    const old_ship_datum = Data.from(ship_datum, ShipDatum);
+    const old_ship_datum = parse(ShipDatum, ship_datum);
 
     const ship_token = AssetId(
         shipyard_policy + old_ship_datum.ship_token_name,
@@ -568,7 +540,7 @@ async function mineAsteria(
         },
     );
 
-    const reward_percentage = Number(asteria_datum_data.max_asteria_mining) /
+    const reward_percentage = Number(asteria_ref_datum_data.max_asteria_mining) /
         100;
     const total_rewards = asteria_utxos[0].output().amount().coin();
     const user_reward = BigInt(Number(total_rewards) * reward_percentage);
@@ -587,15 +559,15 @@ async function mineAsteria(
         .addMint(
             AssetId.getPolicyId(ship_token),
             new Map([[AssetId.getAssetName(ship_token), -1n]]),
-            Data.to(new Constr(1, [])),
+            constr(1n, []),
         )
         .addMint(
             AssetId.getPolicyId(fuel_token),
             new Map([[AssetId.getAssetName(fuel_token), -ship_fuel]]),
-            Data.to(new Constr(1, [])),
+            constr(1n, []),
         )
-        .addInput(ship_utxo[0], Data.to(new Constr(2, [])))
-        .addInput(asteria_utxos[0], Data.to(new Constr(1, [])))
+        .addInput(ship_utxo[0], constr(2n, []))
+        .addInput(asteria_utxos[0], constr(1n, []))
         .lockAssets(
             asteria_validator_address,
             makeValue(remaining_rewards, [admin_token, 1n]),
@@ -638,7 +610,7 @@ async function quit(
     const pellet_validator_address = pellet_ref_utxos[0].output().address();
 
     const ship_datum = ship_utxo[0].output().datum()!.asInlineData()!;
-    const old_ship_datum = Data.from(ship_datum, ShipDatum);
+    const old_ship_datum = parse(ShipDatum, ship_datum);
 
     const fuel_policy = extractPolicyIdFromAddress(pellet_validator_address);
     const fuel_assetName = "4655454C";
@@ -676,8 +648,8 @@ async function quit(
         },
     );
 
-    const quitRedeemer = Data.to(new Constr(3, []));
-    const burnRedeemer = Data.to(new Constr(1, []));
+    const quitRedeemer = constr(3n, []);
+    const burnRedeemer = constr(1n, []);
 
     const tx = blaze
         .newTransaction()

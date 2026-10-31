@@ -1,76 +1,73 @@
-import { Data, Static } from "@blaze-cardano/sdk";
+import { Static, Type } from "@blaze-cardano/data";
 
 // Internal Types
 
-const ShipDatumSchema = Data.Object({
-  pos_x: Data.Integer(),
-  pos_y: Data.Integer(),
-  ship_token_name: Data.Bytes(),
-  pilot_token_name: Data.Bytes(),
-  tx_latest_posix_time: Data.Integer(),
-});
+const ShipDatumSchema = Type.Object({
+  pos_x: Type.BigInt(),
+  pos_y: Type.BigInt(),
+  ship_token_name: Type.String(),
+  pilot_token_name: Type.String(),
+  tx_latest_posix_time: Type.BigInt(),
+}, { ctor: 0n });
 
 type ShipDatum = Static<typeof ShipDatumSchema>;
-const ShipDatum = ShipDatumSchema as unknown as ShipDatum;
+const ShipDatum = ShipDatumSchema;
 
-const AsteriaDatumSchema = Data.Object({
-  ship_counter: Data.Integer(),
-  shipyard_policy: Data.Bytes(),
-});
+const AsteriaDatumSchema = Type.Object({
+  ship_counter: Type.BigInt(),
+  shipyard_policy: Type.String(),
+}, { ctor: 0n });
 type AsteriaDatum = Static<typeof AsteriaDatumSchema>;
-const AsteriaDatum = AsteriaDatumSchema as unknown as AsteriaDatum;
+const AsteriaDatum = AsteriaDatumSchema;
 
-const PelletDatumSchema = Data.Object({
-  pos_x: Data.Integer(),
-  pos_y: Data.Integer(),
-  shipyard_policy: Data.Bytes(),
-});
+const PelletDatumSchema = Type.Object({
+  pos_x: Type.BigInt(),
+  pos_y: Type.BigInt(),
+  shipyard_policy: Type.String(),
+}, { ctor: 0n });
 
 type PelletDatum = Static<typeof PelletDatumSchema>;
-const PelletDatum = PelletDatumSchema as unknown as PelletDatum;
+const PelletDatum = PelletDatumSchema;
 
-const AsteriaScriptDatumSchema = Data.Object({
-  admin_token: Data.Object({
-    policy_id: Data.Bytes(),
-    asset_name: Data.Bytes(),
-  }),
-  ship_mint_lovelace_fee: Data.Integer(),
-  max_asteria_mining: Data.Integer(),
-});
+const AsteriaScriptDatumSchema = Type.Object({
+  admin_token: Type.Object({
+    policy_id: Type.String(),
+    asset_name: Type.String(),
+  }, { ctor: 0n }),
+  ship_mint_lovelace_fee: Type.BigInt(),
+  max_asteria_mining: Type.BigInt(),
+}, { ctor: 0n });
 
 type AsteriaScriptDatum = Static<typeof AsteriaScriptDatumSchema>;
-const AsteriaScriptDatum =
-  AsteriaScriptDatumSchema as unknown as AsteriaScriptDatum;
+const AsteriaScriptDatum = AsteriaScriptDatumSchema;
 
-const SpaceTimeScriptDatumSchema = Data.Object({
-  pellet_validator_address: Data.Bytes(),
-  asteria_validator_address: Data.Bytes(),
-  admin_token: Data.Object({
-    policy_id: Data.Bytes(),
-    asset_name: Data.Bytes(),
-  }),
-  max_speed: Data.Object({
-    distance: Data.Integer(),
-    time: Data.Integer(),
-  }),
-  max_ship_fuel: Data.Integer(),
-  fuel_per_step: Data.Integer(),
-  initial_fuel: Data.Integer(),
-  min_asteria_distance: Data.Integer(),
-});
+const SpaceTimeScriptDatumSchema = Type.Object({
+  pellet_validator_address: Type.String(),
+  asteria_validator_address: Type.String(),
+  admin_token: Type.Object({
+    policy_id: Type.String(),
+    asset_name: Type.String(),
+  }, { ctor: 0n }),
+  max_speed: Type.Object({
+    distance: Type.BigInt(),
+    time: Type.BigInt(),
+  }, { ctor: 0n }),
+  max_ship_fuel: Type.BigInt(),
+  fuel_per_step: Type.BigInt(),
+  initial_fuel: Type.BigInt(),
+  min_asteria_distance: Type.BigInt(),
+}, { ctor: 0n });
 type SpaceTimeScriptDatum = Static<typeof SpaceTimeScriptDatumSchema>;
-const SpaceTimeScriptDatum =
-  SpaceTimeScriptDatumSchema as unknown as SpaceTimeScriptDatum;
+const SpaceTimeScriptDatum = SpaceTimeScriptDatumSchema;
 
-const PelletScriptDatumSchema = Data.Object({
-  admin_token: Data.Object({
-    policy_id: Data.Bytes(),
-    asset_name: Data.Bytes(),
-  }),
-});
+const PelletScriptDatumSchema = Type.Object({
+  admin_token: Type.Object({
+    policy_id: Type.String(),
+    asset_name: Type.String(),
+  }, { ctor: 0n }),
+}, { ctor: 0n });
 type PelletScriptDatum = Static<typeof PelletScriptDatumSchema>;
-const PelletScriptDatum =
-  PelletScriptDatumSchema as unknown as PelletScriptDatum;
+const PelletScriptDatum = PelletScriptDatumSchema;
 
 // External Types
 

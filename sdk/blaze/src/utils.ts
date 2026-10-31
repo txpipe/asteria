@@ -1,4 +1,4 @@
-import { Address, AssetId, NetworkId, TransactionId, TransactionInput } from "@blaze-cardano/core";
+import { Address, AssetId, ConstrPlutusData, NetworkId, PlutusData, PlutusList, TransactionId, TransactionInput } from "@blaze-cardano/core";
 import { Blaze, ColdWallet, Core, Kupmios } from "@blaze-cardano/sdk";
 import {  OutRef } from "./types";
 
@@ -30,6 +30,12 @@ function outRefToTransactionInput(outref: OutRef): TransactionInput {
     );
 }
 
+function constr(index: bigint, fields: bigint[]): PlutusData {
+    const list = new PlutusList();
+    for (const field of fields) list.add(PlutusData.newInteger(field));
+    return PlutusData.newConstrPlutusData(new ConstrPlutusData(index, list));
+}
+
 function extractPolicyIdFromAddress(address: Address): string {
     const addressBytes = address.toBytes();
     return addressBytes.slice(2, 58);
@@ -41,4 +47,4 @@ function subjectToAssetId(subject: string): AssetId {
     return AssetId(policy_id + asset_name);
 }
 
-export { blazeInit,slotToUnix, utf8ToHex, outRefToTransactionInput, extractPolicyIdFromAddress, subjectToAssetId };
+export { blazeInit, constr, slotToUnix, utf8ToHex, outRefToTransactionInput, extractPolicyIdFromAddress, subjectToAssetId };
