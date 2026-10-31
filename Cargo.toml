@@ -2,3 +2,4 @@
 resolver = "2" # Important! wgpu/Bevy needs this!
 
 members = [ "backend" ]
+exclude = [ "visualizer" ]
