@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 ubuntu:20.04 AS build
+FROM --platform=linux/amd64 ubuntu:24.04 AS build
 
 ARG GODOT_VERSION="4.5.1"
 
@@ -16,8 +16,7 @@ RUN mkdir -p /visualizer/build \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
-    python \
-    python-openssl \
+    python3 \
     unzip \
     wget \
     zip \
@@ -38,13 +37,15 @@ WORKDIR /visualizer
 COPY ./godot-visualizer ./
 RUN godot --headless --export-release "Web" ./build/index.html
 
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
 # RUN wget -qO- https://github.com/tx3-lang/up/releases/download/v0.4.2/tx3up-installer.sh | sh
 
-RUN wget -qO- "https://github.com/tx3-lang/trix/releases/latest/download/trix-x86_64-unknown-linux-gnu.tar.xz" \
+ARG TRIX_VERSION="v0.18.0"
+
+RUN wget -qO- "https://github.com/tx3-lang/trix/releases/download/${TRIX_VERSION}/trix-x86_64-unknown-linux-gnu.tar.xz" \
     | tar -xJ -C /tmp && \
     mkdir -p /root/.tx3/default/bin && \
     mv /tmp/trix-x86_64-unknown-linux-gnu/trix /root/.tx3/default/bin/trix && \
@@ -62,7 +63,7 @@ ENV MAINNET_TRP_API_KEY=trp1lrnhzcax5064cgxsaup
 COPY --from=build /visualizer/build ./public/visualizer
 
 COPY ./frontend/package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY ./frontend ./
 

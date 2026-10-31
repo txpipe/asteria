@@ -1,0 +1,7 @@
+export default {
+  creating_ship: "Creating a Ship",
+  moving_ship: "Moving a Ship",
+  gathering_fuel: "Gathering Fuel",
+  mining_asteria: "Mining Asteria",
+  backend_api: "Backend API",
+};

@@ -2,7 +2,7 @@ use async_graphql::http::GraphiQLSource;
 use blockfrost::{BlockFrostSettings, BlockfrostAPI, Pagination};
 use blockfrost_openapi::models::address_utxo_content_inner::AddressUtxoContentInner;
 use blockfrost_openapi::models::tx_content_output_amount_inner::TxContentOutputAmountInner;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use pallas::codec::minicbor;
 use pallas::ledger::primitives::{PlutusData, ToCanonicalJson};
 use reqwest::Client;
@@ -818,7 +818,7 @@ async fn rocket() -> _ {
         std::env::var("BLOCKFROST_PROJECT_ID").unwrap_or("asteria-backend".to_string());
 
     let client =
-        BlockfrostAPI::new_with_client(&project_id, settings, Client::builder().use_rustls_tls())
+        BlockfrostAPI::new_with_client(&project_id, settings, Client::builder().tls_backend_rustls())
             .expect("failed to create Blockfrost client");
 
     let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
