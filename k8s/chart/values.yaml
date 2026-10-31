@@ -1,0 +1,114 @@
+# The Asteria challenge: the GraphQL backend (backend/) and the Next.js game
+# frontend (frontend/), each built by its own workflow into ghcr.io.
+#
+# These defaults are instance-agnostic: no cluster, hostname, chain endpoint
+# or image is assumed. What an instance must supply is empty here and
+# `required` in the templates, so a missing value fails at render instead of
+# deploying a half-configured service.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Placement shared by both components; a component's own nodeSelector or
+# tolerations replace these. Both images are built for linux/amd64 only.
+nodeSelector: {}
+tolerations: []
+
+backend:
+  enabled: true
+  image:
+    repository: ghcr.io/txpipe/asteria-backend
+    # The workflows tag every image with the full commit SHA. Pin a tag and
+    # its digest; never a moving tag.
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 8000
+  # A Blockfrost-compatible API root (Blockfrost itself, or Dolos minibf).
+  blockfrostBaseUrl: ""
+  # Optional Secret whose keys become environment variables, e.g.
+  # DMTR_API_KEY or BLOCKFROST_PROJECT_ID for an authenticated endpoint.
+  existingSecret: ""
+  # Extra plain environment variables.
+  env: {}
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+  service:
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+  ingress:
+    enabled: false
+    className: ""
+    clusterIssuer: ""
+    host: ""
+    # The backend answers on /graphql. A path other than / needs the ingress
+    # to map it back, e.g. through annotations for the controller in use.
+    path: /
+    pathType: Prefix
+    tlsSecretName: ""
+    annotations: {}
+
+frontend:
+  enabled: false
+  image:
+    repository: ghcr.io/txpipe/asteria-frontend
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 3000
+  # The backend URLs (MAINNET_API_URL, PREVIEW_API_URL) are inlined at image
+  # build time by next.config.mjs, so changing them means a new image. Server
+  # side settings, such as the TRP endpoints and keys, are read at runtime
+  # and can be set here or through existingSecret.
+  existingSecret: ""
+  env: {}
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  # The image runs as root and Next.js writes its cache under /app/.next, so
+  # the root filesystem stays writable.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  service:
+    type: ClusterIP
+    port: 3000
+    annotations: {}
+  ingress:
+    enabled: false
+    className: ""
+    clusterIssuer: ""
+    host: ""
+    path: /
+    pathType: Prefix
+    tlsSecretName: ""
+    annotations: {}

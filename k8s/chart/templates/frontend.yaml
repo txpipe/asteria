@@ -1,0 +1,10 @@
+{{- if .Values.frontend.enabled }}
+{{- $values := .Values.frontend }}
+{{- $env := dict
+  "HOSTNAME" "0.0.0.0"
+  "PORT" $values.port
+}}
+{{- $probe := dict "tcpSocket" (dict "port" "http") }}
+---
+{{ include "asteria.workload" (dict "root" . "component" "frontend" "values" $values "env" $env "probe" $probe) }}
+{{- end }}

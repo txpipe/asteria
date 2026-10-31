@@ -1,0 +1,20 @@
+{{ .Chart.Name }} {{ .Chart.Version }}
+{{ if .Values.backend.enabled }}
+Backend ({{ .Values.backend.image.tag }}):
+  in-cluster: http://{{ include "asteria.componentName" (dict "root" . "component" "backend") }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.backend.service.port }}/graphql
+{{- if .Values.backend.ingress.enabled }}
+  public:     https://{{ .Values.backend.ingress.host }}{{ .Values.backend.ingress.path }}
+{{- end }}
+{{- end }}
+{{ if .Values.frontend.enabled }}
+Frontend ({{ .Values.frontend.image.tag }}):
+  in-cluster: http://{{ include "asteria.componentName" (dict "root" . "component" "frontend") }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.frontend.service.port }}/
+{{- if .Values.frontend.ingress.enabled }}
+  public:     https://{{ .Values.frontend.ingress.host }}{{ .Values.frontend.ingress.path }}
+{{- end }}
+{{- end }}
+
+Smoke test:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "asteria.componentName" (dict "root" . "component" "backend") }} 18000:{{ .Values.backend.service.port }}
+  curl -s http://localhost:18000/graphql -H 'content-type: application/json' \
+    -d '{"query":"{ __typename }"}'                                            # {"data":{"__typename":"QueryRoot"}}
