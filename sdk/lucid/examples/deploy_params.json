@@ -1,0 +1,12 @@
+{
+    "ship_mint_lovelace_fee": 1000000,
+    "max_asteria_mining": 50,
+    "max_speed": {
+        "distance": 1,
+        "time": 60000
+    },
+    "max_ship_fuel": 5,
+    "fuel_per_step": 1,
+    "initial_fuel": 5,
+    "min_asteria_distance": 50
+}
